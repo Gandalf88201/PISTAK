@@ -15,6 +15,7 @@ e un sistema di plugin.
 ./start.py batch cartella/ --csv riepilogo.csv              # molti file in parallelo
 ./start.py compare a.cif b.cif c.cif --ref 1 --csv confronto.csv   # confronto del motivo di stack
 ./start.py stats cartella/ --kind stack --corr --csv coppie.csv --summary descrizione.csv
+./start.py qc a.cif --program psi4 --method sapt -o input/  # dimeri degli stack per ORCA / Psi4 / Gaussian
 ./start.py sessione.pistak                                   # riapre una sessione salvata
 ./start.py params                # parametri disponibili (con quelli dei plugin)
 ./start.py config                # dove stanno impostazioni personali, ultima sessione e plugin
@@ -42,7 +43,8 @@ pistak/
     analysis.py     la catena completa, il PairContext e il riepilogo per molecola (MoleculeContact)
     uncertainty.py  incertezze dei parametri con un Monte Carlo sulle s.u. del CIF
   params/    registro dei parametri misurabili (Registry; builtin = sito, extra = fase 2, plugins)
-  io/        export CSV/JSON/XYZ con chiavi fisse; batch (parallelo), stats (statistiche), compare (confronto)
+  io/        export CSV/JSON/XYZ con chiavi fisse; batch (parallelo), stats (statistiche), compare (confronto);
+             qc = input del dimero per ORCA, Psi4, Gaussian
   gui/       finestra (PySide6): session.py = stato condiviso e sincronizzazione; views/ = le viste;
              collection_window.py = confronto e statistiche; session_file.py = formato .pistak
   errors.py  messaggi degli errori nella lingua corrente
@@ -165,6 +167,25 @@ Tutte si scelgono in *Analisi ▸ Soglie…*, in `user.toml` (`[limits]`) o da t
   «valore ± σ», il CSV aggiunge le colonne `<chiave>_su` e `kind_agreement`, il JSON `su` per coppia. Approssimazioni:
   coordinate indipendenti (nessuna covarianza), posizioni speciali non vincolate, atomi senza s.u. fermi. Una σ
   grande sugli slittamenti L/W di un nucleo quasi isotropo (fenile, coronene) dice che l'asse lungo non è definito.
+* **Dimero per calcoli quantistici**: *Esporta ▸ Coppia selezionata per calcoli quantistici…* o
+  `./start.py qc file.cif` (`--pair 1,3-5` o `--kind stack|parallel|tilted|all`, `-o` file o cartella; senza `-o` e
+  con una sola coppia l'input va sul terminale). I monomeri sono le **due molecole intere** della coppia nella geometria
+  del cristallo (B già traslata nella cella giusta), non i soli frammenti π: per un contatto tra frammenti l'energia è
+  comunque quella dell'intero dimero. Gli idrogeni da raggi X sono troppo corti: con la normalizzazione (predefinita,
+  `--raw-h` per toglierla) ogni X–H viene allungato lungo il legame alle distanze medie da neutroni (Allen 1987/2010:
+  C–H 1,083, N–H 1,009, O–H 0,983, B–H 1,19, S–H 1,338 Å); gli atomi pesanti non si muovono.
+  - **DFT-D** (`--method dft-d`, predefinito B3LYP-D3(BJ)/def2-TZVP; `--functional`, `--dispersion d3bj|d3zero|d4|none`,
+    `--basis`): energia di interazione con counterpoise (Boys–Bernardi). ORCA: tre lavori in un file (`$new_job`):
+    dimero, A con B fantasma (`El :`), B con A fantasma; E_int = E(AB) − E(A^AB) − E(B^AB). Psi4:
+    `energy('b3lyp-d3bj', bsse_type='cp')`, che fa tutto da sé. Gaussian: `Counterpoise=2` con `(Fragment=n)` sugli
+    atomi (D4 non c'è: `EmpiricalDispersion=GD3BJ|GD3`). `--no-cp` dà il solo calcolo del dimero.
+  - **SAPT** (`--method sapt`, solo Psi4; `--sapt-level sapt0|ssapt0|sapt2|sapt2+|sapt2+(3)|sapt2+3`, base predefinita
+    jun-cc-pVDZ, la scelta usuale per SAPT0): energia separata in elettrostatica, scambio, induzione e dispersione.
+  - Cariche e molteplicità dei monomeri: `--charges 0,0`, `--mult 1,1` (il dimero ha la somma delle cariche e, per
+    accoppiamento ad alto spin, 2S = 2S_A + 2S_B). `--nprocs`, `--mem` (GB) vanno nelle intestazioni dei programmi.
+  - Il file inizia con un commento che dice da dove viene (CIF, blocco, coppia, simmetria, distanza, idrogeni) ed è
+    tutto ASCII. Le coppie intramolecolari (tra frammenti della stessa molecola) non si esportano: non sono un dimero.
+    Le parole chiave seguono le versioni correnti (ORCA 5–6, Psi4 1.7+, Gaussian 16): controllale con la tua.
 * **Atomi disordinati** (`disorder`): `major` (predefinito) tiene, per ogni assemblaggio (`_atom_site_disorder_assembly`),
   il gruppo con l'occupanza media più alta; `first` il gruppo 1 (il sito); `all` tutti; un numero, quel gruppo.
 * **Criterio di stack**: oltre ad angolo tra i piani e distanza interplanare, la sovrapposizione dei nuclei proiettati

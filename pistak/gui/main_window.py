@@ -186,6 +186,7 @@ class MainWindow(QMainWindow):
         self._act(ex, tr("Tabella delle coppie (CSV)…"), lambda: self._export("csv"))
         self._act(ex, tr("Risultati completi (JSON)…"), lambda: self._export("json"))
         self._act(ex, tr("Coppia selezionata (XYZ)…"), lambda: self._export("xyz"))
+        self._act(ex, tr("Coppia selezionata per calcoli quantistici (ORCA, Psi4, Gaussian)…"), self._export_qc)
         self._act(ex, tr("Vista 3D (PNG)…"), lambda: self._export("png"))
         f.addSeparator()
         self._act(f, tr("Esci"), self.close, QKeySequence.StandardKey.Quit)
@@ -296,6 +297,32 @@ class MainWindow(QMainWindow):
                 return
             export.write_pair_xyz(a, a.pairs[idx], path)
         self.status_label.setText(tf("Scritto {path}", path=path))
+
+    def _export_qc(self) -> None:
+        from pistak.errors import describe_error
+        from pistak.gui.qc_dialog import QCDialog
+        from pistak.io import qc
+
+        a = self.session.analysis
+        idx = self.session.selection("A")
+        if not a or not 0 <= idx < len(a.pairs):
+            QMessageBox.information(self, APP_NAME, tr("Seleziona prima una coppia."))
+            return
+        dlg = QCDialog(getattr(self, "_qc_options", None), self)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return
+        options = self._qc_options = dlg.options()
+        pair = a.pairs[idx]
+        try:
+            text = qc.dimer_input(a, pair, options)
+        except Exception as e:  # noqa: BLE001
+            QMessageBox.warning(self, APP_NAME, describe_error(e))
+            return
+        suffix = qc.SUFFIX[options.program]
+        path, _ = QFileDialog.getSaveFileName(self, tr("Esporta"), qc.suggested_name(a, pair, options), f"*.{suffix}")
+        if path:
+            Path(path).write_text(text, encoding="utf-8")
+            self.status_label.setText(tf("Scritto {path}", path=path))
 
     # ---- analisi -------------------------------------------------------------------
     def edit_limits(self) -> None:

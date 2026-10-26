@@ -11,6 +11,7 @@ comparison and statistics across structures, synchronised 3D / projection / para
 ./start.py batch folder/ --csv summary.csv
 ./start.py compare a.cif b.cif --csv comparison.csv
 ./start.py stats folder/ --kind stack --corr
+./start.py qc a.cif --program psi4 --method sapt -o inputs/   # stacked dimers for ORCA / Psi4 / Gaussian
 ./start.py session.pistak        # reopen a saved session
 ./start.py config                # where personal settings, last session and plugins live
 ```
@@ -23,6 +24,10 @@ Molecules with several planar ring systems get one π fragment each (`fragments 
 set from two atom labels (`long_axis_atoms = "C1,C9"`), and signed slips are available as parameters.
 Parameter uncertainties (σ) come from a Monte Carlo over the standard uncertainties in the CIF (*Analysis ▸
 Uncertainties*, `analyze --mc 200`, `pistak.api.uncertainty`), symmetry-consistent, for every registry parameter.
+Any intermolecular pair can be exported as a dimer input for quantum-chemistry codes (*Export ▸ Selected pair for
+quantum chemistry*, `pistak qc`): ORCA, Psi4 and Gaussian, DFT-D with counterpoise correction (default
+B3LYP-D3(BJ)/def2-TZVP) or SAPT (Psi4 only, default SAPT0/jun-cc-pVDZ). The monomers are the two whole molecules in
+the crystal geometry, with X–H bonds extended to neutron-diffraction lengths (C–H 1.083 Å; `--raw-h` keeps the CIF ones).
 Disorder policy (`--disorder major|first|all|N`), stack criterion (`--overlap-measure`, `--min-overlap`, `--max-slip`),
 multi-block CIFs (`--block`) and missing symmetry operations (derived from the Hall or H-M symbol) are described in `README.md`.
 Personal settings (`user.toml`), the last session and a `plugins/` folder live in the user's config folder

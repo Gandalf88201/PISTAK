@@ -131,3 +131,19 @@ def test_incertezze_nel_dettaglio(world):
     values = [tree.topLevelItem(i).child(j).text(1) for i in range(tree.topLevelItemCount())
               for j in range(tree.topLevelItem(i).childCount())]
     assert any("±" in t for t in values)
+
+
+def test_finestra_calcoli_quantistici(app):
+    from pistak.gui.qc_dialog import QCDialog
+    from pistak.io.qc import QCOptions
+
+    d = QCDialog(QCOptions("gaussian", dispersion="d3zero", charges=(1, -1), multiplicities=(2, 2)))
+    o = d.options()
+    assert (o.program, o.dispersion, o.charges, o.multiplicities) == ("gaussian", "d3zero", (1, -1), (2, 2))
+    d.method.setCurrentIndex(d.method.findData("sapt"))  # SAPT esiste solo in Psi4
+    assert d.options().program == "psi4" and not d.functional.isEnabled() and d.sapt_level.isEnabled()
+    d.method.setCurrentIndex(d.method.findData("dft-d"))
+    d.dispersion.setCurrentIndex(d.dispersion.findData("d4"))
+    d.program.setCurrentIndex(d.program.findData("gaussian"))  # Gaussian non ha D4
+    assert d.options().dispersion == "d3bj"
+    d.options().check()

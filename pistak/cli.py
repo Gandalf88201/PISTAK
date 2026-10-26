@@ -10,6 +10,8 @@
     python -m pistak params                elenco dei parametri disponibili (con quelli dei plugin)
     python -m pistak demo > demo.cif       scrive il cristallo dimostrativo
     python -m pistak config                dove stanno impostazioni personali, ultima sessione e plugin
+    python -m pistak qc a.cif --pair 1 --program psi4 --method sapt -o dimero.in
+                                           il dimero di una coppia come input per ORCA, Psi4 o Gaussian
     python -m pistak --lang en ...         interfaccia in inglese (anche PISTAK_LANG=en)
 """
 from __future__ import annotations
@@ -211,6 +213,50 @@ def cmd_params(_args) -> int:
     return 0
 
 
+def _pair_list(text: str) -> list[int]:
+    """'1,3-5' → [1, 3, 4, 5]."""
+    out: list[int] = []
+    for part in filter(None, (p.strip() for p in text.split(","))):
+        lo, _, hi = part.partition("-")
+        out += list(range(int(lo), int(hi or lo) + 1))
+    return out
+
+
+def cmd_qc(args) -> int:
+    from pistak import analyse_file
+    from pistak.io import qc
+
+    try:
+        a = analyse_file(args.file, _limits(args), args.block)
+        charges = tuple(int(x) for x in args.charges.split(","))
+        mults = tuple(int(x) for x in args.mult.split(","))
+        if len(charges) != 2 or len(mults) != 2:
+            raise ValueError("--charges/--mult: due valori, A,B")
+        options = qc.QCOptions(args.program, args.method, args.functional, args.dispersion, args.basis or "",
+                               args.sapt_level, not args.no_cp, not args.raw_h, charges, mults, args.nprocs, args.mem)
+        options.check()
+        if args.pair:
+            pairs = [a.pairs[n - 1] for n in _pair_list(args.pair) if 1 <= n <= len(a.pairs)]
+        else:
+            pairs = qc.exportable(a.pairs, None if args.kind == "all" else args.kind)
+        if not pairs:
+            print(tr("nessuna coppia da esportare"), file=sys.stderr)
+            return 1
+        if len(pairs) == 1 and not args.output:
+            sys.stdout.write(qc.dimer_input(a, pairs[0], options))
+            return 0
+        out = Path(args.output or ".")
+        # cartella se ci sono più coppie, se esiste già come cartella o se il nome non ha estensione (o finisce con /)
+        if len(pairs) > 1 or out.is_dir() or not out.suffix or str(args.output).endswith(("/", "\\")):
+            out.mkdir(parents=True, exist_ok=True)
+        for p in pairs:
+            print(tr("scritto"), qc.write_dimer_input(a, p, out, options))
+    except Exception as e:  # noqa: BLE001
+        print(tf("errore: {msg}", msg=describe_error(e)), file=sys.stderr)
+        return 1
+    return 0
+
+
 def cmd_config(_args) -> int:
     from pistak.core.config import DEFAULTS_FILE, user_config_dir, user_config_file
     from pistak.params import plugin_dirs
@@ -257,7 +303,7 @@ def main(argv: list[str] | None = None) -> int:
     argv, lang = _extract_lang(list(sys.argv[1:] if argv is None else argv))
     if lang:
         i18n.set_language(lang)
-    commands = {"analyze", "batch", "compare", "stats", "params", "demo", "config", "gui"}
+    commands = {"analyze", "batch", "compare", "stats", "params", "demo", "config", "qc", "gui"}
     if not argv or argv[0] not in commands | {"-h", "--help"}:
         argv = ["gui", *argv]  # `pistak file.cif` apre la GUI
     ap = argparse.ArgumentParser(prog="pistak", description=tr("Analisi dei π-stack da file CIF."),
@@ -308,6 +354,28 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("params", help=tr("elenca i parametri disponibili")).set_defaults(fn=cmd_params)
     sub.add_parser("demo", help=tr("scrive il CIF dimostrativo su stdout")).set_defaults(fn=cmd_demo)
     sub.add_parser("config", help=tr("mostra dove stanno impostazioni personali e plugin")).set_defaults(fn=cmd_config)
+
+    p = sub.add_parser("qc", help=tr("il dimero di una coppia come input per ORCA, Psi4 o Gaussian"))
+    p.add_argument("file")
+    p.add_argument("--block")
+    p.add_argument("--pair", help=tr("coppie da esportare, numeri della tabella (es. 1 oppure 1,3-5)"))
+    p.add_argument("--kind", choices=["stack", "parallel", "tilted", "all"], default="stack",
+                   help=tr("senza --pair: esporta tutte le coppie di questo tipo (stack)"))
+    p.add_argument("--program", choices=["orca", "psi4", "gaussian"], default="orca")
+    p.add_argument("--method", choices=["dft-d", "sapt"], default="dft-d", help=tr("dft-d con counterpoise, oppure sapt (solo psi4)"))
+    p.add_argument("--functional", default="B3LYP")
+    p.add_argument("--dispersion", choices=["d3bj", "d3zero", "d4", "none"], default="d3bj")
+    p.add_argument("--basis", help=tr("base (predefinita: def2-TZVP per dft-d, jun-cc-pVDZ per sapt)"))
+    p.add_argument("--sapt-level", default="sapt0", help=tr("livello SAPT di Psi4: sapt0, ssapt0, sapt2, sapt2+, sapt2+(3)…"))
+    p.add_argument("--no-cp", action="store_true", help=tr("senza correzione counterpoise"))
+    p.add_argument("--raw-h", action="store_true", help=tr("lascia le distanze X–H del CIF (non normalizzate)"))
+    p.add_argument("--charges", default="0,0", help=tr("cariche dei monomeri A,B"))
+    p.add_argument("--mult", default="1,1", help=tr("molteplicità dei monomeri A,B"))
+    p.add_argument("--nprocs", type=int, default=4)
+    p.add_argument("--mem", type=int, default=4, help=tr("memoria in GB"))
+    p.add_argument("-o", "--output", help=tr("file (una coppia) o cartella (più coppie); senza: su stdout"))
+    _add_limit_args(p)
+    p.set_defaults(fn=cmd_qc)
 
     p = sub.add_parser("gui", help=tr("apre la finestra grafica"))
     p.add_argument("file", nargs="?")

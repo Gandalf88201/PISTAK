@@ -49,6 +49,9 @@ def constant_texts() -> set[str]:
     out |= set(FIXED) | set(STYLES) | {label for label, _ in collection_window.KIND_FILTER}
     out |= {f.metadata["label"] for f in fields(Limits)} | {cls.TITLE for cls in VIEW_TYPES.values()}
     out |= {text for f in fields(Limits) for text in f.metadata.get("choices", {}).values()}
+    from pistak.gui import qc_dialog
+
+    out |= set(qc_dialog.METHOD_TEXT.values()) | set(qc_dialog.DISP_TEXT.values())
     for s in params.specs():
         out |= {t for t in (s.label, s.description, s.group) if t}
     return out
