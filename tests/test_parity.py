@@ -24,7 +24,7 @@ FIELDS = {"interplanar": "interplanar", "longSlip": "long_slip", "latSlip": "lat
 @pytest.mark.parametrize("name", NAMES)
 def test_stessi_numeri_del_sito(name):
     exp = EXPECTED[name]
-    a = analyse_file(ROOT / "examples" / name, Limits())  # soglie del sito
+    a = analyse_file(ROOT / "examples" / name, Limits.site())  # soglie e convenzioni del sito
     assert a.structure.n_cell_atoms == exp["cellAtoms"]
     assert len(a.structure.molecules) == len(exp["molecules"])
     for i, (m, em) in enumerate(zip(a.structure.molecules, exp["molecules"])):

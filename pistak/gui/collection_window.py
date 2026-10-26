@@ -83,7 +83,7 @@ def _num(v: float, digits: int = 2) -> str:
 
 class CollectionWindow(QMainWindow):
     #: percorso del file e indice della coppia che l'utente vuole vedere nella finestra principale
-    openRequested = Signal(str, int)
+    openRequested = Signal(str, int, str)  # file, indice della coppia, blocco data_ ("" = il primo)
     changed = Signal()  # l'elenco dei file è cambiato (per il salvataggio della sessione)
 
     def __init__(self, limits: Limits, parent=None):
@@ -301,7 +301,7 @@ class CollectionWindow(QMainWindow):
         e = self.entries[row]
         if not e.error:
             best = next((p.index for p in e.pairs if p.kind == "stack"), 0)
-            self.openRequested.emit(e.path, best)
+            self.openRequested.emit(e.path, best, e.block or "")
 
     def _fill_structures(self) -> None:
         rows = cmp.compare(self.entries, self.reference) if self.entries else []
@@ -465,7 +465,7 @@ class CollectionWindow(QMainWindow):
             return
         i = int(points[0].data())
         t = self.table
-        self._picked = (t.paths[i], int(t.index[i]))
+        self._picked = (t.paths[i], int(t.index[i]), t.blocks[i] if t.blocks else "")
         self.pick_marker.setData([points[0].pos().x()], [points[0].pos().y()])
         self.pick_label.setText(f"<b>{t.files[i]}</b> · " + tf("coppia {n}", n=t.index[i] + 1)
                                 + f" · {theme.kind_label(str(t.kinds[i]))} · ×{t.counts[i]}")

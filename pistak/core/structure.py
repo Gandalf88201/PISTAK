@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 import numpy as np
 from scipy.spatial import cKDTree
 
-from pistak.core.cif import Cell, Cif
+from pistak.core.cif import Cell, Cif, SymOp
 from pistak.core.config import Limits
 from pistak.core.elements import covalent_radius
 from pistak.core.errors import StructureError
@@ -72,6 +72,10 @@ class Molecule:
         return [(e, n[e]) for e in order]
 
 
+#: Dove finisce una molecola sotto un'operazione: (indice della molecola immagine, traslazione in celle).
+Image = tuple[int, tuple[int, int, int]]
+
+
 @dataclass
 class Structure:
     vectors: np.ndarray
@@ -79,6 +83,9 @@ class Structure:
     cell_labels: list[str]
     cell_frac: np.ndarray
     molecules: list[Molecule]
+    #: Le operazioni di simmetria del CIF (servono a riconoscere le coppie equivalenti).
+    symops: list[SymOp] = field(default_factory=list)
+    _images: dict[float, list[list[Image | None]]] = field(default_factory=dict, repr=False)
 
     @property
     def n_cell_atoms(self) -> int:
@@ -86,6 +93,18 @@ class Structure:
 
     def shift_vector(self, shift) -> np.ndarray:
         return to_cart(self.vectors, np.asarray(shift, dtype=float))
+
+    def molecule_images(self, tol: float = 0.3) -> list[list[Image | None]]:
+        """Per ogni operazione di simmetria e ogni molecola della cella, la molecola in cui va a finire:
+        g(m nella cella 0) = m' traslata di T celle. None se l'immagine non coincide con una molecola (simmetria
+        non esatta, atomi disordinati tolti in modo non simmetrico…): quell'operazione non si usa per m."""
+        if tol not in self._images:
+            self._images[tol] = _molecule_images(self, tol)
+        return self._images[tol]
+
+    def rotation(self, k: int) -> np.ndarray:
+        """Parte rotazionale (intera) dell'operazione k, in coordinate frazionarie."""
+        return np.rint(self.symops[k].r).astype(int)
 
 
 def _wrap(x: np.ndarray) -> np.ndarray:
@@ -199,7 +218,49 @@ def build_structure(cif: Cif, limits: Limits | None = None) -> Structure:
             bonds=_dedupe(bonds), centroid=c + back, extended=extended,
             cell_index=ci, cell_shift=cs - fc.astype(int),
         ))
-    return Structure(vectors, els, labels, frac, molecules)
+    return Structure(vectors, els, labels, frac, molecules, list(cif.symops))
+
+
+def _molecule_images(s: Structure, tol: float) -> list[list[Image | None]]:
+    owner: dict[int, tuple[int, np.ndarray]] = {}  # atomo della cella → (molecola, cella in cui sta in quella molecola)
+    for mi, m in enumerate(s.molecules):
+        for ci, cs in zip(m.cell_index, m.cell_shift):
+            owner[int(ci)] = (mi, np.asarray(cs))
+    by_el: dict[str, np.ndarray] = {}
+    for e in set(s.cell_el):
+        by_el[e] = np.array([i for i, x in enumerate(s.cell_el) if x == e])
+    centroids = [(s.cell_frac[m.cell_index] + m.cell_shift).mean(axis=0) for m in s.molecules]
+    out: list[list[Image | None]] = []
+    for op in s.symops:
+        row: list[Image | None] = []
+        for mi, m in enumerate(s.molecules):
+            row.append(_image_of(s, op, mi, m, owner, by_el, centroids, tol))
+        out.append(row)
+    return out
+
+
+def _image_of(s: Structure, op: SymOp, mi: int, m: Molecule, owner, by_el, centroids, tol: float) -> Image | None:
+    if not len(m):
+        return None
+    f0 = s.cell_frac[m.cell_index[0]] + m.cell_shift[0]
+    img = op.apply(f0)
+    cand = by_el[m.el[0]]
+    d = img - s.cell_frac[cand]
+    d -= np.round(d)
+    dist = np.linalg.norm(d @ s.vectors, axis=1)
+    k = int(np.argmin(dist))
+    if dist[k] > tol:
+        return None
+    j = int(cand[k])
+    if j not in owner:
+        return None
+    mj, sj = owner[j]
+    t = np.rint(img - s.cell_frac[j] - sj).astype(int)
+    # controllo: anche il baricentro deve andare nel baricentro dell'immagine (stessa molecola intera)
+    gc = op.apply(centroids[mi])
+    if np.linalg.norm((gc - centroids[mj] - t) @ s.vectors) > tol or len(s.molecules[mj]) != len(m):
+        return None
+    return mj, (int(t[0]), int(t[1]), int(t[2]))
 
 
 def _dedupe(b: list[tuple[int, int]]) -> np.ndarray:

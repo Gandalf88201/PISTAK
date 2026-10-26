@@ -2,7 +2,7 @@
 
     python -m pistak                       finestra grafica
     python -m pistak struttura.cif         finestra grafica con quel file
-    python -m pistak analyze a.cif [--csv out.csv] [--json out.json] [--xyz 1 out.xyz]
+    python -m pistak analyze a.cif [--block NOME] [--csv out.csv] [--json out.json] [--xyz 1 out.xyz]
     python -m pistak batch cartella/ --csv riepilogo.csv
     python -m pistak compare a.cif b.cif c.cif [--ref 1] [--csv confronto.csv]
     python -m pistak stats cartella/ [--kind stack] [--csv coppie.csv] [--summary descrizione.csv] [--corr]
@@ -27,25 +27,37 @@ from pistak.labels import relation
 
 def _limits(args) -> Limits:
     lim = load_limits()
-    over = {k: getattr(args, k) for k in ("max_dihedral", "max_interplanar", "contact_cutoff") if getattr(args, k, None) is not None}
-    return lim.with_values(**over) if over else lim
+    over = {k: getattr(args, k) for k in ("max_dihedral", "max_interplanar", "contact_cutoff", "pair_mode", "disorder",
+                                          "overlap_measure", "min_overlap", "max_slip") if getattr(args, k, None) is not None}
+    return Limits.from_dict(over, lim) if over else lim
 
 
 def _add_limit_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--max-dihedral", type=float, help=tr("angolo massimo tra i piani (°)"))
     p.add_argument("--max-interplanar", type=float, help=tr("distanza interplanare massima (Å)"))
     p.add_argument("--contact-cutoff", type=float, help=tr("contatto massimo tra atomi pesanti (Å)"))
+    p.add_argument("--pair-mode", choices=["canonical", "site"], help=tr("canonical: una coppia per contatto (predefinito); site: come il sito"))
+    p.add_argument("--disorder", help=tr("atomi disordinati: major | first | all | numero del gruppo"))
+    p.add_argument("--overlap-measure", choices=["atoms", "area"], help=tr("come si misura la sovrapposizione per il criterio di stack"))
+    p.add_argument("--min-overlap", type=float, help=tr("sovrapposizione minima per uno stack (0–1)"))
+    p.add_argument("--max-slip", type=float, help=tr("slittamento massimo per uno stack (Å, 0 = nessun limite)"))
 
 
 def cmd_analyze(args) -> int:
     from pistak import analyse_file
+    from pistak.core.analysis import read_cif_file
+    from pistak.core.cif import block_names
     from pistak.io import export
 
     try:
-        a = analyse_file(args.file, _limits(args))
+        names = block_names(read_cif_file(args.file))
+        a = analyse_file(args.file, _limits(args), args.block)
     except Exception as e:  # noqa: BLE001
         print(tf("errore: {msg}", msg=describe_error(e)), file=sys.stderr)
         return 1
+    if len(names) > 1:
+        print(tf("il file contiene {n} strutture ({names}); analizzo {block} (scegli con --block)",
+                 n=len(names), names=", ".join(names), block=a.cif.name), file=sys.stderr)
     s = export.summary_dict(a)
     c = s["cell"]
     print(tf("{name}  gruppo {sg}  a={a:.3f} b={b:.3f} c={c:.3f}  α={al:.2f} β={be:.2f} γ={ga:.2f}  atomi in cella: {n}",
@@ -237,6 +249,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--csv")
     p.add_argument("--json")
     p.add_argument("--xyz", nargs=2, metavar=("N", "FILE"), help=tr("scrive la coppia N in formato XYZ"))
+    p.add_argument("--block", help=tr("blocco data_ da analizzare (predefinito: il primo con atomi)"))
     _add_limit_args(p)
     p.set_defaults(fn=cmd_analyze)
 

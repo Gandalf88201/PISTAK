@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import csv
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -27,6 +27,8 @@ class PairTable:
     counts: np.ndarray
     keys: list[str]
     data: np.ndarray  # N × K
+    #: Blocco data_ di ogni riga ("" se il file ne ha uno solo).
+    blocks: list[str] = field(default_factory=list)
 
     def __len__(self) -> int:
         return len(self.files)
@@ -45,7 +47,8 @@ class PairTable:
             for j, k in enumerate(keys):
                 data[i, j] = p.values.get(k, np.nan)
         return cls([e.name for e, _ in rows], [e.path for e, _ in rows], np.array([p.index for _, p in rows], dtype=int),
-                   np.array([p.kind for _, p in rows], dtype=str), np.array([p.count for _, p in rows], dtype=int), keys, data)
+                   np.array([p.kind for _, p in rows], dtype=str), np.array([p.count for _, p in rows], dtype=int), keys, data,
+                   [e.block or "" for e, _ in rows])
 
     def mask(self, kind: str | None = None, files: set[str] | None = None) -> np.ndarray:
         m = np.ones(len(self), bool)

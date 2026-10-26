@@ -49,9 +49,16 @@ class TestCif:
         assert cif.skipped_disorder == 1
         assert len(cif.symops) == 1
 
-    def test_senza_operazioni_e_con_gruppo_diverso_da_p1_si_ferma(self):
+    def test_senza_operazioni_si_usano_quelle_del_gruppo(self):
         text = ("data_x\n_cell_length_a 5\n_cell_length_b 5\n_cell_length_c 5\n_cell_angle_alpha 90\n_cell_angle_beta 90\n"
                 "_cell_angle_gamma 90\n_symmetry_space_group_name_H-M 'P 21/c'\nloop_\n_atom_site_label\n_atom_site_fract_x\n"
+                "_atom_site_fract_y\n_atom_site_fract_z\nC1 0 0 0\n")
+        c = parse_cif(text)
+        assert c.symops_source == "table" and {o.text for o in c.symops} == {"x,y,z", "-x,-y,-z", "-x,y+1/2,-z+1/2", "x,-y+1/2,z+1/2"}
+
+    def test_senza_operazioni_e_con_gruppo_sconosciuto_si_ferma(self):
+        text = ("data_x\n_cell_length_a 5\n_cell_length_b 5\n_cell_length_c 5\n_cell_angle_alpha 90\n_cell_angle_beta 90\n"
+                "_cell_angle_gamma 90\n_symmetry_space_group_name_H-M 'P 42/n c m'\nloop_\n_atom_site_label\n_atom_site_fract_x\n"
                 "_atom_site_fract_y\n_atom_site_fract_z\nC1 0 0 0\n")
         with pytest.raises(CifError) as e:
             parse_cif(text)

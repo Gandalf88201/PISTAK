@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 
 from pistak import i18n, i18n_check
+from pistak.core.config import Limits
 from pistak.i18n import tf, tr
 from pistak.i18n_en import TEXT
 
@@ -208,6 +209,7 @@ def test_finestra_principale_tutta_in_inglese(app):
     i18n.set_language("en")
     win = MainWindow(Session())
     win.autosave = False
+    win.session.limits = Limits.site()  # 3 coppie nell'herringbone: la selezione 2 esiste
     win.session.load_file(EX / "herringbone_anthracene.cif")
     wait(app, lambda: win.session.analysis is not None)
     for _ in range(20):
@@ -258,6 +260,7 @@ def test_cambio_lingua_a_finestra_aperta_conserva_la_sessione(app, monkeypatch):
     i18n.set_language("it")
     win = MainWindow(Session())
     win.autosave = False
+    win.session.limits = Limits.site()  # 3 coppie nell'herringbone: la selezione 2 esiste
     win.session.load_file(EX / "herringbone_anthracene.cif")
     wait(app, lambda: win.session.analysis is not None)
     for _ in range(20):

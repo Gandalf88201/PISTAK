@@ -55,6 +55,10 @@ class Cif:
     atoms: list[CifAtom]
     skipped_disorder: int = 0
     items: dict[str, str] = field(default_factory=dict)  # tutti i valori semplici del blocco, per i plugin
+    #: Da dove vengono le operazioni: cif (elencate nel file) | hall | table | gemmi (dal simbolo) | p1 (nessuna).
+    symops_source: str = "cif"
+    #: Regola usata per gli atomi disordinati (vedi `parse_cif`).
+    disorder: str = "first"
 
 
 @dataclass
@@ -127,18 +131,21 @@ def _norm_tag(t: str) -> str:
     return t.lower().replace(".", "_")
 
 
-def _first_block(tokens: list[str]) -> _Block:
-    block = _Block()
+def _blocks(tokens: list[str]) -> list[_Block]:
+    """Tutti i blocchi `data_` del file, nell'ordine (i valori prima del primo `data_` sono ignorati)."""
+    blocks: list[_Block] = []
     i, n = 0, len(tokens)
     while i < n and not re.match(r"^data_", tokens[i], re.I):
         i += 1
-    if i < n:
-        block.name = tokens[i][5:]
-        i += 1
+    block: _Block | None = None
     while i < n:
         t = tokens[i]
         if re.match(r"^data_", t, re.I):
-            break  # solo il primo blocco
+            block = _Block(t[5:])
+            blocks.append(block)
+            i += 1
+            continue
+        assert block is not None
         if t.lower() == "loop_":
             i += 1
             tags: list[str] = []
@@ -163,7 +170,12 @@ def _first_block(tokens: list[str]) -> _Block:
                 i += 1
             continue
         i += 1
-    return block
+    return blocks
+
+
+def _first_block(tokens: list[str]) -> _Block:
+    blocks = _blocks(tokens)
+    return blocks[0] if blocks else _Block()
 
 
 _UNCERTAINTY = re.compile(r"\(\d+\)$")
@@ -236,12 +248,73 @@ def element_of(symbol: str | None, label: str, known: Callable[[str], bool] = is
 
 
 _SYM_TAGS = ("_symmetry_equiv_pos_as_xyz", "_space_group_symop_operation_xyz")
+_HALL_TAGS = ("_symmetry_space_group_name_hall", "_space_group_name_hall")
+_ATOM_TAG = "_atom_site_fract_x"
 
 
-def parse_cif(text: str, known: Callable[[str], bool] = is_known) -> Cif:
-    if not text.strip():
-        raise CifError("empty")
-    b = _first_block(tokenize(text))
+def _has_atoms(b: _Block) -> bool:
+    return _loop_with(b, _ATOM_TAG) is not None
+
+
+def block_names(text: str) -> list[str]:
+    """I nomi dei blocchi `data_` che contengono atomi (quelli analizzabili), nell'ordine del file."""
+    return [b.name for b in _blocks(tokenize(text)) if _has_atoms(b)]
+
+
+def _symops(b: _Block, space_group: str) -> tuple[list[SymOp], str]:
+    sym_loop = _loop_with(b, *_SYM_TAGS)
+    if sym_loop:
+        col = next(i for i, t in enumerate(sym_loop.tags) if t in _SYM_TAGS)
+        return [parse_symop(row[col]) for row in sym_loop.rows], "cif"
+    single = next((b.items[t] for t in _SYM_TAGS if b.items.get(t)), None)
+    if single:
+        return [parse_symop(single)], "cif"
+    hall = next((b.items[t] for t in _HALL_TAGS if b.items.get(t)), None)
+    from pistak.core.spacegroups import operations
+
+    found = operations(hall=hall, hm=space_group)
+    if found:
+        ops, source = found
+        return [parse_symop(o) for o in ops], source
+    # senza operazioni il file descrive già tutta la cella solo se il gruppo è P1
+    if not space_group or re.fullmatch(r"p\s*1", space_group, re.I):
+        return [parse_symop("x,y,z")], "p1"
+    raise CifError("noSymops", space_group)
+
+
+def _disorder_keep(groups: list[str], assemblies: list[str], occs: list[float], policy: str) -> list[bool]:
+    """Quali atomi tenere secondo la regola di disordine.
+
+    first   gruppi '.', '?', '1', '-1' (il comportamento del sito)
+    major   per ogni assemblaggio, il gruppo con l'occupanza media più alta (a parità, il numero più basso)
+    all     tutti
+    <n>     il gruppo n (e −n), più gli atomi non disordinati
+    """
+    none = [g in (".", "?") for g in groups]
+    if policy == "all":
+        return [True] * len(groups)
+    if policy == "first":
+        return [g in (".", "?", "1", "-1") for g in groups]
+    if policy.isdigit():
+        return [no or g.lstrip("-") == policy for no, g in zip(none, groups)]
+    # major
+    stats: dict[tuple[str, str], list[float]] = {}
+    for no, g, a, o in zip(none, groups, assemblies, occs):
+        if not no:
+            stats.setdefault((a, g.lstrip("-")), []).append(o)
+
+    def order(item):
+        (a, g), vals = item
+        num = int(g) if g.isdigit() else 10**6
+        return (-sum(vals) / len(vals), num, g)
+
+    best: dict[str, str] = {}
+    for (a, g), _vals in sorted(stats.items(), key=order):
+        best.setdefault(a, g)
+    return [no or best.get(a) == g.lstrip("-") for no, g, a in zip(none, groups, assemblies)]
+
+
+def _cif_from_block(b: _Block, known: Callable[[str], bool], disorder: str) -> Cif:
     cell = Cell(
         cif_number(b.items.get("_cell_length_a")), cif_number(b.items.get("_cell_length_b")),
         cif_number(b.items.get("_cell_length_c")), cif_number(b.items.get("_cell_angle_alpha")),
@@ -251,37 +324,29 @@ def parse_cif(text: str, known: Callable[[str], bool] = is_known) -> Cif:
         raise CifError("noCell")
 
     space_group = (b.items.get("_symmetry_space_group_name_h-m") or b.items.get("_space_group_name_h-m_alt") or "").strip()
-    sym_loop = _loop_with(b, *_SYM_TAGS)
-    if sym_loop:
-        col = next(i for i, t in enumerate(sym_loop.tags) if t in _SYM_TAGS)
-        symops = [parse_symop(row[col]) for row in sym_loop.rows]
-    else:
-        single = next((b.items[t] for t in _SYM_TAGS if b.items.get(t)), None)
-        if single:
-            symops = [parse_symop(single)]
-        # senza operazioni il file descrive già tutta la cella solo se il gruppo è P1
-        elif not space_group or re.fullmatch(r"p\s*1", space_group, re.I):
-            symops = [parse_symop("x,y,z")]
-        else:
-            raise CifError("noSymops", space_group)
+    symops, source = _symops(b, space_group)
 
-    atom_loop = _loop_with(b, "_atom_site_fract_x")
+    atom_loop = _loop_with(b, _ATOM_TAG)
     if not atom_loop:
         raise CifError("noAtoms")
 
     def col_of(tag: str) -> int:
         return atom_loop.tags.index(tag) if tag in atom_loop.tags else -1
 
-    i_label, i_type, i_x, i_y, i_z, i_occ, i_dis = (col_of(t) for t in (
+    i_label, i_type, i_x, i_y, i_z, i_occ, i_dis, i_asm = (col_of(t) for t in (
         "_atom_site_label", "_atom_site_type_symbol", "_atom_site_fract_x", "_atom_site_fract_y",
-        "_atom_site_fract_z", "_atom_site_occupancy", "_atom_site_disorder_group"))
+        "_atom_site_fract_z", "_atom_site_occupancy", "_atom_site_disorder_group", "_atom_site_disorder_assembly"))
+    rows = atom_loop.rows
+    occs = [cif_number(r[i_occ]) if i_occ >= 0 else 1.0 for r in rows]
+    occs = [o if np.isfinite(o) else 1.0 for o in occs]
+    groups = [r[i_dis] if i_dis >= 0 else "." for r in rows]
+    assemblies = [r[i_asm] if i_asm >= 0 else "." for r in rows]
+    keep = _disorder_keep(groups, assemblies, occs, disorder)
     atoms: list[CifAtom] = []
     skipped = 0
-    for row in atom_loop.rows:
+    for row, ok, occ in zip(rows, keep, occs):
         label = row[i_label] if i_label >= 0 else f"X{len(atoms) + 1}"
-        # dei gruppi di disordine si tiene solo il primo (componente principale)
-        dis = row[i_dis] if i_dis >= 0 else "."
-        if dis not in (".", "?", "1", "-1"):
+        if not ok:
             skipped += 1
             continue
         frac = np.array([cif_number(row[i_x]), cif_number(row[i_y]), cif_number(row[i_z])])
@@ -290,8 +355,28 @@ def parse_cif(text: str, known: Callable[[str], bool] = is_known) -> Cif:
         el = element_of(row[i_type] if i_type >= 0 else None, label, known)
         if not el:
             continue
-        occ = cif_number(row[i_occ]) if i_occ >= 0 else 1.0
-        atoms.append(CifAtom(label, el, frac, occ if np.isfinite(occ) else 1.0))
+        atoms.append(CifAtom(label, el, frac, occ))
     if not atoms:
         raise CifError("noAtoms")
-    return Cif(b.name, space_group, cell, symops, atoms, skipped, dict(b.items))
+    return Cif(b.name, space_group, cell, symops, atoms, skipped, dict(b.items), source, disorder)
+
+
+def parse_cif(text: str, known: Callable[[str], bool] = is_known, block: str | int | None = None,
+              disorder: str = "first") -> Cif:
+    """Un blocco del CIF: per nome, per posizione (da 0, tra tutti i blocchi) o, con `block=None`, il primo che
+    contiene atomi. `disorder` è la regola per gli atomi disordinati (vedi `_disorder_keep`)."""
+    if not text.strip():
+        raise CifError("empty")
+    blocks = _blocks(tokenize(text))
+    if isinstance(block, int):
+        if not 0 <= block < len(blocks):
+            raise CifError("noBlock", str(block))
+        b = blocks[block]
+    elif block is not None:
+        b = next((x for x in blocks if x.name.lower() == block.lower()), None)
+        if b is None:
+            raise CifError("noBlock", block)
+    else:
+        # il primo blocco con atomi; se non ce n'è nessuno, il primo (che darà l'errore giusto)
+        b = next((x for x in blocks if _has_atoms(x)), blocks[0] if blocks else _Block())
+    return _cif_from_block(b, known, disorder)

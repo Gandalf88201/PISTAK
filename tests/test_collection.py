@@ -105,9 +105,12 @@ def test_csv_di_confronto(entries, tmp_path):
 def test_riepilogo_per_file(entries):
     rows = summary_rows(entries)
     d = next(r for r in rows if r["file"] == "demo_naphthalene.cif")
-    assert d["n_stack"] == 2 and d["mean_stack_interplanar"] == pytest.approx(3.4, abs=1e-3)
+    # canonical: un contatto per cella (il sito contava a→b e b→a: 2)
+    assert d["n_stack"] == 1 and d["mean_stack_interplanar"] == pytest.approx(3.4, abs=1e-3)
 
 
 def test_analyse_one_diretto():
     e = analyse_one(str(EX / "herringbone_anthracene.cif"), Limits())
-    assert e.counts["stack"] == 4 and e.counts["tilted"] == 8
+    assert e.counts["stack"] == 2 and e.counts["tilted"] == 4  # contatti per cella
+    s = analyse_one(str(EX / "herringbone_anthracene.cif"), Limits.site())
+    assert s.counts["stack"] == 4 and s.counts["tilted"] == 8  # il sito conta i due versi

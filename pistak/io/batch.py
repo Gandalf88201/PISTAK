@@ -43,6 +43,8 @@ class StructureEntry:
     pairs: list[PairRow] = field(default_factory=list)
     columns: list[dict] = field(default_factory=list)
     error_code: str | None = None
+    #: Blocco data_ analizzato, se il file ne ha più d'uno con atomi (allora `name` è «file.cif [blocco]»).
+    block: str | None = None
 
     @property
     def best(self) -> dict[str, float]:
@@ -54,16 +56,31 @@ class StructureEntry:
 BatchResult = StructureEntry  # nome usato dalla prima versione
 
 
-def analyse_one(path: str, limits: Limits) -> StructureEntry:
-    """Analizza un file e ne riassume il risultato (eseguita nei processi di lavoro)."""
+def analyse_path(path: str, limits: Limits) -> list[StructureEntry]:
+    """Tutti i blocchi con atomi di un file, un `StructureEntry` ciascuno (eseguita nei processi di lavoro)."""
+    from pistak.core.analysis import read_cif_file
+    from pistak.core.cif import block_names
+    from pistak.errors import describe_error, error_code
+
+    try:
+        names = block_names(read_cif_file(path))
+    except Exception as e:  # noqa: BLE001
+        return [StructureEntry(path, Path(path).name, error=describe_error(e), error_code=error_code(e))]
+    if len(names) <= 1:
+        return [analyse_one(path, limits)]
+    return [analyse_one(path, limits, n) for n in names]
+
+
+def analyse_one(path: str, limits: Limits, block: str | None = None) -> StructureEntry:
+    """Analizza un blocco di un file (None = il primo con atomi) e ne riassume il risultato."""
     from pistak.api import analyse_file
     from pistak.errors import describe_error, error_code
 
-    name = Path(path).name
+    name = Path(path).name if block is None else f"{Path(path).name} [{block}]"
     try:
-        a = analyse_file(path, limits)
+        a = analyse_file(path, limits, block)
     except Exception as e:  # noqa: BLE001
-        return StructureEntry(path, name, error=describe_error(e), error_code=error_code(e))
+        return StructureEntry(path, name, error=describe_error(e), error_code=error_code(e), block=block)
     c = a.cif.cell
     counts = {k: 0 for k in ("stack", "parallel", "tilted")}
     for p in a.pairs:
@@ -75,43 +92,43 @@ def analyse_one(path: str, limits: Limits) -> StructureEntry:
                      "interplanar": col.mean("interplanar"), "long_slip": col.mean("long_slip"), "lat_slip": col.mean("lat_slip")})
     return StructureEntry(
         path, name, None, a.cif.space_group, (c.a, c.b, c.c, c.alpha, c.beta, c.gamma),
-        "; ".join(f"{g.count}×{g.text}" for g in a.molecule_groups()), len(a.pairs), counts, rows, cols,
+        "; ".join(f"{g.count}×{g.text}" for g in a.molecule_groups()), len(a.pairs), counts, rows, cols, block=block,
     )
 
 
 def run_batch(files: list[Path], limits: Limits, workers: int = 0,
               progress: Callable[[int, int, str], None] | None = None) -> list[StructureEntry]:
-    """Analizza i file in parallelo. `progress(fatti, totale, nome)` viene chiamata a ogni file finito.
-    L'ordine del risultato è quello di `files`."""
+    """Analizza i file in parallelo; un file con più blocchi data_ dà una voce per blocco. `progress(fatti, totale,
+    nome)` viene chiamata a ogni file finito. L'ordine del risultato è quello di `files` (e dei blocchi nel file)."""
     workers = workers or max(1, min(len(files), (os.cpu_count() or 2) - 1))
     paths = [str(f) for f in files]
-    out: dict[str, StructureEntry] = {}
+    out: dict[str, list[StructureEntry]] = {}
     if workers == 1:
         for i, p in enumerate(paths, 1):
-            out[p] = analyse_one(p, limits)
+            out[p] = analyse_path(p, limits)
             if progress:
-                progress(i, len(paths), out[p].name)
+                progress(i, len(paths), Path(p).name)
     else:
         try:
             with ProcessPoolExecutor(max_workers=workers) as ex:
-                futures = {ex.submit(analyse_one, p, limits): p for p in paths}
+                futures = {ex.submit(analyse_path, p, limits): p for p in paths}
                 for i, fut in enumerate(as_completed(futures), 1):
                     p = futures[fut]
                     try:
                         out[p] = fut.result()
                     except Exception as e:  # noqa: BLE001  (processo morto, ecc.)
-                        out[p] = StructureEntry(p, Path(p).name, error=f"{type(e).__name__}: {e}", error_code=type(e).__name__)
+                        out[p] = [StructureEntry(p, Path(p).name, error=f"{type(e).__name__}: {e}", error_code=type(e).__name__)]
                     if progress:
-                        progress(i, len(paths), out[p].name)
+                        progress(i, len(paths), Path(p).name)
         except (RuntimeError, OSError, BrokenExecutor):
             # i processi non partono (ambiente senza multiprocessing, modulo principale senza guardia __main__…):
             # si prosegue in serie sui file non ancora fatti, invece di lasciare l'elaborazione a metà
             for p in paths:
                 if p not in out:
-                    out[p] = analyse_one(p, limits)
+                    out[p] = analyse_path(p, limits)
                     if progress:
-                        progress(len(out), len(paths), out[p].name)
-    return [out[p] for p in paths]
+                        progress(len(out), len(paths), Path(p).name)
+    return [e for p in paths for e in out[p]]
 
 
 def find_cifs(folder: str | Path) -> list[Path]:

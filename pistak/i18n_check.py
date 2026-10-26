@@ -48,6 +48,7 @@ def constant_texts() -> set[str]:
     out: set[str] = set(ERROR_TEXT.values()) | set(HEADERS.values()) | set(RANK_NAMES.values()) | set(theme.KIND_LABELS.values())
     out |= set(FIXED) | set(STYLES) | {label for label, _ in collection_window.KIND_FILTER}
     out |= {f.metadata["label"] for f in fields(Limits)} | {cls.TITLE for cls in VIEW_TYPES.values()}
+    out |= {text for f in fields(Limits) for text in f.metadata.get("choices", {}).values()}
     for s in params.specs():
         out |= {t for t in (s.label, s.description, s.group) if t}
     return out

@@ -4,10 +4,12 @@ from __future__ import annotations
 from dataclasses import fields
 
 from PySide6.QtWidgets import (
+    QComboBox,
     QDialog,
     QDialogButtonBox,
     QDoubleSpinBox,
     QFormLayout,
+    QHBoxLayout,
     QLabel,
     QPushButton,
     QScrollArea,
@@ -25,12 +27,16 @@ class SettingsDialog(QDialog):
     def __init__(self, limits: Limits, parent=None):
         super().__init__(parent)
         self.setWindowTitle(tr("Soglie dell'analisi"))
-        self.editors: dict[str, QSpinBox | QDoubleSpinBox] = {}
+        self.editors: dict[str, QSpinBox | QDoubleSpinBox | QComboBox] = {}
         form = QFormLayout()
         for f in fields(Limits):
             m = f.metadata
-            if f.type == "int":
-                w: QSpinBox | QDoubleSpinBox = QSpinBox()
+            if f.type == "str":
+                w: QSpinBox | QDoubleSpinBox | QComboBox = QComboBox()
+                for key, text in m["choices"].items():
+                    w.addItem(tr(text), key)
+            elif f.type == "int":
+                w = QSpinBox()
                 w.setRange(int(m["min"]), int(m["max"]))
                 w.setSingleStep(int(m["step"]))
             else:
@@ -38,13 +44,15 @@ class SettingsDialog(QDialog):
                 w.setRange(float(m["min"]), float(m["max"]))
                 w.setSingleStep(float(m["step"]))
                 w.setDecimals(2)
-            w.setValue(getattr(limits, f.name))
             self.editors[f.name] = w
             form.addRow(tr(m["label"]), w)
+        self._set_values(limits)
         note = QLabel(tf("Cambiare una soglia rifà l'analisi. «Salva» le scrive in {path}.", path=user_config_file()))
         note.setWordWrap(True)
-        reset = QPushButton(tr("Valori del sito"))
-        reset.clicked.connect(self._reset)
+        reset = QPushButton(tr("Valori predefiniti"))
+        reset.clicked.connect(lambda: self._set_values(Limits()))
+        site = QPushButton(tr("Valori del sito"))
+        site.clicked.connect(lambda: self._set_values(Limits.site()))
         self.buttons = QDialogButtonBox()
         self.apply_btn = self.buttons.addButton(tr("Applica"), QDialogButtonBox.ButtonRole.AcceptRole)
         self.save_btn = self.buttons.addButton(tr("Applica e salva"), QDialogButtonBox.ButtonRole.AcceptRole)
@@ -62,19 +70,32 @@ class SettingsDialog(QDialog):
         lay = QVBoxLayout(self)
         lay.addWidget(scroll, 1)
         lay.addWidget(note)
-        lay.addWidget(reset)
+        resets = QHBoxLayout()
+        resets.addWidget(reset)
+        resets.addWidget(site)
+        lay.addLayout(resets)
         lay.addWidget(self.buttons)
         self.save = False
         fit_to_screen(self, 560, 620, min_width=320, min_height=260)
 
-    def _reset(self) -> None:
-        default = Limits()
+    def _set_values(self, limits: Limits) -> None:
         for name, w in self.editors.items():
-            w.setValue(getattr(default, name))
+            v = getattr(limits, name)
+            if isinstance(w, QComboBox):
+                if w.findData(v) < 0:  # un valore valido ma senza voce nel menu (es. disorder = "2" da user.toml)
+                    w.addItem(v, v)
+                w.setCurrentIndex(w.findData(v))
+            else:
+                w.setValue(v)
 
     def _done(self, save: bool) -> None:
         self.save = save
         self.accept()
 
     def limits(self) -> Limits:
-        return Limits(**{n: (int(w.value()) if isinstance(w, QSpinBox) else float(w.value())) for n, w in self.editors.items()})
+        def value(w):
+            if isinstance(w, QComboBox):
+                return w.currentData()
+            return int(w.value()) if isinstance(w, QSpinBox) else float(w.value())
+
+        return Limits(**{n: value(w) for n, w in self.editors.items()})

@@ -12,9 +12,16 @@ molecule_rms = 0.15        # idem per il nucleo π intero
 bond_tolerance = 0.4       # legame se d < somma dei raggi covalenti + tolleranza
 same_site = 0.3            # due posizioni più vicine di così sono lo stesso atomo
 max_ring_size = 8
-neighbour_shells = 2       # celle vicine esplorate in ogni direzione
+neighbour_shells = 2       # celle vicine esplorate in ogni direzione (minimo: in modalità canonical si allarga da solo)
 ring_pair_max_distance = 6.0   # Cg···Cg massimo per elencare una coppia di anelli (fase 2)
-max_cell_atoms =6000      # il sito, nel browser, si fermava a 2500
+max_cell_atoms = 6000     # il sito, nel browser, si fermava a 2500
+# criterio di stack, oltre ad angolo e distanza: sovrapposizione > min_overlap
+overlap_measure = "atoms"  # atoms: frazione di atomi di un nucleo dentro il contorno dell'altro (sito) | area: area comune / nucleo minore
+min_overlap = 0.0          # il sito: basta un atomo dentro il contorno
+max_slip = 0.0             # Å; 0 = nessun limite allo slittamento
+# convenzioni (quelle del sito: pair_mode = "site", disorder = "first")
+pair_mode = "canonical"    # canonical: una coppia per contatto, equivalenza dalle operazioni del gruppo | site: come il sito
+disorder = "major"         # major: componente con occupanza maggiore | first: gruppo 1 | all: tutto | 2, 3…: quel gruppo
 
 [gui]
 language = "it"            # it | en | auto (auto = lingua del sistema) — si cambia anche dal menu Lingua

@@ -16,6 +16,10 @@ comparison and statistics across structures, synchronised 3D / projection / para
 ```
 
 Exported files (CSV/JSON/XYZ) always use fixed English column names, whatever the interface language.
+By default each intermolecular contact is listed once and contacts related by a space-group operation are grouped
+(`pair_mode = "canonical"`); `--pair-mode site` (or *Website values* in the thresholds dialog) reproduces the website.
+Disorder policy (`--disorder major|first|all|N`), stack criterion (`--overlap-measure`, `--min-overlap`, `--max-slip`),
+multi-block CIFs (`--block`) and missing symmetry operations (derived from the Hall or H-M symbol) are described in `README.md`.
 Personal settings (`user.toml`), the last session and a `plugins/` folder live in the user's config folder
 (macOS `~/Library/Application Support/PISTAK/`, Windows `%APPDATA%\\PISTAK\\`, Linux `~/.config/pistak/`, or `PISTAK_CONFIG_DIR`).
 

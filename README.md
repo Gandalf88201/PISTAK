@@ -11,7 +11,7 @@ e un sistema di plugin.
 ```bash
 ./start.py                       # finestra grafica (con il cristallo dimostrativo)
 ./start.py examples/herringbone_anthracene.cif
-./start.py analyze a.cif --csv out.csv --json out.json     # solo terminale
+./start.py analyze a.cif --csv out.csv --json out.json     # solo terminale (--block NOME per i file con più strutture)
 ./start.py batch cartella/ --csv riepilogo.csv              # molti file in parallelo
 ./start.py compare a.cif b.cif c.cif --ref 1 --csv confronto.csv   # confronto del motivo di stack
 ./start.py stats cartella/ --kind stack --corr --csv coppie.csv --summary descrizione.csv
@@ -30,10 +30,11 @@ modifichi i requisiti reinstalla da solo. Altri pacchetti tuoi: scrivili in `req
 ```
 pistak/
   core/      calcolo puro (numpy/scipy), nessuna GUI: usabile come libreria
-    cif.py          lettura del CIF (cella, simmetria, atomi, disordine)
+    cif.py          lettura del CIF (blocchi data_, cella, simmetria, atomi, regola di disordine)
+    spacegroups.py  operazioni di simmetria dal simbolo di Hall o H-M (quando il CIF non le elenca)
     structure.py    cella → atomi simmetrizzati → legami → molecole intere
     cores.py        anelli e nucleo π di ogni molecola
-    pairs.py        coppie di molecole vicine e loro classificazione (stack / parallela / inclinata)
+    pairs.py        coppie di molecole vicine, equivalenza per simmetria, classificazione (stack / parallela / inclinata)
     stacks.py       colonne di stack (rango 0–3) dal grafo delle coppie
     ringpairs.py    parametri anello–anello (Cg···Cg, α, β, γ)
     config.py       soglie (Limits) e preferenze: pistak/default.toml + user.toml dell'utente
@@ -125,14 +126,37 @@ file della finestra di confronto. Si riapre da *File ▸ Apri una sessione…*, 
 * **Soglie**: *Analisi ▸ Soglie…* o `user.toml` nella cartella delle impostazioni personali (`[limits]`).
 * **Un altro renderer 3D**: la scena è descritta da `gui/scene.py` (solo numpy); `views/view3d.py` la disegna con PyVista.
 
+## Convenzioni dell'analisi
+
+Tutte si scelgono in *Analisi ▸ Soglie…*, in `user.toml` (`[limits]`) o da terminale (`--pair-mode`, `--disorder`,
+`--overlap-measure`, `--min-overlap`, `--max-slip`). *Valori del sito* le riporta a quelle del sito (`Limits.site()`).
+
+* **Coppie** (`pair_mode`). `canonical` (predefinito): ogni contatto tra due molecole compare una volta; due contatti sono
+  la stessa coppia se un'operazione del gruppo spaziale porta l'uno nell'altro (non perché i valori arrotondati
+  coincidono); l'asse lungo L è la bisettrice degli assi lunghi delle due molecole, quindi slittamento longitudinale e
+  laterale non dipendono da quale si chiama A; «Coppie equivalenti» conta i contatti per cella. Le celle vicine esplorate
+  si allargano da sole quanto serve (celle piccole o molto oblique), con `neighbour_shells` come minimo. `site`: come il
+  sito — ogni contatto due volte (a→b e b→a, con slittamenti che possono differire), equivalenza per valori arrotondati,
+  sempre ±`neighbour_shells` celle.
+* **Atomi disordinati** (`disorder`): `major` (predefinito) tiene, per ogni assemblaggio (`_atom_site_disorder_assembly`),
+  il gruppo con l'occupanza media più alta; `first` il gruppo 1 (il sito); `all` tutti; un numero, quel gruppo.
+* **Criterio di stack**: oltre ad angolo tra i piani e distanza interplanare, la sovrapposizione dei nuclei proiettati
+  deve superare `min_overlap`, misurata come frazione di atomi dentro il contorno dell'altro nucleo (`atoms`, il sito) o
+  come area comune / area del nucleo minore (`area`); con `max_slip` > 0 si scartano anche le coppie troppo slittate.
+* **File con più strutture**: ogni blocco `data_` con atomi è una struttura. La finestra chiede quale aprire, il confronto
+  e `batch`/`stats`/`compare` le analizzano tutte (nome «file.cif [blocco]»), `analyze` prende la prima o quella di `--block`.
+* **Operazioni di simmetria mancanti**: se il CIF non le elenca si ricavano dal simbolo di Hall (`_space_group_name_Hall`)
+  o dal simbolo H-M (tabella dei gruppi più comuni in `core/spacegroups.py`; con il pacchetto facoltativo `gemmi`
+  installato, tutti). Il riepilogo JSON dice da dove vengono (`symops_source`).
+
 ## Parità con il sito
 
-`tests/test_parity.py` confronta il porting con i numeri prodotti dai sorgenti TypeScript originali del sito su 6 cristalli
-sintetici (tutti e tre i tipi di coppia). Per rigenerare i valori di riferimento:
+`tests/test_parity.py` confronta il porting, con `Limits.site()`, con i numeri prodotti dai sorgenti TypeScript originali
+del sito su 6 cristalli sintetici (tutti e tre i tipi di coppia). Per rigenerare i valori di riferimento:
 `SITE_DIR=/percorso/SITOMIO node tests/parity/dump_site.js`.
 
-Differenze volute: il limite di atomi in cella è 6000 (2500 nel browser); i versi degli assi (L, W) sono fissati in
-modo riproducibile; in più ci sono i parametri aggiuntivi e le colonne.
+Differenze volute anche in modalità `site`: il limite di atomi in cella è 6000 (2500 nel browser); i versi degli assi
+(L, W) sono fissati in modo riproducibile; in più ci sono i parametri aggiuntivi e le colonne.
 
 ## Sviluppo
 
@@ -146,11 +170,11 @@ modo riproducibile; in più ci sono i parametri aggiuntivi e le colonne.
 ```
 
 Marcatori: `gui` (finestre), `parity` (confronto con il sito), `snapshot` (istantanee). **Istantanee**:
-`tests/snapshots/examples/*.json` contengono tutti i risultati attuali sugli esempi (molecole, nuclei, coppie con tutti i
-parametri, coppie di anelli, colonne); ogni cambiamento di un numero fa fallire `pytest -m snapshot`. Dopo un
-cambiamento voluto: `pytest -m snapshot --update-snapshots` e si controlla il diff. Per strutture reali non
-distribuibili (CSD): `PISTAK_SNAPSHOT_DIR=/cartella/cif pytest -m snapshot --update-snapshots` scrive in
-`tests/snapshots/local/`, che resta fuori dal repository.
+`tests/snapshots/site/*.json` e `tests/snapshots/canonical/*.json` contengono tutti i risultati sugli esempi nei due modi
+(molecole, nuclei, coppie con tutti i parametri, coppie di anelli, colonne); ogni cambiamento di un numero fa fallire
+`pytest -m snapshot`. Dopo un cambiamento voluto: `pytest -m snapshot --update-snapshots` e si controlla il diff. Per
+strutture reali non distribuibili (CSD): `PISTAK_SNAPSHOT_DIR=/cartella/cif pytest -m snapshot --update-snapshots`
+scrive in `tests/snapshots/local/<modo>/`, che resta fuori dal repository.
 
 ## Note per volumi exFAT/FAT (macOS)
 

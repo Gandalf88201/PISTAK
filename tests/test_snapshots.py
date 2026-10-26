@@ -1,14 +1,18 @@
 """Istantanee dei risultati: ogni modifica al calcolo che cambia un numero deve essere voluta.
 
-Per ogni CIF di `examples/` si salva in `tests/snapshots/examples/<nome>.json` tutto ciò che l'analisi produce con
-le soglie del sito (`Limits()`): molecole, nuclei π, coppie con tutti i parametri predefiniti (builtin ed extra,
-non i plugin), coppie di anelli e colonne di stack. Il test confronta i risultati attuali con quelli salvati.
+Per ogni CIF di `examples/` si salva tutto ciò che l'analisi produce (molecole, nuclei π, coppie con tutti i
+parametri predefiniti — builtin ed extra, non i plugin —, coppie di anelli e colonne di stack) in due modi:
+
+    tests/snapshots/site/<nome>.json        Limits.site(): le convenzioni del sito (devono restare quelle di sempre)
+    tests/snapshots/canonical/<nome>.json   Limits(): i valori predefiniti (coppie uniche, equivalenza per simmetria)
+
+Il test confronta i risultati attuali con quelli salvati.
 
     pytest -m snapshot                       confronto
     pytest -m snapshot --update-snapshots    riscrive le istantanee (dopo un cambiamento voluto: guarda il diff!)
 
 Strutture reali che non si possono distribuire (per esempio dal CSD): metti i CIF in una cartella e indicala con
-PISTAK_SNAPSHOT_DIR; le loro istantanee vanno in `tests/snapshots/local/`, che non entra nel repository.
+PISTAK_SNAPSHOT_DIR; le loro istantanee vanno in `tests/snapshots/local/<modo>/`, che non entra nel repository.
 """
 from __future__ import annotations
 
@@ -29,15 +33,16 @@ SNAP_DIR = ROOT / "tests" / "snapshots"
 REL_TOL, ABS_TOL = 1e-7, 1e-6
 
 
-def _cases() -> list[tuple[str, Path, Path]]:
-    cases = [(f"examples/{p.name}", p, SNAP_DIR / "examples" / f"{p.stem}.json")
-             for p in sorted((ROOT / "examples").glob("*.cif")) if not p.name.startswith(".")]
+MODES = {"site": Limits.site, "canonical": Limits}
+
+
+def _cases() -> list[tuple[str, Path, Path, str]]:
+    cifs = [("", p) for p in sorted((ROOT / "examples").glob("*.cif")) if not p.name.startswith(".")]
     extra = os.environ.get("PISTAK_SNAPSHOT_DIR")
     if extra:
-        for p in sorted(Path(extra).expanduser().glob("*.cif")):
-            if not p.name.startswith("."):
-                cases.append((f"local/{p.name}", p, SNAP_DIR / "local" / f"{p.stem}.json"))
-    return cases
+        cifs += [("local/", p) for p in sorted(Path(extra).expanduser().glob("*.cif")) if not p.name.startswith(".")]
+    return [(f"{where}{mode}/{p.name}", p, SNAP_DIR / f"{where}{mode}" / f"{p.stem}.json", mode)
+            for mode in MODES for where, p in cifs]
 
 
 def _num(x) -> float | None:
@@ -112,9 +117,9 @@ def _diff(exp, got, path: str = "$") -> list[str]:
     return [] if exp == got else [f"{path}: salvato {exp!r}, attuale {got!r}"]
 
 
-@pytest.mark.parametrize("label,cif,snap", _cases(), ids=[c[0] for c in _cases()])
-def test_risultati_invariati(label, cif, snap, request):
-    got = snapshot(compute_all(analyse_file(cif, Limits())))
+@pytest.mark.parametrize("label,cif,snap,mode", _cases(), ids=[c[0] for c in _cases()])
+def test_risultati_invariati(label, cif, snap, mode, request):
+    got = snapshot(compute_all(analyse_file(cif, MODES[mode]())))
     if request.config.getoption("--update-snapshots"):
         snap.parent.mkdir(parents=True, exist_ok=True)
         snap.write_text(json.dumps(got, indent=1, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")

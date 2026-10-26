@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QDialog,
     QDockWidget,
     QFileDialog,
+    QInputDialog,
     QLabel,
     QMainWindow,
     QMessageBox,
@@ -27,6 +28,8 @@ from PySide6.QtWidgets import (
 )
 
 from pistak import i18n
+from pistak.core.analysis import read_cif_file
+from pistak.core.cif import block_names
 from pistak.core.config import ROOT, Limits, user_config_dir
 from pistak.gui import session_file
 from pistak.gui.screen import clamp_into_screen, fit_to_screen
@@ -225,12 +228,26 @@ class MainWindow(QMainWindow):
         if path:
             self.open_file(path)
 
-    def open_file(self, path: str) -> None:
+    def open_file(self, path: str, block: str | None = None) -> None:
         self.settings.setValue("last_dir", str(Path(path).parent))
         recent = [p for p in self.settings.value("recent", [], type=list) if p != path][:7]
         self.settings.setValue("recent", [path, *recent])
         self._refresh_recent()
-        self.session.load_file(path)
+        if block is None:
+            block = self._choose_block(path)
+        self.session.load_file(path, block)
+
+    def _choose_block(self, path: str) -> str | None:
+        """Se il file ha più blocchi data_ con atomi, chiede quale analizzare (None = il primo)."""
+        try:
+            names = block_names(read_cif_file(path))
+        except Exception:  # noqa: BLE001  (l'errore lo mostrerà l'analisi)
+            return None
+        if len(names) <= 1 or not self.isVisible():
+            return None
+        name, ok = QInputDialog.getItem(self, APP_NAME, tf("{file} contiene {n} strutture: quale analizzare?",
+                                                            file=Path(path).name, n=len(names)), names, 0, False)
+        return name if ok else names[0]
 
     def _refresh_recent(self) -> None:
         self.recent_menu.clear()
@@ -332,12 +349,14 @@ class MainWindow(QMainWindow):
             self.collection.add_folder_dialog()
         return self.collection
 
-    def open_pair(self, path: str, index: int) -> None:
-        """Apre un file e seleziona una coppia (richiesta della finestra di confronto)."""
-        if self.session.source_path and Path(self.session.source_path) == Path(path) and self.session.analysis:
+    def open_pair(self, path: str, index: int, block: str = "") -> None:
+        """Apre un file (o un suo blocco data_) e seleziona una coppia (richiesta della finestra di confronto)."""
+        same = (self.session.source_path and Path(self.session.source_path) == Path(path)
+                and (self.session.source_block or "") == block and self.session.analysis)
+        if same:
             self.session.select("A", min(index, len(self.session.analysis.pairs) - 1))
         else:
-            self.open_file(path)
+            self.open_file(path, block or None)
             self.after_analysis(lambda: self.session.select("A", min(index, max(0, len(self.session.analysis.pairs) - 1))))
         self.raise_()
         self.activateWindow()
@@ -357,7 +376,8 @@ class MainWindow(QMainWindow):
         views = [{"kind": d.property("kind"), "object": d.objectName(), "title": d.windowTitle(), "state": d.widget().state()}
                  for d in self.docks if isinstance(d.widget(), PairView)]
         st: dict = {
-            "source": session_file.embed_source(s.source_name, s.source_path, s.source_text) if s.source_text else None,
+            "source": ({**session_file.embed_source(s.source_name, s.source_path, s.source_text), "block": s.source_block}
+                       if s.source_text else None),
             "limits": s.limits.to_dict(),
             "selection": {g: s.selection(g) for g in GROUPS},
             "subset": {g: (sorted(s.subset(g)) if s.subset(g) is not None else None) for g in GROUPS},
@@ -437,16 +457,16 @@ class MainWindow(QMainWindow):
             return False
         self.session_path = str(path)
         self._build_docks_from(st)
-        known = {k: v for k, v in st.get("limits", {}).items() if k in Limits.__dataclass_fields__}
-        self.session.limits = Limits(**known) if known else self.session.limits
+        if st.get("limits"):
+            self.session.limits = Limits.from_dict(st["limits"], self.session.limits)
         src = st.get("source") or {}
         loaded = True
         if src.get("text"):
             self.after_analysis(lambda: self._apply_selection(st))
-            self.session.load_text(src["text"], src.get("name", "sessione.cif"), src.get("path"))
+            self.session.load_text(src["text"], src.get("name", "sessione.cif"), src.get("path"), src.get("block"))
         elif src.get("path") and Path(src["path"]).exists():
             self.after_analysis(lambda: self._apply_selection(st))
-            self.session.load_file(src["path"])
+            self.session.load_file(src["path"], src.get("block"))
         else:
             loaded = False
             if src:

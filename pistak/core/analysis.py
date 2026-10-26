@@ -11,7 +11,7 @@ from pistak.core.cif import Cif, parse_cif
 from pistak.core.config import Limits, load_limits
 from pistak.core.cores import Core, pi_core
 from pistak.core.errors import InputError
-from pistak.core.pairs import Frame, Pair, collect_pairs, pair_frame
+from pistak.core.pairs import Frame, Pair, collect_pairs, frame_for
 from pistak.core.stacks import StackColumn, find_stacks
 from pistak.core.structure import Molecule, Structure, build_structure
 
@@ -100,7 +100,7 @@ class PairContext:
 
     @cached_property
     def frame(self) -> Frame:
-        return pair_frame(self.core_a, self.core_b)
+        return frame_for(self.core_a, self.core_b, self.limits)
 
     @cached_property
     def d(self) -> np.ndarray:
@@ -129,8 +129,10 @@ def analyse_cif(cif: Cif, name: str = "", limits: Limits | None = None) -> Analy
     return Analysis(name or cif.name, cif, structure, cores, pairs, limits, stacks=find_stacks(structure, stack_edges))
 
 
-def analyse_text(text: str, name: str = "", limits: Limits | None = None) -> Analysis:
-    return analyse_cif(parse_cif(text), name, limits)
+def analyse_text(text: str, name: str = "", limits: Limits | None = None, block: str | int | None = None) -> Analysis:
+    """Analisi di un blocco del CIF (per impostazione il primo che contiene atomi)."""
+    limits = limits or load_limits()
+    return analyse_cif(parse_cif(text, block=block, disorder=limits.disorder), name, limits)
 
 
 def read_cif_file(path: str | Path) -> str:
@@ -140,6 +142,6 @@ def read_cif_file(path: str | Path) -> str:
     return p.read_text(encoding="utf-8", errors="replace")
 
 
-def analyse_file(path: str | Path, limits: Limits | None = None) -> Analysis:
+def analyse_file(path: str | Path, limits: Limits | None = None, block: str | int | None = None) -> Analysis:
     p = Path(path)
-    return analyse_text(read_cif_file(p), p.name, limits)
+    return analyse_text(read_cif_file(p), p.name, limits, block)

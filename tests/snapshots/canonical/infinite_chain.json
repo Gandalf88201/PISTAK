@@ -1,0 +1,21 @@
+{
+ "cell_atoms": 1,
+ "molecules": [
+  {
+   "atoms": 1,
+   "bonds": 0,
+   "centroid": [
+    4.898587197e-16,
+    4.0,
+    4.0
+   ],
+   "core": null,
+   "extended": true,
+   "formula": "C1"
+  }
+ ],
+ "pairs": [],
+ "skipped_disorder": 0,
+ "space_group": "P 1",
+ "stacks": []
+}

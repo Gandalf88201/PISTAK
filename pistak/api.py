@@ -22,9 +22,9 @@ def finish(analysis: Analysis) -> Analysis:
     return compute_all(analysis)
 
 
-def analyse_text(text: str, name: str = "", limits: Limits | None = None) -> Analysis:
-    return finish(_core.analyse_text(text, name, limits or load_limits()))
+def analyse_text(text: str, name: str = "", limits: Limits | None = None, block: str | int | None = None) -> Analysis:
+    return finish(_core.analyse_text(text, name, limits or load_limits(), block))
 
 
-def analyse_file(path: str | Path, limits: Limits | None = None) -> Analysis:
-    return finish(_core.analyse_file(path, limits or load_limits()))
+def analyse_file(path: str | Path, limits: Limits | None = None, block: str | int | None = None) -> Analysis:
+    return finish(_core.analyse_file(path, limits or load_limits(), block))

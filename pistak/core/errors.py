@@ -17,7 +17,7 @@ class InputError(PistakError):
 
 
 class CifError(PistakError):
-    """Errore di lettura del CIF. `code` è uno tra: empty, noCell, noAtoms, noSymops, badSymop."""
+    """Errore di lettura del CIF. `code` è uno tra: empty, noBlock, noCell, noAtoms, noSymops, badSymop."""
 
 
 class StructureError(PistakError):

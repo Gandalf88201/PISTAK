@@ -78,15 +78,59 @@ class Limits:
     bond_tolerance: float = field(default=0.4, metadata={"label": "Tolleranza dei legami (Å)", "min": 0, "max": 1.5, "step": 0.05})
     same_site: float = field(default=0.3, metadata={"label": "Distanza minima tra atomi distinti (Å)", "min": 0.01, "max": 1, "step": 0.05})
     max_ring_size: int = field(default=8, metadata={"label": "Atomi massimi in un anello", "min": 3, "max": 20, "step": 1})
-    neighbour_shells: int = field(default=2, metadata={"label": "Celle vicine esplorate (±)", "min": 1, "max": 4, "step": 1})
+    neighbour_shells: int = field(default=2, metadata={"label": "Celle vicine esplorate (± minimo)", "min": 1, "max": 4, "step": 1})
     ring_pair_max_distance: float = field(default=6.0, metadata={"label": "Cg···Cg massimo per le coppie di anelli (Å)", "min": 3, "max": 12, "step": 0.5})
     max_cell_atoms: int = field(default=6000, metadata={"label": "Atomi massimi nella cella", "min": 100, "max": 50000, "step": 100})
+    # ---- criterio di stack (oltre ad angolo e distanza interplanare) --------------------------------------
+    overlap_measure: str = field(default="atoms", metadata={"label": "Sovrapposizione misurata come", "choices": {
+        "atoms": "frazione di atomi dentro il contorno dell'altro nucleo",
+        "area": "area comune / area del nucleo minore"}})
+    min_overlap: float = field(default=0.0, metadata={"label": "Sovrapposizione minima per uno stack (sopra questo valore)", "min": 0, "max": 1, "step": 0.05})
+    max_slip: float = field(default=0.0, metadata={"label": "Slittamento massimo per uno stack (Å, 0 = nessun limite)", "min": 0, "max": 20, "step": 0.1})
+    # ---- coppie e disordine ------------------------------------------------------------------------------
+    pair_mode: str = field(default="canonical", metadata={"label": "Coppie", "choices": {
+        "canonical": "una per contatto, equivalenti per simmetria del gruppo",
+        "site": "come il sito (a→b e b→a, equivalenza per valori arrotondati)"}})
+    disorder: str = field(default="major", metadata={"label": "Atomi disordinati", "choices": {
+        "major": "componente con occupanza maggiore",
+        "first": "gruppo 1 (come il sito)",
+        "all": "tutti gli atomi"}, "numeric": True})
 
     def with_values(self, **kw) -> Limits:
         return replace(self, **kw)
 
     def to_dict(self) -> dict:
         return asdict(self)
+
+    @classmethod
+    def site(cls, **kw) -> Limits:
+        """Le soglie e le convenzioni dell'analizzatore del sito (per i confronti di parità)."""
+        return cls(pair_mode="site", disorder="first", **kw)
+
+    @classmethod
+    def from_dict(cls, data: dict, base: Limits | None = None) -> Limits:
+        """Soglie da un dizionario (TOML, sessione): le chiavi sconosciute e i valori non validi si ignorano."""
+        out = asdict(base or cls())
+        for f in fields(cls):
+            if f.name not in data:
+                continue
+            try:
+                out[f.name] = _coerce(f, data[f.name])
+            except (TypeError, ValueError):
+                pass
+        return cls(**out)
+
+
+def _coerce(f, v):
+    """Un valore di configurazione convertito nel tipo del campo; ValueError se non è accettabile."""
+    if f.type == "str":
+        v = str(v).strip().lower()
+        if v in f.metadata.get("choices", {}) or (f.metadata.get("numeric") and v.isdigit()):
+            return v
+        raise ValueError(f"{f.name}: {v!r}")
+    if isinstance(v, bool) or not isinstance(v, (int, float, str)):
+        raise TypeError(f.name)
+    return int(v) if f.type == "int" else float(v)
 
 
 def _read(path: Path) -> dict:
@@ -104,9 +148,7 @@ def _merged(section: str, config_dir: Path | None) -> dict:
 
 def load_limits(config_dir: Path | None = None) -> Limits:
     """Soglie del sito, poi quelle di default.toml, poi quelle dell'utente."""
-    known = {f.name: f.type for f in fields(Limits)}
-    clean = {k: (int(v) if known[k] == "int" else float(v)) for k, v in _merged("limits", config_dir).items() if k in known}
-    return Limits(**clean)
+    return Limits.from_dict(_merged("limits", config_dir))
 
 
 def load_section(name: str, config_dir: Path | None = None) -> dict:

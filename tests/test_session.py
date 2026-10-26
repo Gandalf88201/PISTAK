@@ -42,6 +42,7 @@ def wait(app, cond, timeout=40):
 
 def new_window(app) -> MainWindow:
     win = MainWindow(Session())
+    win.session.limits = Limits.site()  # 3 coppie nell'herringbone: servono a provare selezione e filtri
     win.autosave = False
     return win
 
@@ -52,7 +53,7 @@ def view(win, cls, n=0):
 
 def test_salva_e_ripristina(app, tmp_path):
     win = new_window(app)
-    win.session.limits = Limits(max_interplanar=4.5)
+    win.session.limits = Limits.site(max_interplanar=4.5)
     win.session.load_file(EX / "herringbone_anthracene.cif")
     wait(app, lambda: win.session.analysis is not None)
     s = win.session
@@ -137,7 +138,7 @@ def test_chiavi_sconosciute_e_soglie_non_valide_si_ignorano(app, tmp_path):
 def test_finestra_di_confronto(app):
     win = CollectionWindow(Limits())
     opened = []
-    win.openRequested.connect(lambda path, i: opened.append((Path(path).name, i)))
+    win.openRequested.connect(lambda path, i, block: opened.append((Path(path).name, i)))
     win.add_paths([EX])
     wait(app, lambda: len(win.entries) == 6)
     assert win.struct.rowCount() == 6 and len(win.table) > 0

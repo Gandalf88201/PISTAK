@@ -14,7 +14,6 @@ from PySide6.QtCore import QObject, QRunnable, QThreadPool, Signal
 
 from pistak import api
 from pistak.core.analysis import Analysis, read_cif_file
-from pistak.core.cif import parse_cif
 from pistak.core.config import Limits, load_limits, save_user_config
 from pistak.core.demo import demo_cif
 from pistak.errors import describe_error
@@ -59,6 +58,8 @@ class Session(QObject):
         self.source_text = ""
         self.source_name = ""
         self.source_path: str | None = None
+        #: Blocco data_ analizzato (None = il primo con atomi).
+        self.source_block: str | None = None
         self._selection: dict[str, int] = {g: 0 for g in GROUPS}
         self._subset: dict[str, set[int] | None] = {g: None for g in GROUPS}
         self._pool = QThreadPool.globalInstance()
@@ -87,20 +88,20 @@ class Session(QObject):
     def busy(self) -> bool:
         return self._busy
 
-    def load_file(self, path: str | Path) -> None:
+    def load_file(self, path: str | Path, block: str | None = None) -> None:
         p = Path(path)
         try:
             text = read_cif_file(p)
         except Exception as e:  # noqa: BLE001
             self.error.emit(f"{p.name}: {describe_error(e)}")
             return
-        self.load_text(text, p.name, str(p.resolve()))
+        self.load_text(text, p.name, str(p.resolve()), block)
 
     def load_demo(self) -> None:
         self.load_text(demo_cif(), "demo.cif")
 
-    def load_text(self, text: str, name: str, path: str | None = None) -> None:
-        self.source_text, self.source_name, self.source_path = text, name, path
+    def load_text(self, text: str, name: str, path: str | None = None, block: str | None = None) -> None:
+        self.source_text, self.source_name, self.source_path, self.source_block = text, name, path, block
         self._run(name)
 
     def reanalyse(self) -> None:
@@ -108,13 +109,10 @@ class Session(QObject):
             self._run(self.source_name)
 
     def _run(self, name: str) -> None:
-        text, limits = self.source_text, self.limits
+        text, limits, block = self.source_text, self.limits, self.source_block
 
         def work() -> Analysis:
-            cif = parse_cif(text)
-            from pistak.core.analysis import analyse_cif
-
-            return api.finish(analyse_cif(cif, name, limits))
+            return api.analyse_text(text, name, limits, block)
 
         self._submit(work, tf("Analisi di {name}…", name=name), self._apply)
 

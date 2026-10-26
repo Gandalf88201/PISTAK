@@ -33,7 +33,8 @@ def app():
 @pytest.fixture()
 def world(app):
     s = Session()
-    a = api.analyse_file(EX / "herringbone_anthracene.cif", Limits())
+    s.limits = Limits.site()  # 3 coppie (a→b e b→a separate): servono a provare selezione e filtri
+    a = api.analyse_file(EX / "herringbone_anthracene.cif", s.limits)
     views = {
         "tableA": TableView(s, "A"), "scatterA": ScatterView(s, "A"), "projA": ProjectionView(s, "A"),
         "histA": HistogramView(s, "A"), "detailA": DetailView(s, "A"),

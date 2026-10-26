@@ -50,11 +50,13 @@ def summary_dict(analysis: Analysis) -> dict:
         "file": analysis.name,
         "block": analysis.cif.name,
         "space_group": analysis.cif.space_group,
+        "symops_source": analysis.cif.symops_source,
         "cell": {"a": c.a, "b": c.b, "c": c.c, "alpha": c.alpha, "beta": c.beta, "gamma": c.gamma},
         "cell_atoms": analysis.structure.n_cell_atoms,
         "molecules": [{"formula": g.text, "count": g.count, "with_pi_core": g.with_core} for g in analysis.molecule_groups()],
         "has_extended_network": analysis.has_extended,
         "skipped_disorder_atoms": analysis.cif.skipped_disorder,
+        "disorder_policy": analysis.cif.disorder,
         "limits": analysis.limits.to_dict(),
     }
 
