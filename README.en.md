@@ -21,6 +21,8 @@ By default each intermolecular contact is listed once and contacts related by a 
 Molecules with several planar ring systems get one π fragment each (`fragments = "all"`): pairs are fragment–fragment
 (π1–π2, also intramolecular), grouped per molecule contact in *Detail ▸ Contacts* and in the JSON. The long axis can be
 set from two atom labels (`long_axis_atoms = "C1,C9"`), and signed slips are available as parameters.
+Parameter uncertainties (σ) come from a Monte Carlo over the standard uncertainties in the CIF (*Analysis ▸
+Uncertainties*, `analyze --mc 200`, `pistak.api.uncertainty`), symmetry-consistent, for every registry parameter.
 Disorder policy (`--disorder major|first|all|N`), stack criterion (`--overlap-measure`, `--min-overlap`, `--max-slip`),
 multi-block CIFs (`--block`) and missing symmetry operations (derived from the Hall or H-M symbol) are described in `README.md`.
 Personal settings (`user.toml`), the last session and a `plugins/` folder live in the user's config folder

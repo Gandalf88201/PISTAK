@@ -40,6 +40,7 @@ pistak/
     config.py       soglie (Limits) e preferenze: pistak/default.toml + user.toml dell'utente
     errors.py       errori con codice stabile (CifError, StructureError, InputError)
     analysis.py     la catena completa, il PairContext e il riepilogo per molecola (MoleculeContact)
+    uncertainty.py  incertezze dei parametri con un Monte Carlo sulle s.u. del CIF
   params/    registro dei parametri misurabili (Registry; builtin = sito, extra = fase 2, plugins)
   io/        export CSV/JSON/XYZ con chiavi fisse; batch (parallelo), stats (statistiche), compare (confronto)
   gui/       finestra (PySide6): session.py = stato condiviso e sincronizzazione; views/ = le viste;
@@ -155,6 +156,15 @@ Tutte si scelgono in *Analisi ▸ Soglie…*, in `user.toml` (`[limits]`) o da t
 * **Slittamenti con segno**: `long_slip_signed`, `lat_slip_signed` (componenti di s da A verso B lungo L e W) e
   `slip_direction` (−180…180°). Il segno ha senso fisico se l'asse è definito dagli atomi e la molecola non sta su un
   centro di inversione (che rovescia l'asse); scambiando A e B cambia segno.
+* **Incertezze (σ)**: *Analisi ▸ Incertezze (Monte Carlo)…*, `analyze --mc 200` (`--mc-seed`, `--mc-no-cell`) o
+  `pistak.api.uncertainty(analisi, 200)`. Dalle s.u. del CIF (le cifre tra parentesi delle coordinate e della cella)
+  si generano N geometrie perturbate: lo spostamento casuale di ogni atomo dell'unità asimmetrica passa alle sue copie
+  per simmetria attraverso l'operazione che le genera, si ricalcolano piani e assi dei frammenti e si rimisurano tutte
+  le coppie. La σ di ogni parametro del registro (plugin compresi) è la deviazione standard sui campioni; in più, per
+  ogni coppia, la frazione di campioni in cui il tipo (stack/parallela/inclinata) resta lo stesso. Il Dettaglio mostra
+  «valore ± σ», il CSV aggiunge le colonne `<chiave>_su` e `kind_agreement`, il JSON `su` per coppia. Approssimazioni:
+  coordinate indipendenti (nessuna covarianza), posizioni speciali non vincolate, atomi senza s.u. fermi. Una σ
+  grande sugli slittamenti L/W di un nucleo quasi isotropo (fenile, coronene) dice che l'asse lungo non è definito.
 * **Atomi disordinati** (`disorder`): `major` (predefinito) tiene, per ogni assemblaggio (`_atom_site_disorder_assembly`),
   il gruppo con l'occupanza media più alta; `first` il gruppo 1 (il sito); `all` tutti; un numero, quel gruppo.
 * **Criterio di stack**: oltre ad angolo tra i piani e distanza interplanare, la sovrapposizione dei nuclei proiettati

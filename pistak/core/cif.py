@@ -44,6 +44,8 @@ class CifAtom:
     el: str
     frac: np.ndarray
     occ: float = 1.0
+    #: Incertezze standard (s.u.) delle coordinate frazionarie, dalle cifre tra parentesi (0 se mancano).
+    su: np.ndarray = field(default_factory=lambda: np.zeros(3))
 
 
 @dataclass
@@ -59,6 +61,8 @@ class Cif:
     symops_source: str = "cif"
     #: Regola usata per gli atomi disordinati (vedi `parse_cif`).
     disorder: str = "first"
+    #: s.u. dei parametri di cella (a, b, c in Å; α, β, γ in gradi), 0 se mancano.
+    cell_su: tuple[float, ...] = (0.0,) * 6
 
 
 @dataclass
@@ -179,6 +183,19 @@ def _first_block(tokens: list[str]) -> _Block:
 
 
 _UNCERTAINTY = re.compile(r"\(\d+\)$")
+
+
+def cif_su(v: str | None) -> float:
+    """Incertezza standard scritta tra parentesi, nelle unità dell'ultima cifra: '10.3528(16)' → 0.0016,
+    '1.5(12)' → 1.2, '123(4)' → 4; 0 se manca (o il valore non è un numero)."""
+    if not v:
+        return 0.0
+    m = re.fullmatch(r"\s*[-+]?(\d*)(?:\.(\d*))?(?:[eE][-+]?\d+)?\((\d+)\)\s*", v)
+    if not m:
+        return 0.0
+    decimals = len(m.group(2) or "")
+    exp = re.search(r"[eE]([-+]?\d+)", v)
+    return int(m.group(3)) * 10.0 ** (-decimals + (int(exp.group(1)) if exp else 0))
 
 
 def cif_number(v: str | None) -> float:
@@ -320,8 +337,10 @@ def _cif_from_block(b: _Block, known: Callable[[str], bool], disorder: str) -> C
         cif_number(b.items.get("_cell_length_c")), cif_number(b.items.get("_cell_angle_alpha")),
         cif_number(b.items.get("_cell_angle_beta")), cif_number(b.items.get("_cell_angle_gamma")),
     )
-    if any(not np.isfinite(x) or x <= 0 for x in vars(cell).values()):
+    if any(not np.isfinite(x) or x <= 0 for x in (cell.a, cell.b, cell.c, cell.alpha, cell.beta, cell.gamma)):
         raise CifError("noCell")
+    cell_su = tuple(cif_su(b.items.get(t)) for t in ("_cell_length_a", "_cell_length_b", "_cell_length_c",
+                                                         "_cell_angle_alpha", "_cell_angle_beta", "_cell_angle_gamma"))
 
     space_group = (b.items.get("_symmetry_space_group_name_h-m") or b.items.get("_space_group_name_h-m_alt") or "").strip()
     symops, source = _symops(b, space_group)
@@ -350,15 +369,16 @@ def _cif_from_block(b: _Block, known: Callable[[str], bool], disorder: str) -> C
             skipped += 1
             continue
         frac = np.array([cif_number(row[i_x]), cif_number(row[i_y]), cif_number(row[i_z])])
+        su = np.array([cif_su(row[i_x]), cif_su(row[i_y]), cif_su(row[i_z])])
         if not np.all(np.isfinite(frac)):
             continue
         el = element_of(row[i_type] if i_type >= 0 else None, label, known)
         if not el:
             continue
-        atoms.append(CifAtom(label, el, frac, occ))
+        atoms.append(CifAtom(label, el, frac, occ, su))
     if not atoms:
         raise CifError("noAtoms")
-    return Cif(b.name, space_group, cell, symops, atoms, skipped, dict(b.items), source, disorder)
+    return Cif(b.name, space_group, cell, symops, atoms, skipped, dict(b.items), source, disorder, cell_su)
 
 
 def parse_cif(text: str, known: Callable[[str], bool] = is_known, block: str | int | None = None,

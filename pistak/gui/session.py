@@ -17,7 +17,7 @@ from pistak.core.analysis import Analysis, read_cif_file
 from pistak.core.config import Limits, load_limits, save_user_config
 from pistak.core.demo import demo_cif
 from pistak.errors import describe_error
-from pistak.i18n import tf
+from pistak.i18n import tf, tr
 
 GROUPS = ("A", "B", "C")
 
@@ -47,6 +47,7 @@ class Session(QObject):
     selectionChanged = Signal(str, int)  # gruppo, indice della coppia (-1 = nessuna)
     subsetChanged = Signal(str, object)  # gruppo, insieme di indici o None
     paramsChanged = Signal()  # i parametri del registro sono cambiati (plugin ricaricati)
+    uncertaintyChanged = Signal()  # sono state calcolate le incertezze dell'analisi corrente
     busyChanged = Signal(bool, str)
     message = Signal(str)
     error = Signal(str)
@@ -155,6 +156,23 @@ class Session(QObject):
         if save:
             save_user_config(limits)
         self.reanalyse()
+
+    def compute_uncertainty(self, samples: int, include_cell: bool = True) -> None:
+        """σ dei parametri dell'analisi corrente con il Monte Carlo, in un thread a parte."""
+        analysis = self.analysis
+        if analysis is None:
+            return
+
+        def work():
+            return api.uncertainty(analysis, samples, include_cell=include_cell)
+
+        def done(u) -> None:
+            if self.analysis is analysis:
+                self.uncertaintyChanged.emit()
+                self.message.emit(tf("Incertezze calcolate su {n} campioni", n=samples) if u.has_su
+                                  else tr("Il CIF non ha incertezze standard (s.u.): tutte le σ sono 0"))
+
+        self._submit(work, tf("Monte Carlo delle incertezze ({n} campioni)…", n=samples), done)
 
     def reload_plugins(self) -> list[str]:
         loaded = api.ensure_plugins(force=True)

@@ -28,3 +28,12 @@ def analyse_text(text: str, name: str = "", limits: Limits | None = None, block:
 
 def analyse_file(path: str | Path, limits: Limits | None = None, block: str | int | None = None) -> Analysis:
     return finish(_core.analyse_file(path, limits or load_limits(), block))
+
+
+def uncertainty(analysis: Analysis, samples: int = 100, seed: int = 0, keys=None, include_cell: bool = True, progress=None):
+    """σ dei parametri dalle s.u. del CIF con un Monte Carlo (vedi `pistak.core.uncertainty`); il risultato va anche
+    in `analysis.uncertainty`."""
+    from pistak.params.uncertainty import uncertainty as _mc
+
+    ensure_plugins()
+    return _mc(analysis, samples, seed, keys, include_cell, progress)

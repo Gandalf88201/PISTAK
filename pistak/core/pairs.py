@@ -204,6 +204,17 @@ def measure_pair(s: Structure, cores: Sequence, a: int, b: int, shift: Shift, li
     return _measure(s, ca, cb0, a, b, shift, limits, contact, fa, fb, len(frags[a]) > 1 or len(frags[b]) > 1)
 
 
+def remeasure(s: Structure, frags: Fragments, pair: Pair, limits: Limits) -> Pair:
+    """La stessa coppia (stesse molecole, frammenti e traslazione) misurata su un'altra geometria: serve al Monte Carlo
+    delle incertezze, dove gli atomi si spostano di poco ma la topologia resta quella dell'analisi."""
+    ca, cb0 = frags[pair.a][pair.fa], frags[pair.b][pair.fb]
+    v = s.shift_vector(pair.shift)
+    contact = _fragment_distance(s, ca, cb0, pair.a, pair.b, v) if pair.intramolecular else _heavy_contact(s, pair.a, pair.b, v)
+    q = _measure(s, ca, cb0, pair.a, pair.b, pair.shift, limits, contact, pair.fa, pair.fb, pair.fragmented)
+    q.index, q.count, q.members = pair.index, pair.count, pair.members
+    return q
+
+
 def neighbour_shells(s: Structure, cores: Sequence, limits: Limits) -> tuple[int, int, int]:
     """Celle da esplorare (±) lungo a, b, c. Nel modo del sito sempre `neighbour_shells`; altrimenti quante ne
     servono perché due molecole qualunque a contatto siano trovate, ma almeno `neighbour_shells`.

@@ -135,7 +135,11 @@ class DetailView(PairView):
         pair, a = self.pair, self.analysis
         if not (pair and a):
             return
+        u = a.uncertainty
         QTreeWidgetItem(self.params, [tf("Coppia {n}: {kind}", n=pair.index + 1, kind=theme.kind_label(pair.kind)), relation(pair), ""])
+        if u is not None:
+            QTreeWidgetItem(self.params, [tr("Incertezze"), tf("Monte Carlo, {n} campioni", n=u.samples),
+                                          tf("tipo stabile nel {p:.0f}% dei campioni", p=100 * u.kind_agreement.get(pair.index, 0))])
         groups: dict[str, QTreeWidgetItem] = {}
         for s in specs():
             top = groups.get(s.group_name)
@@ -143,7 +147,11 @@ class DetailView(PairView):
                 top = groups[s.group_name] = QTreeWidgetItem(self.params, [s.group_name])
                 top.setExpanded(True)
             v = pair.get(s.key)
-            it = QTreeWidgetItem(top, [s.name, "–" if not math.isfinite(v) else f"{v:.{s.digits}f}", s.unit])
+            text = "–" if not math.isfinite(v) else f"{v:.{s.digits}f}"
+            sig = u.get(pair, s.key) if u is not None and s.key in u.keys else math.nan
+            if math.isfinite(v) and math.isfinite(sig):
+                text += f" ± {sig:.{max(s.digits, 3)}f}"
+            it = QTreeWidgetItem(top, [s.name, text, s.unit])
             it.setToolTip(0, s.info)
             it.setTextAlignment(1, Qt.AlignmentFlag.AlignRight)
         self.params.header().setStretchLastSection(False)

@@ -113,3 +113,21 @@ def test_scena_fuori_schermo_con_pyvista(world):
         pl.close()
     except Exception as e:  # nessun contesto OpenGL disponibile in questo ambiente
         pytest.skip(f"rendering non disponibile: {e}")
+
+
+def test_incertezze_nel_dettaglio(world):
+    s, a, v = world
+    from test_uncertainty import with_su
+
+    from pistak.core.analysis import read_cif_file
+
+    b = api.analyse_text(with_su(read_cif_file(EX / "herringbone_anthracene.cif"), 20), "h", s.limits)
+    s._apply(b)
+    api.uncertainty(b, samples=10, keys=["interplanar"])
+    s.uncertaintyChanged.emit()
+    tree = v["detailA"].params
+    texts = [tree.topLevelItem(i).text(1) for i in range(tree.topLevelItemCount())]
+    assert any("10" in t for t in texts)  # la riga «Incertezze: Monte Carlo, 10 campioni»
+    values = [tree.topLevelItem(i).child(j).text(1) for i in range(tree.topLevelItemCount())
+              for j in range(tree.topLevelItem(i).childCount())]
+    assert any("±" in t for t in values)

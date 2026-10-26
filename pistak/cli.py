@@ -77,6 +77,8 @@ def cmd_analyze(args) -> int:
                   f"{p.centroid_distance:7.2f} {p.contact:8.2f}  {relation(p)}")
         if len(a.pairs) > args.rows:
             print(tf("… altre {n} coppie (usa --rows o --csv)", n=len(a.pairs) - args.rows))
+    if args.mc:
+        _print_uncertainty(a, args)
     if args.csv:
         print(tr("scritto"), export.write_csv(a, args.csv))
     if args.json:
@@ -88,6 +90,23 @@ def cmd_analyze(args) -> int:
             return 1
         print(tr("scritto"), export.write_pair_xyz(a, a.pairs[n - 1], out))
     return 0
+
+
+def _print_uncertainty(a, args) -> None:
+    from pistak.api import uncertainty
+
+    prog = lambda i, n: print(f"\r[MC {i}/{n}]", end="", flush=True, file=sys.stderr)  # noqa: E731
+    u = uncertainty(a, args.mc, args.mc_seed, include_cell=not args.mc_no_cell, progress=prog)
+    print(file=sys.stderr)
+    if not u.has_su:
+        print(tr("attenzione: il CIF non ha incertezze standard (s.u.): tutte le σ sono 0"), file=sys.stderr)
+    print("\n" + tf("incertezze (σ, Monte Carlo su {n} campioni dalle s.u. del CIF):", n=u.samples))
+    print(f"{'#':>3} {tr('interpl.'):>15} {'L-slip':>15} {'W-slip':>15} {tr('diedro'):>13} {tr('stabilità del tipo'):>20}")
+    for p in a.pairs[: args.rows]:
+        s = u.sigma[p.index]
+        print(f"{p.index + 1:>3} {p.interplanar:7.3f}±{s['interplanar']:<7.3f} {p.long_slip:7.3f}±{s['long_slip']:<7.3f} "
+              f"{p.lat_slip:7.3f}±{s['lat_slip']:<7.3f} {p.dihedral:6.2f}±{s['dihedral']:<6.2f} "
+              f"{100 * u.kind_agreement[p.index]:>19.0f}%")
 
 
 def _entries(args):
@@ -252,6 +271,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--json")
     p.add_argument("--xyz", nargs=2, metavar=("N", "FILE"), help=tr("scrive la coppia N in formato XYZ"))
     p.add_argument("--block", help=tr("blocco data_ da analizzare (predefinito: il primo con atomi)"))
+    p.add_argument("--mc", type=int, default=0, metavar="N",
+                   help=tr("incertezze dei parametri con un Monte Carlo di N campioni dalle s.u. del CIF (es. 200)"))
+    p.add_argument("--mc-seed", type=int, default=0, help=tr("seme del generatore casuale del Monte Carlo"))
+    p.add_argument("--mc-no-cell", action="store_true", help=tr("non perturbare i parametri di cella"))
     _add_limit_args(p)
     p.set_defaults(fn=cmd_analyze)
 

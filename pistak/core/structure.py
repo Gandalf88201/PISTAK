@@ -85,6 +85,8 @@ class Structure:
     molecules: list[Molecule]
     #: Le operazioni di simmetria del CIF (servono a riconoscere le coppie equivalenti).
     symops: list[SymOp] = field(default_factory=list)
+    #: Per ogni atomo della cella: (indice dell'atomo in `Cif.atoms`, indice dell'operazione che lo genera).
+    cell_origin: np.ndarray = field(default_factory=lambda: np.zeros((0, 2), dtype=int))
     _images: dict[float, list[list[Image | None]]] = field(default_factory=dict, repr=False)
     _atom_maps: dict[float, list[list[np.ndarray | None]]] = field(default_factory=dict, repr=False)
 
@@ -124,14 +126,16 @@ def _wrap(x: np.ndarray) -> np.ndarray:
     return x - np.floor(x + 1e-9)
 
 
-def fill_cell(cif: Cif, vectors: np.ndarray, limits: Limits) -> tuple[list[str], list[str], np.ndarray]:
-    """Tutti gli atomi della cella: ogni operazione di simmetria applicata a ogni atomo, senza doppioni."""
+def fill_cell(cif: Cif, vectors: np.ndarray, limits: Limits,
+              origins: list[tuple[int, int]] | None = None) -> tuple[list[str], list[str], np.ndarray]:
+    """Tutti gli atomi della cella: ogni operazione di simmetria applicata a ogni atomo, senza doppioni. Se si passa
+    `origins`, vi si aggiunge per ogni atomo della cella (indice in `cif.atoms`, indice dell'operazione)."""
     els: list[str] = []
     labels: list[str] = []
     buf = np.zeros((16, 3))  # posizioni frazionarie accettate finora (cresce al bisogno)
     by_el: dict[str, list[int]] = {}
-    for at in cif.atoms:
-        for op in cif.symops:
+    for ia, at in enumerate(cif.atoms):
+        for k, op in enumerate(cif.symops):
             f = _wrap(op.apply(at.frac))
             idx = by_el.get(at.el)
             if idx:
@@ -145,6 +149,8 @@ def fill_cell(cif: Cif, vectors: np.ndarray, limits: Limits) -> tuple[list[str],
             by_el.setdefault(at.el, []).append(len(els))
             els.append(at.el)
             labels.append(at.label)
+            if origins is not None:
+                origins.append((ia, k))
             if len(els) > limits.max_cell_atoms:
                 raise StructureError("tooLarge", str(limits.max_cell_atoms))
     return els, labels, buf[:len(els)].copy()
@@ -188,7 +194,8 @@ def build_structure(cif: Cif, limits: Limits | None = None) -> Structure:
     """Ricompone le molecole intere partendo dagli atomi della cella e dai loro legami."""
     limits = limits or Limits()
     vectors = cell_vectors(cif.cell)
-    els, labels, frac = fill_cell(cif, vectors, limits)
+    origins: list[tuple[int, int]] = []
+    els, labels, frac = fill_cell(cif, vectors, limits, origins)
     cart = to_cart(vectors, frac)
     edges = cell_bonds(els, cart, vectors, limits)
     seen: dict[int, tuple[int, int, int]] = {}  # atomo della cella → cella in cui è stato messo
@@ -231,7 +238,8 @@ def build_structure(cif: Cif, limits: Limits | None = None) -> Structure:
             bonds=_dedupe(bonds), centroid=c + back, extended=extended,
             cell_index=ci, cell_shift=cs - fc.astype(int),
         ))
-    return Structure(vectors, els, labels, frac, molecules, list(cif.symops))
+    return Structure(vectors, els, labels, frac, molecules, list(cif.symops),
+                     cell_origin=np.array(origins, dtype=int).reshape(-1, 2))
 
 
 def _molecule_images(s: Structure, tol: float) -> list[list[Image | None]]:

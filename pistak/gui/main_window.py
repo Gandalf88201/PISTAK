@@ -199,6 +199,7 @@ class MainWindow(QMainWindow):
         a = mb.addMenu(tr("&Analisi"))
         self._act(a, tr("Soglie…"), self.edit_limits, "Ctrl+,")
         self._act(a, tr("Rianalizza"), self.session.reanalyse, "Ctrl+R")
+        self._act(a, tr("Incertezze (Monte Carlo)…"), self._uncertainty)
         a.addSeparator()
         self._act(a, tr("Ricarica i plugin"), self._reload_plugins)
         self._act(a, tr("Apri la cartella dei plugin"), self._open_plugins)
@@ -303,6 +304,14 @@ class MainWindow(QMainWindow):
             self.session.set_limits(dlg.limits(), save=dlg.save)
             if self.collection is not None:
                 self.collection.set_limits(dlg.limits())
+
+    def _uncertainty(self) -> None:
+        if self.session.analysis is None or self.session.busy:
+            return
+        n, ok = QInputDialog.getInt(self, APP_NAME, tr("Campioni del Monte Carlo (le σ vengono dalle s.u. del CIF):"),
+                                    200, 10, 5000, 50)
+        if ok:
+            self.session.compute_uncertainty(n)
 
     def _reload_plugins(self) -> None:
         loaded = self.session.reload_plugins()

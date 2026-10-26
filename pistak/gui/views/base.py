@@ -55,6 +55,7 @@ class PairView(QWidget):
         session.selectionChanged.connect(self._selection_changed)
         session.subsetChanged.connect(self._subset_changed)
         session.paramsChanged.connect(self.on_params)
+        session.uncertaintyChanged.connect(lambda: self.on_pair(self.index))
 
     # ---- stato ---------------------------------------------------------------------
     @property

@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -14,6 +15,9 @@ from pistak.core.errors import InputError
 from pistak.core.pairs import Frame, Pair, Shift, _canon, collect_pairs, frame_for, molecule_key
 from pistak.core.stacks import StackColumn, find_stacks
 from pistak.core.structure import Molecule, Structure, build_structure
+
+if TYPE_CHECKING:
+    from pistak.core.uncertainty import Uncertainty
 
 MAX_BYTES = 50 * 1024 * 1024
 
@@ -70,6 +74,8 @@ class Analysis:
     stacks: list[StackColumn] = field(default_factory=list)
     #: Frammenti π di ogni molecola (il primo è `cores[i]`); vuoto se l'analisi è stata fatta senza frammenti.
     fragments: list[list[Core]] = field(default_factory=list)
+    #: Incertezze dal Monte Carlo (`pistak.api.uncertainty`), se calcolate.
+    uncertainty: Uncertainty | None = None
 
     def fragment(self, molecule: int, index: int = 0) -> Core | None:
         if self.fragments:

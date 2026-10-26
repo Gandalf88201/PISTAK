@@ -23,9 +23,16 @@ def table(analysis: Analysis, keys: list[str] | None = None) -> tuple[list[str],
     della seconda e i parametri scelti (per impostazione tutti quelli del registro, per chiave)."""
     keys = keys if keys is not None else list(analysis.param_keys)
     headers = ["n", "kind", "molecule_a", "molecule_b", "shift", *keys]
+    u = analysis.uncertainty
+    su_keys = [k for k in keys if u is not None and k in u.keys]
+    if u is not None:  # incertezze dal Monte Carlo: una colonna <chiave>_su per parametro, più la stabilità del tipo
+        headers += [f"{k}_su" for k in su_keys] + ["kind_agreement"]
     rows = []
     for p in analysis.pairs:
-        rows.append([p.index + 1, p.kind, p.a + 1, p.b + 1, " ".join(map(str, p.shift))] + [p.get(k) for k in keys])
+        row = [p.index + 1, p.kind, p.a + 1, p.b + 1, " ".join(map(str, p.shift))] + [p.get(k) for k in keys]
+        if u is not None:
+            row += [u.get(p, k) for k in su_keys] + [u.kind_agreement.get(p.index, math.nan)]
+        rows.append(row)
     return headers, rows
 
 
@@ -59,15 +66,22 @@ def summary_dict(analysis: Analysis) -> dict:
         "skipped_disorder_atoms": analysis.cif.skipped_disorder,
         "disorder_policy": analysis.cif.disorder,
         "limits": analysis.limits.to_dict(),
+        "uncertainty": None if analysis.uncertainty is None else {
+            "method": "monte_carlo", "samples": analysis.uncertainty.samples, "seed": analysis.uncertainty.seed,
+            "include_cell": analysis.uncertainty.include_cell, "has_su": analysis.uncertainty.has_su},
     }
 
 
-def pair_dict(p: Pair, keys: list[str]) -> dict:
-    return {
+def pair_dict(p: Pair, keys: list[str], uncertainty=None) -> dict:
+    d = {
         "n": p.index + 1, "kind": p.kind, "molecule_a": p.a + 1, "molecule_b": p.b + 1, "shift": list(p.shift),
         "fragment_a": p.fa + 1, "fragment_b": p.fb + 1,
         "equivalent_pairs": p.count, "parameters": {k: _clean(p.get(k)) for k in keys},
     }
+    if uncertainty is not None:
+        d["su"] = {k: _clean(uncertainty.get(p, k)) for k in keys if k in uncertainty.keys}
+        d["kind_agreement"] = _clean(uncertainty.kind_agreement.get(p.index, math.nan))
+    return d
 
 
 def fragments_list(analysis: Analysis) -> list[dict]:
@@ -95,7 +109,7 @@ def write_json(analysis: Analysis, path: str | Path, keys: list[str] | None = No
     from pistak import __version__
 
     data = {"format": JSON_FORMAT, "version": JSON_VERSION, "pistak": __version__, "summary": summary_dict(analysis),
-            "units": units, "fragments": fragments_list(analysis), "pairs": [pair_dict(p, keys) for p in analysis.pairs],
+            "units": units, "fragments": fragments_list(analysis), "pairs": [pair_dict(p, keys, analysis.uncertainty) for p in analysis.pairs],
             "molecule_contacts": contacts_list(analysis)}
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     return path
