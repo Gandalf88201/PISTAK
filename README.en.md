@@ -18,6 +18,9 @@ comparison and statistics across structures, synchronised 3D / projection / para
 Exported files (CSV/JSON/XYZ) always use fixed English column names, whatever the interface language.
 By default each intermolecular contact is listed once and contacts related by a space-group operation are grouped
 (`pair_mode = "canonical"`); `--pair-mode site` (or *Website values* in the thresholds dialog) reproduces the website.
+Molecules with several planar ring systems get one π fragment each (`fragments = "all"`): pairs are fragment–fragment
+(π1–π2, also intramolecular), grouped per molecule contact in *Detail ▸ Contacts* and in the JSON. The long axis can be
+set from two atom labels (`long_axis_atoms = "C1,C9"`), and signed slips are available as parameters.
 Disorder policy (`--disorder major|first|all|N`), stack criterion (`--overlap-measure`, `--min-overlap`, `--max-slip`),
 multi-block CIFs (`--block`) and missing symmetry operations (derived from the Hall or H-M symbol) are described in `README.md`.
 Personal settings (`user.toml`), the last session and a `plugins/` folder live in the user's config folder

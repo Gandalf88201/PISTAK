@@ -86,6 +86,7 @@ class Structure:
     #: Le operazioni di simmetria del CIF (servono a riconoscere le coppie equivalenti).
     symops: list[SymOp] = field(default_factory=list)
     _images: dict[float, list[list[Image | None]]] = field(default_factory=dict, repr=False)
+    _atom_maps: dict[float, list[list[np.ndarray | None]]] = field(default_factory=dict, repr=False)
 
     @property
     def n_cell_atoms(self) -> int:
@@ -101,6 +102,18 @@ class Structure:
         if tol not in self._images:
             self._images[tol] = _molecule_images(self, tol)
         return self._images[tol]
+
+    def atom_maps(self, tol: float = 0.3) -> list[list[np.ndarray | None]]:
+        """Come `molecule_images`, atomo per atomo: per l'operazione k e la molecola m, l'array che dà per ogni atomo
+        di m l'indice dell'atomo corrispondente nella molecola immagine (None se l'immagine non è esatta)."""
+        if tol not in self._atom_maps:
+            imgs = self.molecule_images(tol)
+            out = []
+            for k, row in enumerate(imgs):
+                out.append([_atom_map(self, self.symops[k], m, img, tol) if img is not None else None
+                            for m, img in zip(self.molecules, row)])
+            self._atom_maps[tol] = out
+        return self._atom_maps[tol]
 
     def rotation(self, k: int) -> np.ndarray:
         """Parte rotazionale (intera) dell'operazione k, in coordinate frazionarie."""
@@ -261,6 +274,19 @@ def _image_of(s: Structure, op: SymOp, mi: int, m: Molecule, owner, by_el, centr
     if np.linalg.norm((gc - centroids[mj] - t) @ s.vectors) > tol or len(s.molecules[mj]) != len(m):
         return None
     return mj, (int(t[0]), int(t[1]), int(t[2]))
+
+
+def _atom_map(s: Structure, op: SymOp, m: Molecule, img: Image, tol: float) -> np.ndarray | None:
+    mj, t = img
+    target = s.molecules[mj]
+    f_src = s.cell_frac[m.cell_index] + m.cell_shift
+    f_img = f_src @ op.r.T + op.t
+    f_tgt = s.cell_frac[target.cell_index] + target.cell_shift + np.asarray(t)
+    d = np.linalg.norm((f_img[:, None, :] - f_tgt[None, :, :]) @ s.vectors, axis=2)
+    j = d.argmin(axis=1)
+    if (d[np.arange(len(j)), j] > tol).any() or len(set(j.tolist())) != len(j):
+        return None
+    return j
 
 
 def _dedupe(b: list[tuple[int, int]]) -> np.ndarray:

@@ -64,7 +64,9 @@ def cmd_analyze(args) -> int:
              name=a.name, sg=s["space_group"] or "?", a=c["a"], b=c["b"], c=c["c"], al=c["alpha"], be=c["beta"], ga=c["gamma"],
              n=s["cell_atoms"]))
     for m in s["molecules"]:
-        print(tf("  {count} × {formula}  ({core} con nucleo π)", count=m["count"], formula=m["formula"], core=m["with_pi_core"]))
+        frags = "" if m["pi_fragments"] <= 1 else ", " + tf("{n} frammenti π per molecola", n=m["pi_fragments"])
+        print(tf("  {count} × {formula}  ({core} con nucleo π", count=m["count"], formula=m["formula"], core=m["with_pi_core"])
+              + frags + ")")
     if not a.pairs:
         print(tr("nessuna coppia di molecole vicine con nuclei π"))
     else:

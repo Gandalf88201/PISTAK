@@ -1,5 +1,5 @@
-"""Dettaglio: riepilogo del cristallo, tutti i parametri della coppia scelta, coppie di anelli (Janiak)
-e avvisi (file non letti, plugin con errori)."""
+"""Dettaglio: riepilogo del cristallo, tutti i parametri della coppia scelta, coppie di anelli (Janiak), colonne,
+contatti tra molecole (riepilogo per molecola delle coppie di frammenti π) e avvisi (file non letti, plugin con errori)."""
 from __future__ import annotations
 
 import math
@@ -30,12 +30,19 @@ class DetailView(PairView):
         self.rings.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.columns = QTableWidget()
         self.columns.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.contacts = QTableWidget()
+        self.contacts.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.contacts.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.contacts.setToolTip(tr("Doppio clic: seleziona la coppia di frammenti migliore di quel contatto"))
+        self.contacts.cellDoubleClicked.connect(self._contact_chosen)
+        self._contact_best: list[int] = []
         self.notes = QTextBrowser()
         self.tabs.addTab(self.summary, tr("Struttura"))
         self.tabs.addTab(self.params, tr("Coppia"))
         self.tabs.addTab(self.rings, tr("Anelli"))
         self.tabs.addTab(self.columns, tr("Colonne"))
         self.tabs.addTab(self.notes, tr("Avvisi"))
+        self.tabs.addTab(self.contacts, tr("Contatti"))
         self.body.addWidget(self.tabs)
 
     def on_analysis(self) -> None:
@@ -52,7 +59,10 @@ class DetailView(PairView):
         html = "<table cellpadding=3>" + "".join(f"<tr><td><b>{k}</b></td><td>{v}</td></tr>" for k, v in rows) + f"</table><h4>{tr('Molecole')}</h4><ul>"
         for g in a.molecule_groups():
             sub = "".join(f"{e}<sub>{n}</sub>" if n > 1 else e for e, n in g.formula)
-            html += f"<li><b>{g.count} ×</b> {sub} · " + tf("{n} con nucleo π", n=g.with_core) + "</li>"
+            html += f"<li><b>{g.count} ×</b> {sub} · " + tf("{n} con nucleo π", n=g.with_core)
+            if g.fragments > 1:
+                html += " · " + tf("{n} frammenti π per molecola", n=g.fragments)
+            html += "</li>"
         html += "</ul>"
         if a.has_extended:
             html += tr("<p><i>La rete di legami non si chiude (polimero o solido esteso): quelle parti sono escluse.</i></p>")
@@ -61,7 +71,33 @@ class DetailView(PairView):
         html += f"<h4>{tr('Soglie')}</h4><p>{', '.join(f'{k} = {v}' for k, v in a.limits.to_dict().items())}</p>"
         self.summary.setHtml(html)
         self._fill_columns()
+        self._fill_contacts()
         self._notes()
+
+    def _fill_contacts(self) -> None:
+        a = self.analysis
+        rows = a.molecule_contacts() if a else []
+        heads = [tr("Molecole"), tr("Contatti per cella"), tr("Coppie di frammenti"), "π-stack", tr("Contatto (Å)"),
+                 tr("Coppia migliore")]
+        self.contacts.clear()
+        self.contacts.setColumnCount(len(heads))
+        self.contacts.setHorizontalHeaderLabels(heads)
+        self.contacts.setRowCount(len(rows))
+        self._contact_best = [c.best.index for c in rows]
+        for r, c in enumerate(rows):
+            best = c.best
+            mols = tf("{a} (interna)", a=c.a + 1) if c.intramolecular else \
+                f"{c.a + 1}–{c.b + 1} [{' '.join(map(str, c.shift))}]"
+            cells = [mols, str(c.count), str(len(c.pairs)), str(len(c.stacks)), f"{c.contact:.2f}",
+                     f"#{best.index + 1} {theme.kind_label(best.kind)} · π{best.fa + 1}–π{best.fb + 1} · {best.interplanar:.2f} Å"]
+            for k, v in enumerate(cells):
+                self.contacts.setItem(r, k, QTableWidgetItem(v))
+        self.contacts.resizeColumnsToContents()
+        self.tabs.setTabText(5, f"{tr('Contatti')} ({len(rows)})")
+
+    def _contact_chosen(self, row: int, _col: int) -> None:
+        if 0 <= row < len(self._contact_best):
+            self.choose(self._contact_best[row])
 
     def _fill_columns(self) -> None:
         a = self.analysis

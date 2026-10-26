@@ -16,6 +16,21 @@ def slip_angle(ctx):
     return float(np.degrees(np.arctan2(ctx.pair.lat_slip, ctx.pair.long_slip)))
 
 
+@parameter("long_slip_signed", "Slittamento longitudinale con segno", "Å", "Componente di s (da A verso B) lungo L. Il verso di L è quello dell'asse definito dagli atomi (Soglie ▸ Asse lungo da due atomi), altrimenti una convenzione riproducibile; scambiando A e B cambia segno.", 2, G)
+def long_slip_signed(ctx):
+    return float(ctx.slip_vector @ ctx.frame.L)
+
+
+@parameter("lat_slip_signed", "Slittamento laterale con segno", "Å", "Componente di s (da A verso B) lungo W = n × L.", 2, G)
+def lat_slip_signed(ctx):
+    return float(ctx.slip_vector @ ctx.frame.W)
+
+
+@parameter("slip_direction", "Direzione dello slittamento con segno", "°", "Angolo di s nel piano, da L verso W (−180…180°): distingue i quattro quadranti che «Direzione dello slittamento» confonde.", 1, G)
+def slip_direction(ctx):
+    return float(np.degrees(np.arctan2(ctx.slip_vector @ ctx.frame.W, ctx.slip_vector @ ctx.frame.L)))
+
+
 @parameter("beta_a", "β (Cg→normale A)", "°", "Angolo tra il vettore tra i centroidi e la normale del nucleo A (stile Janiak).", 1, G)
 def beta_a(ctx):
     return acute_angle_deg(ctx.d, ctx.core_a.normal)
@@ -109,3 +124,23 @@ def core_rms_a(ctx):
 @parameter("core_rms_b", "Planarità nucleo B", "Å", "", 3, "nuclei")
 def core_rms_b(ctx):
     return ctx.core_b.rms
+
+
+@parameter("fragment_a", "Frammento π di A", "", "Numero del frammento π della molecola A (1 = il sistema di anelli più grande).", 0, "nuclei")
+def fragment_a(ctx):
+    return ctx.pair.fa + 1
+
+
+@parameter("fragment_b", "Frammento π di B", "", "", 0, "nuclei")
+def fragment_b(ctx):
+    return ctx.pair.fb + 1
+
+
+@parameter("axis_aspect_a", "Isotropia del nucleo A", "", "Dispersione lungo l'asse corto / lungo l'asse lungo, nel piano (0–1). Vicino a 1 (coronene, porfirina) l'asse lungo automatico è mal definito e la divisione dello slittamento in L e W è arbitraria: conviene definire l'asse con due atomi.", 2, "nuclei")
+def axis_aspect_a(ctx):
+    return ctx.core_a.plane.aspect
+
+
+@parameter("axis_aspect_b", "Isotropia del nucleo B", "", "", 2, "nuclei")
+def axis_aspect_b(ctx):
+    return ctx.core_b.plane.aspect

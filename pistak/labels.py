@@ -11,9 +11,14 @@ from pistak.i18n import tr
 
 
 def relation(pair: Pair) -> str:
-    """Come la seconda molecola è legata alla prima: «stessa [0 1 0]» o «molecola 2 [1 0 0]»."""
+    """Come la seconda molecola è legata alla prima: «stessa [0 1 0]» o «molecola 2 [1 0 0]»; con più frammenti π
+    anche quali («· π1–π2»), e per le coppie nella stessa molecola «intramolecolare · π1–π3»."""
+    frag = f"π{pair.fa + 1}–π{pair.fb + 1}"
+    if pair.intramolecular:
+        return f"{tr('intramolecolare')} · {frag}"
     t = "[" + " ".join(map(str, pair.shift)) + "]"
-    return f"{tr('stessa')} {t}" if pair.a == pair.b else f"{tr('molecola')} {pair.b + 1} {t}"
+    base = f"{tr('stessa')} {t}" if pair.a == pair.b else f"{tr('molecola')} {pair.b + 1} {t}"
+    return f"{base} · {frag}" if pair.fragmented else base
 
 
 def rank_name(rank: int) -> str:

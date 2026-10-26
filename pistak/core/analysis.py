@@ -1,4 +1,4 @@
-"""Catena completa: testo CIF → cella → molecole → nuclei π → coppie vicine."""
+"""Catena completa: testo CIF → cella → molecole → frammenti π → coppie vicine → colonne e contatti tra molecole."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -9,9 +9,9 @@ import numpy as np
 
 from pistak.core.cif import Cif, parse_cif
 from pistak.core.config import Limits, load_limits
-from pistak.core.cores import Core, pi_core
+from pistak.core.cores import Core, apply_axis, pi_fragments
 from pistak.core.errors import InputError
-from pistak.core.pairs import Frame, Pair, collect_pairs, frame_for
+from pistak.core.pairs import Frame, Pair, Shift, _canon, collect_pairs, frame_for, molecule_key
 from pistak.core.stacks import StackColumn, find_stacks
 from pistak.core.structure import Molecule, Structure, build_structure
 
@@ -23,10 +23,35 @@ class MoleculeGroup:
     formula: list[tuple[str, int]]
     count: int
     with_core: int
+    #: Frammenti π per molecola (il massimo tra le molecole del gruppo).
+    fragments: int = 0
 
     @property
     def text(self) -> str:
         return "".join(f"{e}{n if n > 1 else ''}" for e, n in self.formula)
+
+
+@dataclass
+class MoleculeContact:
+    """Un contatto tra due molecole (o, intramolecolare, tra frammenti della stessa molecola) con tutte le sue coppie
+    di frammenti. In modalità canonical i contatti equivalenti per simmetria sono uno solo (`count` per cella)."""
+
+    a: int
+    b: int
+    shift: Shift
+    pairs: list[Pair]
+    count: int
+    contact: float
+    intramolecular: bool = False
+
+    @property
+    def stacks(self) -> list[Pair]:
+        return [p for p in self.pairs if p.kind == "stack"]
+
+    @property
+    def best(self) -> Pair:
+        """La coppia di frammenti più interessante: il primo stack, altrimenti la prima coppia (ordine della tabella)."""
+        return (self.stacks or self.pairs)[0]
 
 
 @dataclass
@@ -43,6 +68,32 @@ class Analysis:
     param_errors: dict[str, str] = field(default_factory=dict)
     #: Colonne di π-stack (molecole impilate lungo una direzione del cristallo).
     stacks: list[StackColumn] = field(default_factory=list)
+    #: Frammenti π di ogni molecola (il primo è `cores[i]`); vuoto se l'analisi è stata fatta senza frammenti.
+    fragments: list[list[Core]] = field(default_factory=list)
+
+    def fragment(self, molecule: int, index: int = 0) -> Core | None:
+        if self.fragments:
+            fs = self.fragments[molecule]
+            return fs[index] if index < len(fs) else None
+        return self.cores[molecule] if index == 0 else None
+
+    def molecule_contacts(self) -> list[MoleculeContact]:
+        """Le coppie di frammenti raccolte per contatto tra molecole, nell'ordine della prima coppia di ciascuno."""
+        groups: dict[tuple, list[Pair]] = {}
+        for p in self.pairs:
+            groups.setdefault(molecule_key(self.structure, p, self.limits), []).append(p)
+        out = []
+        for key, pairs in groups.items():
+            first = pairs[0]
+            intra = key[0] == "intra"
+            if self.limits.pair_mode == "site":
+                count = max(p.count for p in pairs)
+            elif intra:  # quante molecole (equivalenti) della cella hanno questo contatto interno
+                count = len({a for p in pairs for a, *_ in p.members})
+            else:  # contatti tra molecole per cella: i membri delle coppie di frammenti, senza i frammenti
+                count = len({_canon(a, b, sh) for p in pairs for a, b, sh, *_ in p.members})
+            out.append(MoleculeContact(first.a, first.b, first.shift, pairs, count, min(p.contact for p in pairs), intra))
+        return out
 
     def molecule_groups(self) -> list[MoleculeGroup]:
         """Molecole uguali raggruppate per formula (escluse quelle estese)."""
@@ -55,6 +106,7 @@ class Analysis:
             g = groups.setdefault(key, MoleculeGroup(f, 0, 0))
             g.count += 1
             g.with_core += self.cores[i] is not None
+            g.fragments = max(g.fragments, len(self.fragments[i]) if self.fragments else int(self.cores[i] is not None))
         return list(groups.values())
 
     @property
@@ -86,8 +138,9 @@ class PairContext:
         self.A: Molecule = analysis.structure.molecules[pair.a]
         self.B: Molecule = analysis.structure.molecules[pair.b]
         self.shift_vector = analysis.structure.shift_vector(pair.shift)
-        self.core_a: Core = analysis.cores[pair.a]  # type: ignore[assignment]
-        self.core_b: Core = analysis.cores[pair.b].moved(self.shift_vector)  # type: ignore[union-attr]
+        #: I frammenti π della coppia (per le molecole con un solo frammento, il loro nucleo π).
+        self.core_a: Core = analysis.fragment(pair.a, pair.fa)  # type: ignore[assignment]
+        self.core_b: Core = analysis.fragment(pair.b, pair.fb).moved(self.shift_vector)  # type: ignore[union-attr]
 
     @cached_property
     def pos_a(self) -> np.ndarray:
@@ -124,9 +177,11 @@ class PairContext:
 def analyse_cif(cif: Cif, name: str = "", limits: Limits | None = None) -> Analysis:
     limits = limits or load_limits()
     structure = build_structure(cif, limits)
-    cores = [None if m.extended else pi_core(m, limits) for m in structure.molecules]
-    pairs, stack_edges = collect_pairs(structure, cores, limits)
-    return Analysis(name or cif.name, cif, structure, cores, pairs, limits, stacks=find_stacks(structure, stack_edges))
+    fragments = [[] if m.extended else apply_axis(m, pi_fragments(m, limits), limits.long_axis_atoms) for m in structure.molecules]
+    cores = [f[0] if f else None for f in fragments]
+    pairs, stack_edges = collect_pairs(structure, fragments, limits)
+    return Analysis(name or cif.name, cif, structure, cores, pairs, limits, stacks=find_stacks(structure, stack_edges),
+                    fragments=fragments)
 
 
 def analyse_text(text: str, name: str = "", limits: Limits | None = None, block: str | int | None = None) -> Analysis:

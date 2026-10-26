@@ -95,6 +95,12 @@ class Limits:
         "major": "componente con occupanza maggiore",
         "first": "gruppo 1 (come il sito)",
         "all": "tutti gli atomi"}, "numeric": True})
+    # ---- frammenti π e assi ------------------------------------------------------------------------------
+    fragments: str = field(default="all", metadata={"label": "Frammenti π per molecola", "choices": {
+        "all": "tutti i sistemi di anelli planari",
+        "largest": "solo il più grande (come il sito)"}})
+    min_fragment_atoms: int = field(default=5, metadata={"label": "Atomi minimi in un frammento π secondario", "min": 3, "max": 60, "step": 1})
+    long_axis_atoms: str = field(default="", metadata={"label": "Asse lungo da due atomi (etichette, es. C1,C9; vuoto = automatico)", "free": True})
 
     def with_values(self, **kw) -> Limits:
         return replace(self, **kw)
@@ -105,7 +111,7 @@ class Limits:
     @classmethod
     def site(cls, **kw) -> Limits:
         """Le soglie e le convenzioni dell'analizzatore del sito (per i confronti di parità)."""
-        return cls(pair_mode="site", disorder="first", **kw)
+        return cls(pair_mode="site", disorder="first", fragments="largest", **kw)
 
     @classmethod
     def from_dict(cls, data: dict, base: Limits | None = None) -> Limits:
@@ -123,6 +129,10 @@ class Limits:
 
 def _coerce(f, v):
     """Un valore di configurazione convertito nel tipo del campo; ValueError se non è accettabile."""
+    if f.type == "str" and f.metadata.get("free"):
+        if isinstance(v, (str, int, float)) and not isinstance(v, bool):
+            return str(v).strip()
+        raise TypeError(f.name)
     if f.type == "str":
         v = str(v).strip().lower()
         if v in f.metadata.get("choices", {}) or (f.metadata.get("numeric") and v.isdigit()):

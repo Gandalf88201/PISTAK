@@ -28,6 +28,9 @@ class Plane:
     normal: np.ndarray
     long: np.ndarray  # direzione di massima estensione nel piano
     rms: float  # scarto quadratico medio dei punti dal piano (Å)
+    #: Rapporto tra la dispersione lungo l'asse corto e quella lungo l'asse lungo, nel piano (0–1): vicino a 1 il
+    #: nucleo è quasi isotropo (coronene, porfirina…) e l'asse lungo calcolato è mal definito.
+    aspect: float = 0.0
 
 
 def _canonical(v: np.ndarray) -> np.ndarray:
@@ -41,7 +44,8 @@ def fit_plane(ps: np.ndarray) -> Plane:
     c = ps.mean(axis=0)
     d = ps - c
     values, vectors = np.linalg.eigh(d.T @ d)  # autovalori in ordine crescente
-    return Plane(c, _canonical(vectors[:, 0]), _canonical(vectors[:, 2]), float(np.sqrt(max(0.0, values[0]) / len(ps))))
+    aspect = float(np.sqrt(max(0.0, values[1]) / values[2])) if values[2] > 0 else 0.0
+    return Plane(c, _canonical(vectors[:, 0]), _canonical(vectors[:, 2]), float(np.sqrt(max(0.0, values[0]) / len(ps))), aspect)
 
 
 def convex_hull(points: np.ndarray) -> np.ndarray:

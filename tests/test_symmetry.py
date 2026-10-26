@@ -27,8 +27,8 @@ def test_ogni_contatto_una_volta(cif):
     assert sum(p.count for p in site.pairs) == 2 * sum(p.count for p in canon.pairs)
     seen = set()
     for p in canon.pairs:
-        for a, b, sh in p.members:
-            key = min((a, b, sh), (b, a, tuple(-x for x in sh)))
+        for a, b, sh, fa, fb in p.members:
+            key = min((a, b, sh, fa, fb), (b, a, tuple(-x for x in sh), fb, fa))
             assert key not in seen
             seen.add(key)
 
@@ -233,4 +233,4 @@ def test_soglie_da_dizionario():
                             "max_slip": True, "sconosciuta": 1})
     assert lim.pair_mode == "site" and lim.disorder == "3" and lim.max_dihedral == 15.0
     assert lim.overlap_measure == "atoms" and lim.max_slip == 0.0  # valori non validi ignorati
-    assert Limits.site() == Limits(pair_mode="site", disorder="first")
+    assert Limits.site() == Limits(pair_mode="site", disorder="first", fragments="largest")

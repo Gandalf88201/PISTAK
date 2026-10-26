@@ -33,13 +33,13 @@ pistak/
     cif.py          lettura del CIF (blocchi data_, cella, simmetria, atomi, regola di disordine)
     spacegroups.py  operazioni di simmetria dal simbolo di Hall o H-M (quando il CIF non le elenca)
     structure.py    cella → atomi simmetrizzati → legami → molecole intere
-    cores.py        anelli e nucleo π di ogni molecola
-    pairs.py        coppie di molecole vicine, equivalenza per simmetria, classificazione (stack / parallela / inclinata)
+    cores.py        anelli e frammenti π di ogni molecola (sistemi di anelli planari), asse lungo dagli atomi
+    pairs.py        coppie di frammenti π vicini, equivalenza per simmetria, classificazione (stack / parallela / inclinata)
     stacks.py       colonne di stack (rango 0–3) dal grafo delle coppie
     ringpairs.py    parametri anello–anello (Cg···Cg, α, β, γ)
     config.py       soglie (Limits) e preferenze: pistak/default.toml + user.toml dell'utente
     errors.py       errori con codice stabile (CifError, StructureError, InputError)
-    analysis.py     la catena completa e il PairContext
+    analysis.py     la catena completa, il PairContext e il riepilogo per molecola (MoleculeContact)
   params/    registro dei parametri misurabili (Registry; builtin = sito, extra = fase 2, plugins)
   io/        export CSV/JSON/XYZ con chiavi fisse; batch (parallelo), stats (statistiche), compare (confronto)
   gui/       finestra (PySide6): session.py = stato condiviso e sincronizzazione; views/ = le viste;
@@ -138,6 +138,23 @@ Tutte si scelgono in *Analisi ▸ Soglie…*, in `user.toml` (`[limits]`) o da t
   si allargano da sole quanto serve (celle piccole o molto oblique), con `neighbour_shells` come minimo. `site`: come il
   sito — ogni contatto due volte (a→b e b→a, con slittamenti che possono differire), equivalenza per valori arrotondati,
   sempre ±`neighbour_shells` celle.
+* **Frammenti π** (`fragments`, `min_fragment_atoms`). `all` (predefinito): ogni sistema di anelli planari condensati
+  di una molecola è un frammento (π1 = il più grande, il nucleo π di sempre; gli altri con almeno `min_fragment_atoms`
+  atomi). Le coppie sono tra frammenti: per due molecole a contatto si misurano π1–π1 e le altre combinazioni di
+  frammenti a meno di `contact_cutoff` + 1 Å; con più frammenti nella stessa molecola anche le coppie intramolecolari.
+  La relazione in tabella dice quali («molecola 2 [1 0 0] · π2–π1», «intramolecolare · π1–π3»); i parametri
+  `fragment_a`/`fragment_b` li danno come numeri. Equivalenza per simmetria anche tra frammenti. `largest`: solo π1
+  (il sito). Il **riepilogo per molecola** (*Dettaglio ▸ Contatti*, `molecule_contacts` nel JSON) raccoglie per ogni
+  contatto tra molecole le sue coppie di frammenti, quanti stack, il contatto più corto e la coppia migliore (doppio
+  clic la seleziona).
+* **Asse lungo** (`long_axis_atoms`). Vuoto: la direzione di massima estensione del frammento; per nuclei quasi
+  isotropi (parametro *Isotropia del nucleo* vicino a 1: coronene, porfirine) è mal definita e così la divisione dello
+  slittamento in L e W. Con due etichette del CIF («C1,C9») l'asse va dal primo atomo al secondo, proiettato sul piano,
+  per i frammenti che li contengono (o per π1). Se un'etichetta compare più volte nella molecola (molecola su un
+  elemento di simmetria) si prende la coppia più lontana: «C1,C1» va bene.
+* **Slittamenti con segno**: `long_slip_signed`, `lat_slip_signed` (componenti di s da A verso B lungo L e W) e
+  `slip_direction` (−180…180°). Il segno ha senso fisico se l'asse è definito dagli atomi e la molecola non sta su un
+  centro di inversione (che rovescia l'asse); scambiando A e B cambia segno.
 * **Atomi disordinati** (`disorder`): `major` (predefinito) tiene, per ogni assemblaggio (`_atom_site_disorder_assembly`),
   il gruppo con l'occupanza media più alta; `first` il gruppo 1 (il sito); `all` tutti; un numero, quel gruppo.
 * **Criterio di stack**: oltre ad angolo tra i piani e distanza interplanare, la sovrapposizione dei nuclei proiettati

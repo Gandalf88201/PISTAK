@@ -22,6 +22,9 @@ max_slip = 0.0             # Å; 0 = nessun limite allo slittamento
 # convenzioni (quelle del sito: pair_mode = "site", disorder = "first")
 pair_mode = "canonical"    # canonical: una coppia per contatto, equivalenza dalle operazioni del gruppo | site: come il sito
 disorder = "major"         # major: componente con occupanza maggiore | first: gruppo 1 | all: tutto | 2, 3…: quel gruppo
+fragments = "all"          # all: tutti i sistemi di anelli planari di ogni molecola | largest: solo il più grande (sito)
+min_fragment_atoms = 5     # atomi minimi di un frammento π secondario (il principale si tiene sempre)
+long_axis_atoms = ""       # asse lungo da due atomi, per etichetta ("C1,C9"); vuoto = direzione di massima estensione
 
 [gui]
 language = "it"            # it | en | auto (auto = lingua del sistema) — si cambia anche dal menu Lingua

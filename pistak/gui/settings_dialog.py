@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QPushButton,
     QScrollArea,
     QSpinBox,
@@ -27,12 +28,14 @@ class SettingsDialog(QDialog):
     def __init__(self, limits: Limits, parent=None):
         super().__init__(parent)
         self.setWindowTitle(tr("Soglie dell'analisi"))
-        self.editors: dict[str, QSpinBox | QDoubleSpinBox | QComboBox] = {}
+        self.editors: dict[str, QSpinBox | QDoubleSpinBox | QComboBox | QLineEdit] = {}
         form = QFormLayout()
         for f in fields(Limits):
             m = f.metadata
-            if f.type == "str":
-                w: QSpinBox | QDoubleSpinBox | QComboBox = QComboBox()
+            if f.type == "str" and m.get("free"):
+                w: QSpinBox | QDoubleSpinBox | QComboBox | QLineEdit = QLineEdit()
+            elif f.type == "str":
+                w = QComboBox()
                 for key, text in m["choices"].items():
                     w.addItem(tr(text), key)
             elif f.type == "int":
@@ -81,7 +84,9 @@ class SettingsDialog(QDialog):
     def _set_values(self, limits: Limits) -> None:
         for name, w in self.editors.items():
             v = getattr(limits, name)
-            if isinstance(w, QComboBox):
+            if isinstance(w, QLineEdit):
+                w.setText(v)
+            elif isinstance(w, QComboBox):
                 if w.findData(v) < 0:  # un valore valido ma senza voce nel menu (es. disorder = "2" da user.toml)
                     w.addItem(v, v)
                 w.setCurrentIndex(w.findData(v))
@@ -94,6 +99,8 @@ class SettingsDialog(QDialog):
 
     def limits(self) -> Limits:
         def value(w):
+            if isinstance(w, QLineEdit):
+                return w.text().strip()
             if isinstance(w, QComboBox):
                 return w.currentData()
             return int(w.value()) if isinstance(w, QSpinBox) else float(w.value())
