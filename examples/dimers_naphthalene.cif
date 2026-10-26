@@ -1,0 +1,37 @@
+# Struttura SINTETICA costruita per le prove: non è una misura sperimentale.
+data_dimers
+_symmetry_space_group_name_H-M 'P -1'
+_cell_length_a 6.20000
+_cell_length_b 7.90000
+_cell_length_c 9.40000
+_cell_angle_alpha 83.0000
+_cell_angle_beta 97.0000
+_cell_angle_gamma 101.0000
+loop_
+_symmetry_equiv_pos_as_xyz
+'x, y, z'
+'-x, -y, -z'
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+C1 C 0.047389 0.267920 0.160079
+C2 C -0.172958 0.232811 0.190961
+H1 H -0.254130 0.337602 0.206511
+C3 C -0.288082 0.061860 0.201687
+H2 H -0.458063 0.034775 0.225511
+C4 C -0.182859 -0.073981 0.181530
+H3 H -0.271669 -0.205857 0.189804
+C5 C 0.037488 -0.038871 0.150647
+H4 H 0.118659 -0.143663 0.135097
+C6 C 0.152611 0.132080 0.139921
+C7 C 0.382859 0.473981 0.118470
+H5 H 0.471669 0.605857 0.110196
+C8 C 0.162512 0.438871 0.149353
+H6 H 0.081341 0.543663 0.164903
+C9 C 0.372958 0.167189 0.109039
+H7 H 0.454130 0.062398 0.093489
+C10 C 0.488082 0.338140 0.098313
+H8 H 0.658063 0.365225 0.074489

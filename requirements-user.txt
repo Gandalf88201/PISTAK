@@ -1,0 +1,2 @@
+# I tuoi pacchetti aggiuntivi (uno per riga, sintassi pip): ./start.py li installa al prossimo avvio.
+# Esempio, per usarli nei plugin:  pandas   matplotlib   gemmi

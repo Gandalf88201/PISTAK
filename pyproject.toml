@@ -1,0 +1,69 @@
+# Metadati del pacchetto e configurazione degli strumenti (pytest, ruff).
+# ./start.py continua a installare da requirements*.txt: se cambi le dipendenze, aggiorna entrambi.
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pistak"
+dynamic = ["version"]
+description = "Analisi dei π-stack nei cristalli molecolari a partire da file CIF"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+]
+
+[project.optional-dependencies]
+gui = [
+    "PySide6-Essentials>=6.6",
+    "pyvista>=0.43",
+    "pyvistaqt>=0.11",
+    "pyqtgraph>=0.13.3",
+]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+pistak = "pistak.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "pistak.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["pistak*"]
+
+# ---------------------------------------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "gui: richiede PySide6 e apre finestre (offscreen); escludi con -m 'not gui'",
+    "parity: confronto con i numeri dell'algoritmo originale del sito",
+    "snapshot: confronto con i risultati salvati in tests/snapshots (rigenera con --update-snapshots)",
+]
+
+# ---------------------------------------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py311"
+line-length = 140
+extend-exclude = [".venv", "tests/parity"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = [
+    "E501",  # righe lunghe: lo stile attuale arriva a ~160 colonne, non si riformatta in blocco
+    "E731",  # lambda assegnate a un nome, usate come piccole funzioni locali
+    "B008",  # QModelIndex() come argomento predefinito è l'idioma di Qt
+    "B905",  # zip() senza strict=: le sequenze hanno sempre la stessa lunghezza per costruzione
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/test_i18n.py" = ["E402"]  # la seconda metà del file importa PySide6 solo se disponibile
+
+[tool.ruff.lint.isort]
+known-first-party = ["pistak", "cifgen"]

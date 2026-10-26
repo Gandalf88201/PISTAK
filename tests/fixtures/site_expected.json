@@ -1,0 +1,295 @@
+{
+ "demo_naphthalene.cif": {
+  "cellAtoms": 18,
+  "molecules": [
+   {
+    "atoms": 18,
+    "bonds": 19,
+    "extended": false,
+    "core": {
+     "kind": "rings",
+     "atoms": 10,
+     "rms": 0
+    }
+   }
+  ],
+  "pairs": [
+   {
+    "kind": "stack",
+    "interplanar": 3.4000040317080433,
+    "longSlip": 1.5000015167402083,
+    "latSlip": 0.8000011103405567,
+    "slip": 1.700001860813408,
+    "dihedral": 0.0000012074182697257333,
+    "centroidDistance": 3.80132,
+    "contact": 3.4136081744775355,
+    "overlap": 0.3,
+    "count": 2
+   }
+  ]
+ },
+ "dimers_naphthalene.cif": {
+  "cellAtoms": 36,
+  "molecules": [
+   {
+    "atoms": 18,
+    "bonds": 19,
+    "extended": false,
+    "core": {
+     "kind": "rings",
+     "atoms": 10,
+     "rms": 0.000002488940443848558
+    }
+   },
+   {
+    "atoms": 18,
+    "bonds": 19,
+    "extended": false,
+    "core": {
+     "kind": "rings",
+     "atoms": 10,
+     "rms": 0.0000024889370254444254
+    }
+   }
+  ],
+  "pairs": [
+   {
+    "kind": "stack",
+    "interplanar": 2.7847561952385194,
+    "longSlip": 1.9523079636097689,
+    "latSlip": 2.780933900545881,
+    "slip": 3.3978080793328287,
+    "dihedral": 0,
+    "centroidDistance": 4.393172749949489,
+    "contact": 2.8246292626454483,
+    "overlap": 0.1,
+    "count": 2
+   },
+   {
+    "kind": "parallel",
+    "interplanar": 1.2890497437859094,
+    "longSlip": 4.645693628232396,
+    "latSlip": 3.898189511894772,
+    "slip": 6.06451570680178,
+    "dihedral": 0,
+    "centroidDistance": 6.2,
+    "contact": 2.431454429747124,
+    "overlap": 0,
+    "count": 4
+   },
+   {
+    "kind": "parallel",
+    "interplanar": 1.8090987013531263,
+    "longSlip": 6.54860434356123,
+    "latSlip": 0.20920542954019616,
+    "slip": 6.551945189045624,
+    "dihedral": 0,
+    "centroidDistance": 6.797118791921741,
+    "contact": 2.4905257447546543,
+    "overlap": 0,
+    "count": 2
+   },
+   {
+    "kind": "parallel",
+    "interplanar": 3.0981484451390364,
+    "longSlip": 1.9029107153288332,
+    "latSlip": 4.107394941434968,
+    "slip": 4.526782786421152,
+    "dihedral": 0,
+    "centroidDistance": 5.485461346464514,
+    "contact": 3.4029746412195077,
+    "overlap": 0,
+    "count": 2
+   }
+  ]
+ },
+ "herringbone_anthracene.cif": {
+  "cellAtoms": 48,
+  "molecules": [
+   {
+    "atoms": 24,
+    "bonds": 26,
+    "extended": false,
+    "core": {
+     "kind": "rings",
+     "atoms": 14,
+     "rms": 0.0000024363072470935857
+    }
+   },
+   {
+    "atoms": 24,
+    "bonds": 26,
+    "extended": false,
+    "core": {
+     "kind": "rings",
+     "atoms": 14,
+     "rms": 0.000002436283691125048
+    }
+   }
+  ],
+  "pairs": [
+   {
+    "kind": "stack",
+    "interplanar": 3.9138094692903587,
+    "longSlip": 3.86924856373586,
+    "latSlip": 0.8044112570825395,
+    "slip": 3.9519820240599692,
+    "dihedral": 0,
+    "centroidDistance": 5.56202,
+    "contact": 3.9220630893304977,
+    "overlap": 0.21428571428571427,
+    "count": 4
+   },
+   {
+    "kind": "tilted",
+    "interplanar": 5.851072253834555,
+    "longSlip": 2.0145137437068046,
+    "latSlip": 3.0181387312421184,
+    "slip": 3.628694947857617,
+    "dihedral": 89.44389344324064,
+    "centroidDistance": 6.884945427830201,
+    "contact": 2.447279638938928,
+    "overlap": 0.14285714285714285,
+    "count": 4
+   },
+   {
+    "kind": "tilted",
+    "interplanar": 5.851072253834557,
+    "longSlip": 3.3236893012593893,
+    "latSlip": 1.4561993178480988,
+    "slip": 3.6286949478576176,
+    "dihedral": 89.44389344324064,
+    "centroidDistance": 6.884945427830203,
+    "contact": 2.447279638938929,
+    "overlap": 0.14285714285714285,
+    "count": 4
+   }
+  ]
+ },
+ "infinite_chain.cif": {
+  "cellAtoms": 1,
+  "molecules": [
+   {
+    "atoms": 1,
+    "bonds": 0,
+    "extended": true,
+    "core": null
+   }
+  ],
+  "pairs": []
+ },
+ "tilted_anthracene.cif": {
+  "cellAtoms": 48,
+  "molecules": [
+   {
+    "atoms": 24,
+    "bonds": 26,
+    "extended": false,
+    "core": {
+     "kind": "rings",
+     "atoms": 14,
+     "rms": 0.0000017055719333724145
+    }
+   },
+   {
+    "atoms": 24,
+    "bonds": 26,
+    "extended": false,
+    "core": {
+     "kind": "rings",
+     "atoms": 14,
+     "rms": 0.0000017056232051479557
+    }
+   }
+  ],
+  "pairs": [
+   {
+    "kind": "stack",
+    "interplanar": 2.258000995663417,
+    "longSlip": 5.444467173469495,
+    "latSlip": 0.08672977283561645,
+    "slip": 5.445157927597971,
+    "dihedral": 0,
+    "centroidDistance": 5.89477,
+    "contact": 2.3366169166733584,
+    "overlap": 0.14285714285714285,
+    "count": 4
+   },
+   {
+    "kind": "tilted",
+    "interplanar": 1.0722964099353405,
+    "longSlip": 3.0419282332760775,
+    "latSlip": 5.456868066948995,
+    "slip": 6.247458401341283,
+    "dihedral": 45.045666932891194,
+    "centroidDistance": 6.3388134589408764,
+    "contact": 2.7671163674954515,
+    "overlap": 0,
+    "count": 4
+   },
+   {
+    "kind": "tilted",
+    "interplanar": 1.0722964099353414,
+    "longSlip": 2.8519654150257963,
+    "latSlip": 5.5585096696854395,
+    "slip": 6.247458401341284,
+    "dihedral": 45.045666932891194,
+    "centroidDistance": 6.338813458940877,
+    "contact": 2.767116367495451,
+    "overlap": 0,
+    "count": 4
+   }
+  ]
+ },
+ "zigzag_chain.cif": {
+  "cellAtoms": 12,
+  "molecules": [
+   {
+    "atoms": 6,
+    "bonds": 5,
+    "extended": false,
+    "core": {
+     "kind": "molecule",
+     "atoms": 6,
+     "rms": 5.551115123125783e-17
+    }
+   },
+   {
+    "atoms": 6,
+    "bonds": 5,
+    "extended": false,
+    "core": {
+     "kind": "molecule",
+     "atoms": 6,
+     "rms": 0
+    }
+   }
+  ],
+  "pairs": [
+   {
+    "kind": "stack",
+    "interplanar": 4,
+    "longSlip": 2.182571104050844e-17,
+    "latSlip": 4.435525500353133e-16,
+    "slip": 4.440892098500626e-16,
+    "dihedral": 0,
+    "centroidDistance": 4,
+    "contact": 4,
+    "overlap": 1,
+    "count": 4
+   },
+   {
+    "kind": "parallel",
+    "interplanar": 0.7999999999999998,
+    "longSlip": 9.821767634107564,
+    "latSlip": 1.2187590990844215,
+    "slip": 9.897095190004187,
+    "dihedral": 0,
+    "centroidDistance": 9.929375267357157,
+    "contact": 3.7269279574491376,
+    "overlap": 0,
+    "count": 2
+   }
+  ]
+ }
+}

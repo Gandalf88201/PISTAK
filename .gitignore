@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+._*
+.DS_Store
+config/user.toml
+.pytest_cache/
+output/
+config/last.pistak
+*.pistak.tmp
+
+# istantanee di strutture locali (PISTAK_SNAPSHOT_DIR), non distribuibili
+tests/snapshots/local/
+*.egg-info/
+build/
+.ruff_cache/

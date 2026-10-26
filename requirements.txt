@@ -1,0 +1,8 @@
+# Pacchetti dell'applicazione: ./start.py li installa in .venv/ quando questo file cambia.
+# Il nucleo di calcolo (pistak/core) usa solo numpy e scipy; il resto serve alla finestra grafica.
+numpy>=1.26
+scipy>=1.11
+PySide6-Essentials>=6.6
+pyvista>=0.43
+pyvistaqt>=0.11
+pyqtgraph>=0.13.3

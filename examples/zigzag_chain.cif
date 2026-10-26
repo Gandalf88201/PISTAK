@@ -1,0 +1,25 @@
+# Struttura SINTETICA costruita per le prove: non è una misura sperimentale.
+data_zigzag
+_symmetry_space_group_name_H-M 'P -1'
+_cell_length_a 20.00000
+_cell_length_b 6.00000
+_cell_length_c 4.00000
+_cell_angle_alpha 90.0000
+_cell_angle_beta 90.0000
+_cell_angle_gamma 90.0000
+loop_
+_symmetry_equiv_pos_as_xyz
+'x, y, z'
+'-x, -y, -z'
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+C1 C 0.100000 0.300000 0.100000
+C2 C 0.162500 0.416667 0.100000
+C3 C 0.225000 0.300000 0.100000
+C4 C 0.287500 0.416667 0.100000
+C5 C 0.350000 0.300000 0.100000
+C6 C 0.412500 0.416667 0.100000

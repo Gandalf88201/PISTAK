@@ -1,0 +1,23 @@
+# Valori di partenza di PISTAK. Non modificare questo file: crea config/user.toml
+# (o usa Analisi ▸ Impostazioni nella finestra) e scrivi lì solo ciò che vuoi cambiare.
+
+[limits]
+# Soglie del sito "Analizzatore di π-stack" (moleculesfriends.eu). Unità: Å e gradi.
+max_dihedral = 20.0        # sopra questo angolo tra i piani medi la coppia è "inclinata"
+max_interplanar = 4.2      # sopra questa distanza interplanare non c'è π-stack
+contact_cutoff = 4.0       # due molecole sono vicine se hanno atomi pesanti più vicini di così
+ring_rms = 0.10            # un anello è planare se lo scarto quadratico dal piano è sotto questo
+molecule_rms = 0.15        # idem per il nucleo π intero
+bond_tolerance = 0.4       # legame se d < somma dei raggi covalenti + tolleranza
+same_site = 0.3            # due posizioni più vicine di così sono lo stesso atomo
+max_ring_size = 8
+neighbour_shells = 2       # celle vicine esplorate in ogni direzione
+ring_pair_max_distance = 6.0   # Cg···Cg massimo per elencare una coppia di anelli (fase 2)
+max_cell_atoms =6000      # il sito, nel browser, si fermava a 2500
+
+[gui]
+language = "it"            # it | en | auto (auto = lingua del sistema) — si cambia anche dal menu Lingua
+background = "auto"        # auto | light | dark
+show_hydrogens = true
+sphere_scale = 0.28
+stick_radius = 0.11
