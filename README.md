@@ -17,6 +17,7 @@ e un sistema di plugin.
 ./start.py stats cartella/ --kind stack --corr --csv coppie.csv --summary descrizione.csv
 ./start.py sessione.pistak                                   # riapre una sessione salvata
 ./start.py params                # parametri disponibili (con quelli dei plugin)
+./start.py config                # dove stanno impostazioni personali, ultima sessione e plugin
 ```
 
 La prima volta `start.py` crea `.venv/` con un Python 3.11–3.13 (se il tuo predefinito è più nuovo ne cerca uno adatto,
@@ -35,20 +36,32 @@ pistak/
     pairs.py        coppie di molecole vicine e loro classificazione (stack / parallela / inclinata)
     stacks.py       colonne di stack (rango 0–3) dal grafo delle coppie
     ringpairs.py    parametri anello–anello (Cg···Cg, α, β, γ)
-    config.py       soglie (Limits) lette da config/default.toml e config/user.toml
+    config.py       soglie (Limits) e preferenze: pistak/default.toml + user.toml dell'utente
+    errors.py       errori con codice stabile (CifError, StructureError, InputError)
     analysis.py     la catena completa e il PairContext
-  params/    registro dei parametri misurabili (builtin = sito, extra = fase 2, plugins)
-  io/        export CSV/JSON/XYZ; batch (parallelo), stats (statistiche), compare (confronto)
+  params/    registro dei parametri misurabili (Registry; builtin = sito, extra = fase 2, plugins)
+  io/        export CSV/JSON/XYZ con chiavi fisse; batch (parallelo), stats (statistiche), compare (confronto)
   gui/       finestra (PySide6): session.py = stato condiviso e sincronizzazione; views/ = le viste;
              collection_window.py = confronto e statistiche; session_file.py = formato .pistak
+  errors.py  messaggi degli errori nella lingua corrente
+  labels.py  testi per l'utente costruiti dai risultati (relazione della coppia, tipo di colonna)
+  i18n.py    traduzioni (i18n_en.py: il dizionario inglese)
   cli.py     comandi da terminale
+  default.toml  soglie e preferenze predefinite
 plugins/     i tuoi parametri (caricati all'avvio)
-config/      soglie e preferenze
 examples/    CIF sintetici di prova (non sperimentali)
 tests/       pytest, compresa la parità con l'algoritmo originale del sito
 ```
 
-Regola di dipendenza: `core` non importa nient'altro; `params` usa `core`; `io` e `gui` usano entrambi.
+Regola di dipendenza (controllata da `tests/test_structure.py`): `core` importa solo sé stesso, niente traduzioni;
+`params` usa `core` (e `i18n` per le etichette dei parametri); `io` usa `core` e `params` e scrive file con
+intestazioni fisse in inglese, uguali in ogni lingua; `gui` e `cli` usano tutto e traducono con `labels`, `errors`, `i18n`.
+
+**Impostazioni personali.** Stanno fuori dal progetto, nella cartella dell'utente (`./start.py config` la mostra):
+macOS `~/Library/Application Support/PISTAK/`, Windows `%APPDATA%\PISTAK\`, Linux `~/.config/pistak/`, oppure quella
+indicata da `PISTAK_CONFIG_DIR`. Contiene `user.toml` (soglie e preferenze che sovrascrivono `pistak/default.toml`),
+`last.pistak` (l'ultima sessione) e `plugins/`. Le versioni precedenti usavano `config/` dentro il progetto: alla prima
+apertura `user.toml` e `last.pistak` vengono copiati da lì nella cartella nuova.
 
 ## Finestre e sincronizzazione
 
@@ -86,14 +99,14 @@ Da terminale: `compare` e `stats` (vedi sopra). Tutto si esporta in CSV.
 anche se sposti il file), le soglie, la coppia selezionata e il filtro di ogni gruppo, le viste con le loro impostazioni
 (assi scelti, colonne della tabella, opzioni e camera del 3D…), la disposizione e la geometria dei pannelli, e l'elenco dei
 file della finestra di confronto. Si riapre da *File ▸ Apri una sessione…*, trascinando il file sulla finestra o con
-`./start.py sessione.pistak`. Alla chiusura l'ultima sessione si salva da sola in `config/last.pistak`
+`./start.py sessione.pistak`. Alla chiusura l'ultima sessione si salva da sola in `last.pistak`, nella cartella delle impostazioni personali
 (*File ▸ Riapri l'ultima sessione*). Una vista nuova che scrivi tu salva le sue impostazioni implementando `extra_state()` e
 `apply_state()`; le chiavi sconosciute di un file più nuovo si ignorano.
 
 ## Lingua e dimensioni delle finestre
 
 * **Italiano / English:** menu *Lingua* (la finestra si ricostruisce da sola conservando sessione, selezione e pannelli), oppure
-  `./start.py --lang en`, `PISTAK_LANG=en`, o `language = "en"` in `config/user.toml` (sezione `[gui]`; `auto` = lingua del sistema).
+  `./start.py --lang en`, `PISTAK_LANG=en`, o `language = "en"` in `user.toml` (sezione `[gui]`; `auto` = lingua del sistema).
   I testi sono scritti in italiano dentro `tr("...")` e tradotti da `pistak/i18n_en.py`; `python -m pistak.i18n_check` elenca
   quelli senza traduzione. I plugin traducono le proprie etichette con `pistak.i18n.add_translations("en", {...})`.
 * **Finestre:** la finestra principale non supera mai lo schermo (94% dell'area utile), si può rimpicciolire fino a circa
@@ -102,11 +115,14 @@ file della finestra di confronto. Si riapre da *File ▸ Apri una sessione…*, 
 
 ## Estendere
 
-* **Un parametro nuovo**: copia `plugins/example_param.py`, cambia la funzione, *Analisi ▸ Ricarica i plugin*. Compare
+* **Un parametro nuovo**: copia `plugins/example_param.py` (in `plugins/` del progetto o in quella della cartella delle
+  impostazioni personali), cambia la funzione, *Analisi ▸ Ricarica i plugin*. Compare
   ovunque (tabella, assi, export). Contesto disponibile: vedi la docstring del file e `core/analysis.py::PairContext`.
+  Da codice si può anche calcolare un insieme diverso di parametri con un registro proprio: `reg = Registry()`,
+  `@reg.parameter(...)`, `compute_all(analisi, reg)`; gli errori dei parametri finiscono in `analisi.param_errors`.
 * **Una vista nuova**: eredita da `gui/views/base.py::PairView` (la sincronizzazione è già fatta) e aggiungila a
   `VIEW_TYPES` in `gui/views/__init__.py`.
-* **Soglie**: *Analisi ▸ Soglie…* o `config/user.toml` (`[limits]`).
+* **Soglie**: *Analisi ▸ Soglie…* o `user.toml` nella cartella delle impostazioni personali (`[limits]`).
 * **Un altro renderer 3D**: la scena è descritta da `gui/scene.py` (solo numpy); `views/view3d.py` la disegna con PyVista.
 
 ## Parità con il sito

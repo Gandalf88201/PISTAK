@@ -35,10 +35,10 @@ def constant_texts() -> set[str]:
 
     from pistak import params
     from pistak.api import ensure_plugins
-    from pistak.cli import ERROR_TEXT
     from pistak.core.config import Limits
     from pistak.core.ringpairs import HEADERS
     from pistak.core.stacks import RANK_NAMES
+    from pistak.errors import ERROR_TEXT
     from pistak.gui import collection_window, theme
     from pistak.gui.views import VIEW_TYPES
     from pistak.gui.views.table_view import FIXED

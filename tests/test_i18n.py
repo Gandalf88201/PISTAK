@@ -78,8 +78,8 @@ def test_traduzioni_dei_plugin():
 
 # ---- parti non grafiche ---------------------------------------------------------------------------
 def test_nomi_dei_parametri_e_dei_tipi_in_inglese():
-    from pistak.core.stacks import rank_name
     from pistak.gui import theme
+    from pistak.labels import rank_name
     from pistak.params import get_spec
 
     i18n.set_language("en")
@@ -92,17 +92,20 @@ def test_nomi_dei_parametri_e_dei_tipi_in_inglese():
     assert get_spec("interplanar").name == "Distanza interplanare" and rank_name(1) == "colonna"
 
 
-def test_relazione_della_coppia_e_csv_in_inglese(tmp_path):
+def test_relazione_della_coppia_in_inglese_e_csv_uguale_nelle_due_lingue(tmp_path):
     from pistak import analyse_file
     from pistak.io import export
+    from pistak.labels import relation
 
     a = analyse_file(EX / "herringbone_anthracene.cif")
     i18n.set_language("en")
-    assert any(p.relation().startswith("molecule 2") for p in a.pairs) and a.pairs[0].relation().startswith("same")
-    out = export.write_csv(a, tmp_path / "p.csv")
-    assert out.read_text().splitlines()[0].startswith("n,type,relation,")
+    assert any(relation(p).startswith("molecule 2") for p in a.pairs) and relation(a.pairs[0]).startswith("same")
+    en = export.write_csv(a, tmp_path / "p.csv").read_text()
     i18n.set_language("it")
-    assert export.write_csv(a, tmp_path / "q.csv").read_text().splitlines()[0].startswith("n,tipo,relazione,")
+    assert relation(a.pairs[0]).startswith("stessa")
+    it = export.write_csv(a, tmp_path / "q.csv").read_text()
+    # le intestazioni dei file non si traducono: uno script li legge allo stesso modo in ogni lingua
+    assert en == it and it.splitlines()[0].startswith("n,kind,molecule_a,molecule_b,shift,")
 
 
 def test_terminale_in_inglese(capsys):
@@ -133,7 +136,7 @@ def test_batch_compare_stats_in_inglese(tmp_path, capsys):
     assert main(["--lang", "en", "stats", str(EX), "--kind", "stack", "--summary", str(tmp_path / "s.csv")]) == 0
     out = capsys.readouterr().out
     assert "pairs in" in out and "mean" in out
-    assert (tmp_path / "s.csv").read_text().splitlines()[0].startswith("parameter,n,pairs,mean,std_dev")
+    assert (tmp_path / "s.csv").read_text().splitlines()[0].startswith("parameter,n,pairs,mean,std,")
 
 
 def test_sessioni_vecchie_con_nomi_italiani_delle_viste():

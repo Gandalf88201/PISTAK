@@ -11,7 +11,6 @@ from pathlib import Path
 
 import numpy as np
 
-from pistak.i18n import tr
 from pistak.io.batch import StructureEntry
 
 KINDS = ("stack", "parallel", "tilted")
@@ -66,7 +65,7 @@ class PairTable:
         path = Path(path)
         with path.open("w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
-            w.writerow(["file", "n", tr("tipo"), tr("equivalenti"), *self.keys])
+            w.writerow(["file", "n", "kind", "count", *self.keys])
             for i in range(len(self)):
                 w.writerow([self.files[i], self.index[i] + 1, self.kinds[i], self.counts[i],
                             *[("" if not math.isfinite(v) else f"{v:.5g}") for v in self.data[i]]])
@@ -99,6 +98,20 @@ def describe(table: PairTable, keys: list[str] | None = None, kind: str | None =
                     "q25": _wquantile(x, w, 0.25), "median": _wquantile(x, w, 0.5), "q75": _wquantile(x, w, 0.75),
                     "max": float(x.max())})
     return out
+
+
+DESCRIBE_FIELDS = ("mean", "std", "min", "q25", "median", "q75", "max")
+
+
+def write_describe_csv(rows: list[dict], path: str | Path) -> Path:
+    """Scrive il risultato di `describe` (una riga per parametro, intestazioni fisse)."""
+    path = Path(path)
+    with path.open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["parameter", "n", "pairs", *DESCRIBE_FIELDS])
+        for r in rows:
+            w.writerow([r["key"], r["n"], r.get("pairs", ""), *[f"{r[k]:.5g}" if k in r else "" for k in DESCRIBE_FIELDS]])
+    return path
 
 
 def correlation(table: PairTable, keys: list[str], kind: str | None = None, files: set[str] | None = None) -> np.ndarray:

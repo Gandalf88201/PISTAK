@@ -6,17 +6,13 @@ from pathlib import Path
 from pistak.core import analysis as _core
 from pistak.core.analysis import Analysis
 from pistak.core.config import Limits, load_limits
-from pistak.params import compute_all, load_plugins
-
-_plugins_loaded = False
+from pistak.params import REGISTRY, compute_all, load_plugins
 
 
 def ensure_plugins(force: bool = False) -> list[str]:
     """Carica i plugin la prima volta (o sempre, con force=True). Ritorna i file caricati."""
-    global _plugins_loaded
-    if _plugins_loaded and not force:
+    if REGISTRY.plugins_loaded and not force:
         return []
-    _plugins_loaded = True
     return load_plugins()
 
 

@@ -12,7 +12,12 @@ comparison and statistics across structures, synchronised 3D / projection / para
 ./start.py compare a.cif b.cif --csv comparison.csv
 ./start.py stats folder/ --kind stack --corr
 ./start.py session.pistak        # reopen a saved session
+./start.py config                # where personal settings, last session and plugins live
 ```
+
+Exported files (CSV/JSON/XYZ) always use fixed English column names, whatever the interface language.
+Personal settings (`user.toml`), the last session and a `plugins/` folder live in the user's config folder
+(macOS `~/Library/Application Support/PISTAK/`, Windows `%APPDATA%\\PISTAK\\`, Linux `~/.config/pistak/`, or `PISTAK_CONFIG_DIR`).
 
 Windows fit the screen (never larger than 94% of the usable area), can be resized freely, and toolbars wrap.
 The full documentation is in `README.md` (Italian); code comments are in Italian, UI texts are translated via

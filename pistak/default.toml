@@ -1,5 +1,6 @@
-# Valori di partenza di PISTAK. Non modificare questo file: crea config/user.toml
-# (o usa Analisi ▸ Impostazioni nella finestra) e scrivi lì solo ciò che vuoi cambiare.
+# Valori di partenza di PISTAK. Non modificare questo file: le impostazioni personali vanno in user.toml nella
+# cartella di configurazione dell'utente (vedi `pistak config` o Analisi ▸ Impostazioni nella finestra), e lì si
+# scrive solo ciò che si vuole cambiare.
 
 [limits]
 # Soglie del sito "Analizzatore di π-stack" (moleculesfriends.eu). Unità: Å e gradi.

@@ -21,14 +21,9 @@ import numpy as np
 from pistak.core.geometry import angle_deg
 from pistak.core.pairs import Pair, Shift
 from pistak.core.structure import Structure
-from pistak.i18n import tr
 
-RANK_NAMES = {0: "aggregato finito", 1: "colonna", 2: "strato", 3: "rete 3D"}  # testi italiani, da passare a tr()
+RANK_NAMES = {0: "aggregato finito", 1: "colonna", 2: "strato", 3: "rete 3D"}  # testi italiani: pistak.labels.rank_name
 RANK_KEYS = {0: "finite", 1: "column", 2: "layer", 3: "network"}  # identificatori stabili (non tradotti)
-
-
-def rank_name(rank: int) -> str:
-    return tr(RANK_NAMES[rank])
 
 
 @dataclass
@@ -41,11 +36,6 @@ class StackColumn:
     translations: list[Shift] = field(default_factory=list)
     axis: np.ndarray | None = None  # rango 1: vettore di traslazione in Å (passo della colonna)
     edges: list[tuple[int, int, Shift, Pair]] = field(default_factory=list)
-
-    @property
-    def kind(self) -> str:
-        """Il nome nella lingua corrente (da mostrare all'utente)."""
-        return rank_name(self.rank)
 
     @property
     def kind_key(self) -> str:

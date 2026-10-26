@@ -15,8 +15,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from pistak.core.config import Limits
-from pistak.core.stacks import rank_name
-from pistak.i18n import tr
 
 #: Parametri riportati per la coppia di π-stack migliore (la prima: la più vicina tra gli stack).
 SUMMARY_KEYS = ["interplanar", "long_slip", "lat_slip", "dihedral", "centroid_distance", "contact", "overlap_area", "beta_a"]
@@ -35,6 +33,7 @@ class PairRow:
 class StructureEntry:
     path: str
     name: str
+    #: Messaggio leggibile, nella lingua del processo che ha analizzato il file (il codice stabile è `error_code`).
     error: str | None = None
     space_group: str = ""
     cell: tuple[float, ...] = ()
@@ -43,6 +42,7 @@ class StructureEntry:
     counts: dict[str, int] = field(default_factory=dict)
     pairs: list[PairRow] = field(default_factory=list)
     columns: list[dict] = field(default_factory=list)
+    error_code: str | None = None
 
     @property
     def best(self) -> dict[str, float]:
@@ -57,13 +57,13 @@ BatchResult = StructureEntry  # nome usato dalla prima versione
 def analyse_one(path: str, limits: Limits) -> StructureEntry:
     """Analizza un file e ne riassume il risultato (eseguita nei processi di lavoro)."""
     from pistak.api import analyse_file
-    from pistak.cli import describe_error
+    from pistak.errors import describe_error, error_code
 
     name = Path(path).name
     try:
         a = analyse_file(path, limits)
     except Exception as e:  # noqa: BLE001
-        return StructureEntry(path, name, error=describe_error(e))
+        return StructureEntry(path, name, error=describe_error(e), error_code=error_code(e))
     c = a.cif.cell
     counts = {k: 0 for k in ("stack", "parallel", "tilted")}
     for p in a.pairs:
@@ -100,7 +100,7 @@ def run_batch(files: list[Path], limits: Limits, workers: int = 0,
                     try:
                         out[p] = fut.result()
                     except Exception as e:  # noqa: BLE001  (processo morto, ecc.)
-                        out[p] = StructureEntry(p, Path(p).name, error=f"{type(e).__name__}: {e}")
+                        out[p] = StructureEntry(p, Path(p).name, error=f"{type(e).__name__}: {e}", error_code=type(e).__name__)
                     if progress:
                         progress(i, len(paths), out[p].name)
         except (RuntimeError, OSError, BrokenExecutor):
@@ -124,8 +124,8 @@ def find_cifs(folder: str | Path) -> list[Path]:
 
 def write_summary_csv(results: list[StructureEntry], path: str | Path) -> Path:
     path = Path(path)
-    head = ["file", tr("errore"), tr("gruppo"), "a", "b", "c", "alpha", "beta", "gamma", tr("molecole"), tr("coppie"),
-            "n_stack", "n_parallel", "n_tilted", tr("colonne")] + [f"stack1_{k}" for k in SUMMARY_KEYS]
+    head = ["file", "error", "space_group", "a", "b", "c", "alpha", "beta", "gamma", "molecules", "pairs",
+            "n_stack", "n_parallel", "n_tilted", "columns"] + [f"stack1_{k}" for k in SUMMARY_KEYS]
     with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(head)
@@ -135,5 +135,5 @@ def write_summary_csv(results: list[StructureEntry], path: str | Path) -> Path:
             vals = [("" if not math.isfinite(best.get(k, math.nan)) else f"{best[k]:.4g}") for k in SUMMARY_KEYS]
             w.writerow([r.name, r.error or "", r.space_group, *cell, r.formulas, r.n_pairs,
                         r.counts.get("stack", ""), r.counts.get("parallel", ""), r.counts.get("tilted", ""),
-                        "; ".join(rank_name(c["rank"]) for c in r.columns), *vals])
+                        "; ".join(c["kind_key"] for c in r.columns), *vals])
     return path

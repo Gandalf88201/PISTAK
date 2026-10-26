@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from pistak.core.elements import is_known
+from pistak.core.errors import CifError
 
 
 @dataclass(frozen=True)
@@ -54,15 +55,6 @@ class Cif:
     atoms: list[CifAtom]
     skipped_disorder: int = 0
     items: dict[str, str] = field(default_factory=dict)  # tutti i valori semplici del blocco, per i plugin
-
-
-class CifError(Exception):
-    """Errore di lettura. `code` è uno tra: empty, noCell, noAtoms, noSymops, badSymop."""
-
-    def __init__(self, code: str, detail: str = ""):
-        super().__init__(f"{code}: {detail}" if detail else code)
-        self.code = code
-        self.detail = detail
 
 
 @dataclass

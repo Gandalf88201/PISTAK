@@ -1,5 +1,6 @@
 import os
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 
 os.environ["PISTAK_LANG"] = "it"  # i test controllano i testi italiani; quelli inglesi cambiano lingua da soli
+# impostazioni personali, ultima sessione e plugin dell'utente: in una cartella temporanea, mai quella vera
+os.environ["PISTAK_CONFIG_DIR"] = tempfile.mkdtemp(prefix="pistak-test-config-")
 
 # Marcatori assegnati per modulo (vedi [tool.pytest.ini_options] in pyproject.toml):
 #   pytest -m "not gui"     solo il calcolo, senza finestre (molto più veloce)

@@ -9,7 +9,6 @@ from pathlib import Path
 
 import numpy as np
 
-from pistak.i18n import tr
 from pistak.io.batch import PairRow, StructureEntry
 
 #: Parametri della tabella di confronto (chiavi del registro).
@@ -66,8 +65,8 @@ def write_csv(rows: list[CompareRow], path: str | Path, keys: list[str] | None =
     path = Path(path)
     with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["file", tr("errore"), tr("gruppo"), tr("molecole"), "n_stack", tr("colonne"), *keys, *[f"delta_{k}" for k in keys],
-                    tr("distanza_motivo")])
+        w.writerow(["file", "error", "space_group", "molecules", "n_stack", "columns", *keys, *[f"delta_{k}" for k in keys],
+                    "motif_distance"])
         fmt = lambda v: "" if v is None or not math.isfinite(v) else f"{v:.4g}"  # noqa: E731
         for r in rows:
             w.writerow([r.name, r.error or "", r.space_group, r.formulas, r.n_stack, r.n_columns,

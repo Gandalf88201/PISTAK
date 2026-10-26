@@ -15,13 +15,7 @@ from scipy.spatial import cKDTree
 from pistak.core.cif import Cell, Cif
 from pistak.core.config import Limits
 from pistak.core.elements import covalent_radius
-
-
-class StructureError(Exception):
-    def __init__(self, code: str, detail: str = ""):
-        super().__init__(f"{code}: {detail}" if detail else code)
-        self.code = code
-        self.detail = detail
+from pistak.core.errors import StructureError
 
 
 def cell_vectors(c: Cell) -> np.ndarray:

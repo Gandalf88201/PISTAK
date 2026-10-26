@@ -37,6 +37,9 @@ version = { attr = "pistak.__version__" }
 [tool.setuptools.packages.find]
 include = ["pistak*"]
 
+[tool.setuptools.package-data]
+pistak = ["default.toml"]
+
 # ---------------------------------------------------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]

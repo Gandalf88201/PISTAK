@@ -13,11 +13,11 @@ from pathlib import Path
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, Signal
 
 from pistak import api
-from pistak.cli import describe_error
 from pistak.core.analysis import Analysis, read_cif_file
 from pistak.core.cif import parse_cif
 from pistak.core.config import Limits, load_limits, save_user_config
 from pistak.core.demo import demo_cif
+from pistak.errors import describe_error
 from pistak.i18n import tf
 
 GROUPS = ("A", "B", "C")

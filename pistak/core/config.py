@@ -1,18 +1,69 @@
-"""Soglie dell'analisi, caricabili da TOML.
+"""Soglie dell'analisi e preferenze, caricabili da TOML.
 
-`config/default.toml` contiene i valori del sito; `config/user.toml` (se esiste) li sovrascrive.
-Anche la finestra "Impostazioni" scrive su `user.toml`. Per usare soglie diverse da codice::
+Due file, il secondo sovrascrive il primo:
+
+* `pistak/default.toml`: i valori di partenza (quelli del sito), distribuiti con il pacchetto;
+* `user.toml` nella cartella di configurazione dell'utente (`user_config_dir()`), scritto anche dalla finestra
+  «Impostazioni». La cartella si sceglie con la variabile PISTAK_CONFIG_DIR; altrimenti è quella del sistema
+  (macOS: ~/Library/Application Support/PISTAK, Windows: %APPDATA%\\PISTAK, Linux: ~/.config/pistak).
+
+Lì stanno anche l'ultima sessione (`last.pistak`) e una cartella `plugins/`. Le versioni precedenti tenevano
+`user.toml` e `last.pistak` in `config/` dentro il progetto: alla prima lettura vengono copiati nella nuova cartella.
+
+Per usare soglie diverse da codice::
 
     analyse_file("a.cif", Limits(max_dihedral=15, max_interplanar=4.0))
 """
 from __future__ import annotations
 
+import os
+import shutil
+import sys
 import tomllib
 from dataclasses import asdict, dataclass, field, fields, replace
 from pathlib import Path
 
+#: Cartella del progetto quando si lavora dai sorgenti (esempi, plugins/ del repository).
 ROOT = Path(__file__).resolve().parents[2]
-CONFIG_DIR = ROOT / "config"
+DEFAULTS_FILE = Path(__file__).resolve().parents[1] / "default.toml"
+USER_FILE = "user.toml"
+#: Dove le versioni precedenti tenevano le impostazioni personali.
+LEGACY_CONFIG_DIR = ROOT / "config"
+_LEGACY_FILES = ("user.toml", "last.pistak")
+
+
+def _system_config_dir() -> Path:
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "PISTAK"
+    if os.name == "nt":
+        return Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming") / "PISTAK"
+    return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "pistak"
+
+
+def _migrate_legacy(target: Path) -> None:
+    """Copia user.toml e last.pistak dalla vecchia cartella config/ del progetto, se nella nuova mancano."""
+    for name in _LEGACY_FILES:
+        old, new = LEGACY_CONFIG_DIR / name, target / name
+        if old.is_file() and not new.exists():
+            try:
+                target.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(old, new)
+            except OSError:
+                pass  # cartella non scrivibile: si continua con i valori predefiniti
+
+
+def user_config_dir() -> Path:
+    """Cartella delle impostazioni personali (può non esistere ancora: la crea chi scrive)."""
+    env = os.environ.get("PISTAK_CONFIG_DIR")
+    if env:
+        return Path(env).expanduser()
+    d = _system_config_dir()
+    _migrate_legacy(d)
+    return d
+
+
+def user_config_file() -> Path:
+    return user_config_dir() / USER_FILE
 
 
 @dataclass(frozen=True)
@@ -45,22 +96,22 @@ def _read(path: Path) -> dict:
         return tomllib.load(f)
 
 
-def load_limits(config_dir: Path = CONFIG_DIR) -> Limits:
+def _merged(section: str, config_dir: Path | None) -> dict:
+    merged: dict = dict(_read(DEFAULTS_FILE).get(section, {}))
+    merged.update(_read((config_dir or user_config_dir()) / USER_FILE).get(section, {}))
+    return merged
+
+
+def load_limits(config_dir: Path | None = None) -> Limits:
     """Soglie del sito, poi quelle di default.toml, poi quelle dell'utente."""
-    merged: dict = {}
-    for name in ("default.toml", "user.toml"):
-        merged.update(_read(config_dir / name).get("limits", {}))
     known = {f.name: f.type for f in fields(Limits)}
-    clean = {k: (int(v) if known[k] == "int" else float(v)) for k, v in merged.items() if k in known}
+    clean = {k: (int(v) if known[k] == "int" else float(v)) for k, v in _merged("limits", config_dir).items() if k in known}
     return Limits(**clean)
 
 
-def load_section(name: str, config_dir: Path = CONFIG_DIR) -> dict:
+def load_section(name: str, config_dir: Path | None = None) -> dict:
     """Una sezione qualunque di default.toml/user.toml (per le preferenze della GUI)."""
-    merged: dict = {}
-    for fn in ("default.toml", "user.toml"):
-        merged.update(_read(config_dir / fn).get(name, {}))
-    return merged
+    return _merged(name, config_dir)
 
 
 def _toml_value(v) -> str:
@@ -72,16 +123,17 @@ def _toml_value(v) -> str:
 
 
 def save_user_config(limits: Limits | None = None, sections: dict[str, dict] | None = None,
-                     config_dir: Path = CONFIG_DIR) -> Path:
-    """Scrive config/user.toml, conservando le altre sezioni già presenti."""
-    path = config_dir / "user.toml"
+                     config_dir: Path | None = None) -> Path:
+    """Scrive user.toml nella cartella dell'utente, conservando le altre sezioni già presenti."""
+    config_dir = config_dir or user_config_dir()
+    path = config_dir / USER_FILE
     data = _read(path)
     if limits is not None:
         data["limits"] = limits.to_dict()
     for k, v in (sections or {}).items():
         data.setdefault(k, {}).update(v)
     config_dir.mkdir(parents=True, exist_ok=True)
-    lines = ["# Impostazioni personali / Personal settings: sovrascrivono / override config/default.toml. Modificabile a mano / editable.\n"]
+    lines = ["# Impostazioni personali / Personal settings: sovrascrivono / override pistak/default.toml. Modificabile a mano / editable.\n"]
     for section, values in data.items():
         lines.append(f"\n[{section}]\n")
         lines.extend(f"{k} = {_toml_value(v)}\n" for k, v in values.items())

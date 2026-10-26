@@ -44,7 +44,7 @@ from pistak.gui.screen import fit_to_screen
 from pistak.i18n import tf, tr
 from pistak.io import compare as cmp
 from pistak.io.batch import StructureEntry, find_cifs, run_batch, write_summary_csv
-from pistak.io.stats import PairTable, correlation, describe, summary_rows
+from pistak.io.stats import PairTable, correlation, describe, summary_rows, write_describe_csv
 from pistak.params import get_spec
 
 KIND_FILTER = [("Solo π-stack", "stack"), ("Parallele", "parallel"), ("Inclinate", "tilted"), ("Tutti i tipi", None)]
@@ -582,11 +582,5 @@ class CollectionWindow(QMainWindow):
         elif what == "summary":
             write_summary_csv(self.entries, path)
         else:
-            import csv
-
-            with open(path, "w", newline="", encoding="utf-8") as f:
-                w = csv.writer(f)
-                w.writerow([tr("parametro"), "n", tr("coppie"), tr("media"), tr("dev_std"), "min", "q25", tr("mediana"), "q75", "max"])
-                for d in self.describe_rows():
-                    w.writerow([d["key"], d["n"], d.get("pairs", ""), *[f"{d[k]:.5g}" if k in d else "" for k in ("mean", "std", "min", "q25", "median", "q75", "max")]])
+            write_describe_csv(self.describe_rows(), path)
         self.info.setText(tf("Scritto {path}", path=path))

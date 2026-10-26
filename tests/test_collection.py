@@ -52,7 +52,7 @@ def test_file_illeggibile_non_ferma_il_resto(tmp_path):
 def test_riepilogo_csv(entries, tmp_path):
     out = write_summary_csv(entries, tmp_path / "s.csv")
     lines = out.read_text().splitlines()
-    assert len(lines) == 7 and lines[0].startswith("file,errore")
+    assert len(lines) == 7 and lines[0].startswith("file,error,space_group,")
 
 
 def test_tabella_e_descrizione(entries):

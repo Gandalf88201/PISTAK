@@ -10,10 +10,10 @@ import numpy as np
 from pistak.core.cif import Cif, parse_cif
 from pistak.core.config import Limits, load_limits
 from pistak.core.cores import Core, pi_core
+from pistak.core.errors import InputError
 from pistak.core.pairs import Frame, Pair, collect_pairs, pair_frame
 from pistak.core.stacks import StackColumn, find_stacks
 from pistak.core.structure import Molecule, Structure, build_structure
-from pistak.i18n import tf
 
 MAX_BYTES = 50 * 1024 * 1024
 
@@ -39,6 +39,8 @@ class Analysis:
     limits: Limits
     #: Chiavi dei parametri presenti in `Pair.values`, nell'ordine di calcolo.
     param_keys: list[str] = field(default_factory=list)
+    #: Errori dei parametri che hanno fallito su qualche coppia: chiave → ultimo messaggio (riempito da `compute_all`).
+    param_errors: dict[str, str] = field(default_factory=dict)
     #: Colonne di π-stack (molecole impilate lungo una direzione del cristallo).
     stacks: list[StackColumn] = field(default_factory=list)
 
@@ -134,7 +136,7 @@ def analyse_text(text: str, name: str = "", limits: Limits | None = None) -> Ana
 def read_cif_file(path: str | Path) -> str:
     p = Path(path)
     if p.stat().st_size > MAX_BYTES:
-        raise ValueError(tf("file troppo grande (> {mb} MB): {name}", mb=MAX_BYTES // 2**20, name=p.name))
+        raise InputError("fileTooLarge", f"(> {MAX_BYTES // 2**20} MB): {p.name}")
     return p.read_text(encoding="utf-8", errors="replace")
 
 

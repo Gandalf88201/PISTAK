@@ -66,11 +66,11 @@ TEXT: dict[str, str] = {
     "Analisi di {name}…": "Analysing {name}…",
     "{name}: {n} coppie di molecole vicine": "{name}: {n} neighbouring molecule pairs",
     "{name}: nessuna coppia con nuclei π": "{name}: no pairs with π cores",
-    "file troppo grande (> {mb} MB): {name}": "file too large (> {mb} MB): {name}",
+    "file troppo grande": "file too large",
     # ---- soglie -------------------------------------------------------------------------
     "Soglie dell'analisi": "Analysis thresholds",
-    "Cambiare una soglia rifà l'analisi. «Salva» le scrive in config/user.toml.":
-        "Changing a threshold re-runs the analysis. “Save” writes them to config/user.toml.",
+    "Cambiare una soglia rifà l'analisi. «Salva» le scrive in {path}.":
+        "Changing a threshold re-runs the analysis. “Save” writes them to {path}.",
     "Valori del sito": "Website values",
     "Applica": "Apply",
     "Applica e salva": "Apply and save",
@@ -262,17 +262,16 @@ TEXT: dict[str, str] = {
     # ---- intestazioni dei CSV ---------------------------------------------------------------------
     "tipo": "type",
     "relazione": "relation",
-    "errore": "error",
-    "molecole": "molecules",
-    "colonne": "columns",
-    "equivalenti": "equivalents",
-    "distanza_motivo": "motif_distance",
     "parametro": "parameter",
     "media": "mean",
-    "dev_std": "std_dev",
     "mediana": "median",
-    "{name} coppia {n} {kind} interplanare={ip:.3f} slittamento_L={ls:.3f} slittamento_W={ws:.3f}":
-        "{name} pair {n} {kind} interplanar={ip:.3f} slip_L={ls:.3f} slip_W={ws:.3f}",
+    "cartella delle impostazioni: {path}": "settings folder:   {path}",
+    "impostazioni personali:      {path}": "personal settings: {path}",
+    "valori predefiniti:          {path}": "defaults:          {path}",
+    "(non ancora creato)": "(not created yet)",
+    "cartelle dei plugin:": "plugin folders:",
+    "(non esiste)": "(does not exist)",
+    "mostra dove stanno impostazioni personali e plugin": "show where personal settings and plugins are stored",
     # ---- parametri: nomi, descrizioni, gruppi ---------------------------------------------------
     "sito": "website",
     "angoli": "angles",

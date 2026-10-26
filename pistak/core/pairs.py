@@ -23,7 +23,6 @@ from pistak.core.config import Limits
 from pistak.core.cores import Core
 from pistak.core.geometry import convex_hull, points_inside, unit
 from pistak.core.structure import Structure
-from pistak.i18n import tr
 
 KINDS = ("stack", "parallel", "tilted")  # in ordine di interesse
 Shift = tuple[int, int, int]
@@ -79,10 +78,6 @@ class Pair:
     def get(self, key: str, default: float = float("nan")) -> float:
         """Valore di un parametro del registro per questa coppia."""
         return self.values.get(key, default)
-
-    def relation(self) -> str:
-        t = "[" + " ".join(map(str, self.shift)) + "]"
-        return f"{tr('stessa')} {t}" if self.a == self.b else f"{tr('molecola')} {self.b + 1} {t}"
 
 
 def measure_pair(s: Structure, cores: list[Core | None], a: int, b: int, shift: Shift, limits: Limits) -> Pair | None:

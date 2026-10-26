@@ -8,7 +8,8 @@ lo lascia in italiano (mai un errore). I testi con numeri usano i segnaposto di 
 
 Scegliere la lingua, in ordine di priorità:
     1. variabile d'ambiente PISTAK_LANG (it | en)       2. `./start.py --lang en`
-    3. config/user.toml, sezione [gui], language = "it" | "en" | "auto"   (auto = la lingua del sistema)
+    3. user.toml nella cartella dell'utente (`pistak config`), sezione [gui], language = "it" | "en" | "auto"
+       (auto = la lingua del sistema)
     4. italiano
 
 Si cambia anche dal menu (Lingua / Language): la finestra si ricostruisce da sola conservando la sessione.
@@ -103,7 +104,7 @@ def tf(text: str, **values) -> str:
 
 
 def save_language(lang: str) -> None:
-    """Salva la scelta in config/user.toml, così vale anche al prossimo avvio."""
+    """Salva la scelta in user.toml (cartella dell'utente), così vale anche al prossimo avvio."""
     from pistak.core.config import save_user_config
 
     save_user_config(sections={"gui": {"language": resolve(lang)}})

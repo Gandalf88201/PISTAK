@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (
 )
 
 from pistak import i18n
-from pistak.core.config import ROOT, Limits
+from pistak.core.config import ROOT, Limits, user_config_dir
 from pistak.gui import session_file
 from pistak.gui.screen import clamp_into_screen, fit_to_screen
 from pistak.gui.session import GROUPS, Session
@@ -36,11 +36,15 @@ from pistak.gui.views import LEGACY_KINDS, VIEW_TYPES, view_title
 from pistak.gui.views.base import PairView
 from pistak.i18n import tf, tr
 from pistak.io import export
-from pistak.params import load_errors, specs
+from pistak.params import load_errors, plugin_dirs, specs
 
 APP_NAME = "PISTAK"
-LAST_SESSION = ROOT / "config" / "last.pistak"
 DEFAULT_SIZE = (1500, 920)
+
+
+def last_session_path() -> Path:
+    """Dove si salva da sola l'ultima sessione, alla chiusura (cartella di configurazione dell'utente)."""
+    return user_config_dir() / "last.pistak"
 
 
 class MainWindow(QMainWindow):
@@ -173,7 +177,7 @@ class MainWindow(QMainWindow):
         f.addSeparator()
         self._act(f, tr("Salva la sessione…"), self.save_session_dialog, QKeySequence.StandardKey.Save)
         self._act(f, tr("Apri una sessione…"), self.open_session_dialog, "Ctrl+Shift+O")
-        self._act(f, tr("Riapri l'ultima sessione"), lambda: self.load_session(LAST_SESSION))
+        self._act(f, tr("Riapri l'ultima sessione"), lambda: self.load_session(last_session_path()))
         f.addSeparator()
         ex = f.addMenu(tr("Esporta"))
         self._act(ex, tr("Tabella delle coppie (CSV)…"), lambda: self._export("csv"))
@@ -291,8 +295,8 @@ class MainWindow(QMainWindow):
             self.status_label.setText(tf("Plugin ricaricati: {names}", names=", ".join(loaded) or tr("nessuno")))
 
     def _open_plugins(self) -> None:
-        folder = ROOT / "plugins"
-        folder.mkdir(exist_ok=True)
+        folder = plugin_dirs()[0]  # plugins/ del progetto se si lavora dai sorgenti, altrimenti quella dell'utente
+        folder.mkdir(parents=True, exist_ok=True)
         if sys.platform == "darwin":
             subprocess.Popen(["open", str(folder)])
         elif os.name == "nt":
@@ -488,7 +492,9 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event) -> None:  # noqa: N802
         if self.autosave and self.session.source_text:
             try:
-                session_file.write(LAST_SESSION, self.state())  # per «Riapri l'ultima sessione»
+                path = last_session_path()
+                path.parent.mkdir(parents=True, exist_ok=True)
+                session_file.write(path, self.state())  # per «Riapri l'ultima sessione»
             except OSError:
                 pass
         if self.collection is not None:

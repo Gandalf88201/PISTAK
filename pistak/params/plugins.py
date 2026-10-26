@@ -1,8 +1,13 @@
 """Caricamento dei plugin dell'utente.
 
-Ogni file `.py` nella cartella `plugins/` (e in quelle elencate in $PISTAK_PLUGINS, separate da ':')
-viene eseguito all'avvio. Basta che usi `@parameter(...)` per aggiungere parametri. I file che iniziano
-con '_' o '.' sono ignorati (su volumi exFAT macOS crea file '._nome' che non sono codice).
+Ogni file `.py` nelle cartelle dei plugin viene eseguito all'avvio; basta che usi `@parameter(...)` per aggiungere
+parametri al registro predefinito. Le cartelle, in ordine:
+
+* `plugins/` del progetto, se si lavora dai sorgenti;
+* `plugins/` nella cartella di configurazione dell'utente (`pistak.core.config.user_config_dir()`);
+* quelle elencate in $PISTAK_PLUGINS (separate da ':', ';' su Windows).
+
+I file che iniziano con '_' o '.' sono ignorati (su volumi exFAT macOS crea file '._nome' che non sono codice).
 """
 from __future__ import annotations
 
@@ -12,17 +17,18 @@ import sys
 import traceback
 from pathlib import Path
 
-from pistak.core.config import ROOT
-from pistak.params import registry
+from pistak.core.config import ROOT, user_config_dir
+from pistak.params.registry import REGISTRY, Registry
 
-PLUGIN_DIRS = [ROOT / "plugins"]
-#: Problemi incontrati caricando i plugin: nome file → messaggio.
-load_errors: dict[str, str] = {}
+#: Problemi incontrati caricando i plugin nel registro predefinito: nome file → messaggio.
+load_errors: dict[str, str] = REGISTRY.load_errors
 
 
 def plugin_dirs() -> list[Path]:
-    extra = [Path(p).expanduser() for p in os.environ.get("PISTAK_PLUGINS", "").split(os.pathsep) if p]
-    return PLUGIN_DIRS + extra
+    dirs = [d for d in (ROOT / "plugins",) if d.is_dir()]
+    dirs.append(user_config_dir() / "plugins")
+    dirs += [Path(p).expanduser() for p in os.environ.get("PISTAK_PLUGINS", "").split(os.pathsep) if p]
+    return dirs
 
 
 def plugin_files() -> list[Path]:
@@ -33,14 +39,17 @@ def plugin_files() -> list[Path]:
     return files
 
 
-def load_plugins() -> list[str]:
-    """(Ri)carica tutti i plugin. Ritorna i nomi dei file caricati con successo."""
+def load_plugins(registry: Registry = REGISTRY) -> list[str]:
+    """(Ri)carica tutti i plugin. Ritorna i nomi dei file caricati con successo.
+
+    I plugin registrano con `@parameter`, cioè nel registro predefinito: per questo, durante il caricamento, la
+    sorgente si imposta su quello. Un registro diverso riceve solo gli errori di caricamento."""
     ok: list[str] = []
-    load_errors.clear()
+    registry.load_errors.clear()
     for path in plugin_files():
         name = path.name
-        registry.remove_source(name)  # ricaricando, i parametri vecchi del file spariscono
-        prev = registry.set_source(name)
+        REGISTRY.remove_source(name)  # ricaricando, i parametri vecchi del file spariscono
+        prev = REGISTRY.set_source(name)
         try:
             spec = importlib.util.spec_from_file_location(f"pistak_plugin_{path.stem}", path)
             assert spec and spec.loader
@@ -49,8 +58,9 @@ def load_plugins() -> list[str]:
             spec.loader.exec_module(module)
             ok.append(name)
         except Exception:
-            registry.remove_source(name)
-            load_errors[name] = traceback.format_exc(limit=4)
+            REGISTRY.remove_source(name)
+            registry.load_errors[name] = traceback.format_exc(limit=4)
         finally:
-            registry.set_source(prev)
+            REGISTRY.set_source(prev)
+    registry.plugins_loaded = True
     return ok

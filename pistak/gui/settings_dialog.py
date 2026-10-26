@@ -16,9 +16,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from pistak.core.config import Limits
+from pistak.core.config import Limits, user_config_file
 from pistak.gui.screen import fit_to_screen
-from pistak.i18n import tr
+from pistak.i18n import tf, tr
 
 
 class SettingsDialog(QDialog):
@@ -41,7 +41,7 @@ class SettingsDialog(QDialog):
             w.setValue(getattr(limits, f.name))
             self.editors[f.name] = w
             form.addRow(tr(m["label"]), w)
-        note = QLabel(tr("Cambiare una soglia rifà l'analisi. «Salva» le scrive in config/user.toml."))
+        note = QLabel(tf("Cambiare una soglia rifà l'analisi. «Salva» le scrive in {path}.", path=user_config_file()))
         note.setWordWrap(True)
         reset = QPushButton(tr("Valori del sito"))
         reset.clicked.connect(self._reset)

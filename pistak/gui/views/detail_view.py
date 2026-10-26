@@ -12,7 +12,8 @@ from pistak.gui import theme
 from pistak.gui.session import Session
 from pistak.gui.views.base import PairView
 from pistak.i18n import tf, tr
-from pistak.params import errors, load_errors, specs
+from pistak.labels import rank_name, relation
+from pistak.params import load_errors, specs
 
 
 class DetailView(PairView):
@@ -73,7 +74,7 @@ class DetailView(PairView):
         for r, c in enumerate(cols):
             core = a.cores[c.molecules[0]]
             axis = f"[{' '.join(map(str, c.translations[0]))}]" if c.rank == 1 else (tf("{n} direzioni", n=c.rank) if c.rank else "–")
-            row = [c.kind, ", ".join(str(m + 1) for m in c.molecules), "–" if c.repeat is None else f"{c.repeat:.2f}", axis,
+            row = [rank_name(c.rank), ", ".join(str(m + 1) for m in c.molecules), "–" if c.repeat is None else f"{c.repeat:.2f}", axis,
                    f"{c.mean('interplanar'):.2f}", f"{c.mean('long_slip'):.2f}", f"{c.mean('lat_slip'):.2f}",
                    "–" if core is None or c.axis is None else f"{c.axis_normal_angle(core.normal):.1f}"]
             for k, v in enumerate(row):
@@ -85,6 +86,7 @@ class DetailView(PairView):
         self._notes()
 
     def _notes(self) -> None:
+        errors = self.analysis.param_errors if self.analysis else {}
         msgs = ["<p>" + tf("<b>Plugin {n}</b> non caricato:", n=n) + f"<pre>{m}</pre></p>" for n, m in load_errors.items()]
         msgs += ["<p>" + tf("<b>Parametro {k}</b> ha dato errori:", k=k) + f"<pre>{m}</pre></p>" for k, m in errors.items()]
         self.notes.setHtml("".join(msgs) or tr("<p>Nessun avviso.</p>"))
@@ -97,7 +99,7 @@ class DetailView(PairView):
         pair, a = self.pair, self.analysis
         if not (pair and a):
             return
-        QTreeWidgetItem(self.params, [tf("Coppia {n}: {kind}", n=pair.index + 1, kind=theme.kind_label(pair.kind)), pair.relation(), ""])
+        QTreeWidgetItem(self.params, [tf("Coppia {n}: {kind}", n=pair.index + 1, kind=theme.kind_label(pair.kind)), relation(pair), ""])
         groups: dict[str, QTreeWidgetItem] = {}
         for s in specs():
             top = groups.get(s.group_name)

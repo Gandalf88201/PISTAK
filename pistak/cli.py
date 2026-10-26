@@ -9,6 +9,7 @@
     python -m pistak gui sessione.pistak   riapre una sessione salvata dalla finestra
     python -m pistak params                elenco dei parametri disponibili (con quelli dei plugin)
     python -m pistak demo > demo.cif       scrive il cristallo dimostrativo
+    python -m pistak config                dove stanno impostazioni personali, ultima sessione e plugin
     python -m pistak --lang en ...         interfaccia in inglese (anche PISTAK_LANG=en)
 """
 from __future__ import annotations
@@ -18,22 +19,10 @@ import sys
 from pathlib import Path
 
 from pistak import i18n
-from pistak.core.cif import CifError
 from pistak.core.config import Limits, load_limits
-from pistak.core.structure import StructureError
+from pistak.errors import ERROR_TEXT, describe_error  # noqa: F401  (ERROR_TEXT: per chi lo importava da qui)
 from pistak.i18n import tf, tr
-
-ERROR_TEXT = {  # testi italiani: si traducono al momento dell'uso, con tr()
-    "empty": "il file è vuoto", "noCell": "mancano i parametri di cella", "noAtoms": "non ci sono atomi con coordinate frazionarie",
-    "noSymops": "mancano le operazioni di simmetria (e il gruppo non è P1)", "badSymop": "operazione di simmetria illeggibile",
-    "tooLarge": "troppi atomi nella cella",
-}
-
-
-def describe_error(e: Exception) -> str:
-    if isinstance(e, (CifError, StructureError)):
-        return f"{tr(ERROR_TEXT.get(e.code, e.code))} {e.detail}".strip()
-    return f"{type(e).__name__}: {e}"
+from pistak.labels import relation
 
 
 def _limits(args) -> Limits:
@@ -71,7 +60,7 @@ def cmd_analyze(args) -> int:
               f"{tr('contatto'):>8}  {tr('relazione')}")
         for p in a.pairs[: args.rows]:
             print(f"{p.index + 1:>3} {p.kind:<8} {p.interplanar:8.2f} {p.long_slip:7.2f} {p.lat_slip:7.2f} {p.dihedral:7.1f} "
-                  f"{p.centroid_distance:7.2f} {p.contact:8.2f}  {p.relation()}")
+                  f"{p.centroid_distance:7.2f} {p.contact:8.2f}  {relation(p)}")
         if len(a.pairs) > args.rows:
             print(tf("… altre {n} coppie (usa --rows o --csv)", n=len(a.pairs) - args.rows))
     if args.csv:
@@ -139,7 +128,7 @@ def cmd_compare(args) -> int:
 
 
 def cmd_stats(args) -> int:
-    from pistak.io.stats import PairTable, correlation, describe
+    from pistak.io.stats import PairTable, correlation, describe, write_describe_csv
 
     results = _entries(args)
     if results is None:
@@ -168,14 +157,7 @@ def cmd_stats(args) -> int:
     if args.csv:
         print(tr("scritto"), table.write_csv(args.csv))
     if args.summary:
-        import csv as _csv
-
-        with open(args.summary, "w", newline="", encoding="utf-8") as f:
-            w = _csv.writer(f)
-            w.writerow([tr("parametro"), "n", tr("coppie"), tr("media"), tr("dev_std"), "min", "q25", tr("mediana"), "q75", "max"])
-            for r in rows:
-                w.writerow([r["key"], r["n"], r.get("pairs", ""), *[f"{r[k]:.5g}" if k in r else "" for k in ("mean", "std", "min", "q25", "median", "q75", "max")]])
-        print(tr("scritto"), args.summary)
+        print(tr("scritto"), write_describe_csv(rows, args.summary))
     return 0
 
 
@@ -193,6 +175,20 @@ def cmd_params(_args) -> int:
         print(f"  {s.key:<20} {s.name}{unit}  <{s.source}>")
     for name, msg in load_errors.items():
         print("\n" + tf("plugin {name} non caricato:", name=name) + f"\n{msg}", file=sys.stderr)
+    return 0
+
+
+def cmd_config(_args) -> int:
+    from pistak.core.config import DEFAULTS_FILE, user_config_dir, user_config_file
+    from pistak.params import plugin_dirs
+
+    f = user_config_file()
+    print(tf("cartella delle impostazioni: {path}", path=user_config_dir()))
+    print(tf("impostazioni personali:      {path}", path=f) + ("" if f.exists() else "  " + tr("(non ancora creato)")))
+    print(tf("valori predefiniti:          {path}", path=DEFAULTS_FILE))
+    print(tr("cartelle dei plugin:"))
+    for d in plugin_dirs():
+        print(f"  {d}" + ("" if d.is_dir() else "  " + tr("(non esiste)")))
     return 0
 
 
@@ -228,7 +224,7 @@ def main(argv: list[str] | None = None) -> int:
     argv, lang = _extract_lang(list(sys.argv[1:] if argv is None else argv))
     if lang:
         i18n.set_language(lang)
-    commands = {"analyze", "batch", "compare", "stats", "params", "demo", "gui"}
+    commands = {"analyze", "batch", "compare", "stats", "params", "demo", "config", "gui"}
     if not argv or argv[0] not in commands | {"-h", "--help"}:
         argv = ["gui", *argv]  # `pistak file.cif` apre la GUI
     ap = argparse.ArgumentParser(prog="pistak", description=tr("Analisi dei π-stack da file CIF."),
@@ -273,6 +269,7 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("params", help=tr("elenca i parametri disponibili")).set_defaults(fn=cmd_params)
     sub.add_parser("demo", help=tr("scrive il CIF dimostrativo su stdout")).set_defaults(fn=cmd_demo)
+    sub.add_parser("config", help=tr("mostra dove stanno impostazioni personali e plugin")).set_defaults(fn=cmd_config)
 
     p = sub.add_parser("gui", help=tr("apre la finestra grafica"))
     p.add_argument("file", nargs="?")

@@ -11,6 +11,7 @@ from pistak.gui.session import Session
 from pistak.gui.theme import KIND_COLORS, KIND_LABELS, kind_label, qcolor
 from pistak.gui.views.base import PairView
 from pistak.i18n import tr
+from pistak.labels import relation
 from pistak.params import get_spec, specs
 
 DEFAULT_COLUMNS = ["interplanar", "long_slip", "lat_slip", "dihedral", "centroid_distance", "contact", "overlap", "count"]
@@ -52,9 +53,9 @@ class PairModel(QAbstractTableModel):
         c = index.column()
         if c < len(FIXED):
             if role == Qt.ItemDataRole.DisplayRole:
-                return (p.index + 1, kind_label(p.kind), p.relation())[c]
+                return (p.index + 1, kind_label(p.kind), relation(p))[c]
             if role == Qt.ItemDataRole.UserRole:
-                return (p.index, ["stack", "parallel", "tilted"].index(p.kind), p.relation())[c]
+                return (p.index, ["stack", "parallel", "tilted"].index(p.kind), relation(p))[c]
             if role == Qt.ItemDataRole.ForegroundRole and c == 1:
                 return QBrush(qcolor(KIND_COLORS[p.kind]))
             return None

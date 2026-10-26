@@ -7,6 +7,7 @@ import pytest
 from pistak.core.analysis import analyse_file
 from pistak.core.config import Limits
 from pistak.core.demo import DEMO_STACK
+from pistak.labels import rank_name
 
 EX = Path(__file__).resolve().parents[1] / "examples"
 
@@ -15,7 +16,7 @@ def test_demo_e_una_colonna_lungo_a():
     a = analyse_file(EX / "demo_naphthalene.cif", Limits())
     assert len(a.stacks) == 1
     col = a.stacks[0]
-    assert col.rank == 1 and col.kind == "colonna" and col.kind_key == "column" and col.molecules == [0]
+    assert col.rank == 1 and rank_name(col.rank) == "colonna" and col.kind_key == "column" and col.molecules == [0]
     d = DEMO_STACK
     assert col.repeat == pytest.approx(math.sqrt(d["interplanar"] ** 2 + d["long_slip"] ** 2 + d["lat_slip"] ** 2), abs=1e-3)
     assert col.mean("interplanar") == pytest.approx(d["interplanar"], abs=1e-3)

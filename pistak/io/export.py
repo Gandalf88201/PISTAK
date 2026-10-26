@@ -1,4 +1,8 @@
-"""Esportazione dei risultati: tabella CSV, JSON completo, coppia in formato XYZ."""
+"""Esportazione dei risultati: tabella CSV, JSON completo, coppia in formato XYZ.
+
+I file scritti qui hanno intestazioni e chiavi fisse (inglesi, mai tradotte): uno script che li legge funziona
+qualunque sia la lingua dell'interfaccia. I nomi leggibili dei parametri stanno nel registro (`pistak params`).
+"""
 from __future__ import annotations
 
 import csv
@@ -8,18 +12,20 @@ from pathlib import Path
 
 from pistak.core.analysis import Analysis
 from pistak.core.pairs import Pair
-from pistak.i18n import tf, tr
 from pistak.params import get_spec
+
+#: Formato del JSON scritto da `write_json`: cambia `JSON_VERSION` se cambia la struttura.
+JSON_FORMAT, JSON_VERSION = "pistak-analysis", 1
 
 
 def table(analysis: Analysis, keys: list[str] | None = None) -> tuple[list[str], list[list]]:
-    """Intestazioni e righe della tabella delle coppie: indice, tipo, relazione e i parametri scelti
-    (per impostazione tutti quelli del registro)."""
+    """Intestazioni e righe della tabella delle coppie: indice, tipo, le due molecole (da 1), la traslazione in celle
+    della seconda e i parametri scelti (per impostazione tutti quelli del registro, per chiave)."""
     keys = keys if keys is not None else list(analysis.param_keys)
-    headers = ["n", tr("tipo"), tr("relazione")] + [k for k in keys]
+    headers = ["n", "kind", "molecule_a", "molecule_b", "shift", *keys]
     rows = []
     for p in analysis.pairs:
-        rows.append([p.index + 1, p.kind, p.relation()] + [p.get(k) for k in keys])
+        rows.append([p.index + 1, p.kind, p.a + 1, p.b + 1, " ".join(map(str, p.shift))] + [p.get(k) for k in keys])
     return headers, rows
 
 
@@ -64,7 +70,10 @@ def write_json(analysis: Analysis, path: str | Path, keys: list[str] | None = No
     path = Path(path)
     keys = keys if keys is not None else list(analysis.param_keys)
     units = {k: (get_spec(k).unit if get_spec(k) else "") for k in keys}
-    data = {"summary": summary_dict(analysis), "units": units, "pairs": [pair_dict(p, keys) for p in analysis.pairs]}
+    from pistak import __version__
+
+    data = {"format": JSON_FORMAT, "version": JSON_VERSION, "pistak": __version__, "summary": summary_dict(analysis),
+            "units": units, "pairs": [pair_dict(p, keys) for p in analysis.pairs]}
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     return path
 
@@ -73,8 +82,8 @@ def pair_xyz(analysis: Analysis, pair: Pair) -> str:
     """Le due molecole della coppia, in coordinate cartesiane (Å), nel formato XYZ."""
     ctx = analysis.pair_context(pair)
     atoms = [(e, p) for e, p in zip(ctx.A.el, ctx.pos_a)] + [(e, p) for e, p in zip(ctx.B.el, ctx.pos_b)]
-    head = tf("{name} coppia {n} {kind} interplanare={ip:.3f} slittamento_L={ls:.3f} slittamento_W={ws:.3f}", name=analysis.name,
-              n=pair.index + 1, kind=pair.kind, ip=pair.interplanar, ls=pair.long_slip, ws=pair.lat_slip)
+    head = (f"{analysis.name} pair={pair.index + 1} kind={pair.kind} interplanar={pair.interplanar:.3f} "
+            f"long_slip={pair.long_slip:.3f} lat_slip={pair.lat_slip:.3f}")
     body = "\n".join(f"{e:<2} {p[0]:12.6f} {p[1]:12.6f} {p[2]:12.6f}" for e, p in atoms)
     return f"{len(atoms)}\n{head}\n{body}\n"
 

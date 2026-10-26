@@ -53,10 +53,24 @@ MESSAGES = {  # id: (italiano, inglese)
 }
 
 
+def _config_files() -> list[Path]:
+    """Dove cercare la lingua, in ordine: user.toml dell'utente (stesse regole di pistak/core/config.py), quello
+    vecchio in config/ del progetto, poi i valori predefiniti del pacchetto."""
+    env = os.environ.get("PISTAK_CONFIG_DIR")
+    if env:
+        user = Path(env).expanduser()
+    elif sys.platform == "darwin":
+        user = Path.home() / "Library" / "Application Support" / "PISTAK"
+    elif IS_WINDOWS:
+        user = Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming") / "PISTAK"
+    else:
+        user = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "pistak"
+    return [user / "user.toml", ROOT / "config" / "user.toml", ROOT / "pistak" / "default.toml"]
+
+
 def _config_language() -> str:
-    """La lingua scelta in config/user.toml o default.toml (lettura semplice: start.py non dipende da tomllib)."""
-    for name in ("user.toml", "default.toml"):
-        f = ROOT / "config" / name
+    """La lingua scelta nei file di configurazione (lettura semplice: start.py non dipende da tomllib)."""
+    for f in _config_files():
         if f.exists():
             m = re.search(r'^\s*language\s*=\s*"(\w+)"', f.read_text(encoding="utf-8"), re.M)
             if m:

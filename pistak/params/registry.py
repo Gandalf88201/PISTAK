@@ -55,63 +55,93 @@ class ParamSpec:
         return f"{self.name} ({self.unit})" if self.unit else self.name
 
 
-_REGISTRY: dict[str, ParamSpec] = {}
-#: Errori incontrati calcolando i parametri: chiave → ultimo messaggio. Visibili nella GUI.
-errors: dict[str, str] = {}
-_current_source = "extra"
+class Registry:
+    """Insieme di parametri, per chiave. Di solito si usa quello predefinito, `REGISTRY` (lo stesso che riempiono
+    `@parameter`, i parametri builtin/extra e i plugin); un `Registry()` nuovo serve a calcolare un insieme
+    diverso (per esempio solo alcuni parametri) senza toccare quello globale."""
+
+    def __init__(self) -> None:
+        self._specs: dict[str, ParamSpec] = {}
+        self._source = "extra"
+        #: Problemi incontrati caricando i plugin in questo registro: nome file → messaggio.
+        self.load_errors: dict[str, str] = {}
+        self.plugins_loaded = False
+
+    # ---- registrazione -------------------------------------------------------------------
+    def parameter(self, key: str, label: str, unit: str = "", description: str = "", digits: int = 2,
+                  group: str = "extra", source: str | None = None):
+        """Decoratore: registra la funzione come parametro `key`. Se la chiave esiste già viene sostituita."""
+
+        def deco(fn: ParamFn) -> ParamFn:
+            self.add(ParamSpec(key, label, fn, unit, description or (fn.__doc__ or "").strip(), digits, group,
+                               source or self._source))
+            return fn
+
+        return deco
+
+    def add(self, spec: ParamSpec) -> None:
+        self._specs[spec.key] = spec
+
+    def set_source(self, name: str) -> str:
+        """Imposta il nome della sorgente (file) a cui attribuire i parametri registrati da ora. Ritorna il precedente."""
+        prev, self._source = self._source, name
+        return prev
+
+    def remove_source(self, source: str) -> None:
+        for k in [k for k, s in self._specs.items() if s.source == source]:
+            del self._specs[k]
+
+    # ---- consultazione -------------------------------------------------------------------
+    def specs(self) -> list[ParamSpec]:
+        return list(self._specs.values())
+
+    def get(self, key: str) -> ParamSpec | None:
+        return self._specs.get(key)
+
+    def keys(self) -> list[str]:
+        return list(self._specs)
+
+    def sources(self) -> list[str]:
+        return sorted({s.source for s in self._specs.values()})
+
+    def __contains__(self, key: str) -> bool:
+        return key in self._specs
+
+    def __len__(self) -> int:
+        return len(self._specs)
+
+    # ---- calcolo -------------------------------------------------------------------------
+    def compute_all(self, analysis: Analysis) -> Analysis:
+        """Riempie `Pair.values` di ogni coppia con tutti i parametri del registro. Un parametro che solleva
+        un'eccezione vale NaN per le coppie in cui fallisce; l'errore resta in `analysis.param_errors`."""
+        specs = self.specs()
+        analysis.param_errors = {}
+        for pair in analysis.pairs:
+            ctx = analysis.pair_context(pair)
+            pair.values = {}
+            for s in specs:
+                try:
+                    v = float(s.fn(ctx))
+                except Exception as e:  # un plugin difettoso non deve fermare l'analisi
+                    v = math.nan
+                    analysis.param_errors[s.key] = f"{type(e).__name__}: {e}\n{traceback.format_exc(limit=3)}"
+                pair.values[s.key] = v
+        analysis.param_keys = [s.key for s in specs]
+        return analysis
 
 
-def set_source(name: str) -> str:
-    """Imposta il nome della sorgente (file) a cui attribuire i parametri registrati da ora. Ritorna il precedente."""
-    global _current_source
-    prev, _current_source = _current_source, name
-    return prev
+#: Il registro predefinito: lo usano `@parameter`, la GUI, il terminale e gli export.
+REGISTRY = Registry()
+
+# Funzioni di modulo che lavorano sul registro predefinito (l'interfaccia usata da plugin e versioni precedenti).
+parameter = REGISTRY.parameter
+set_source = REGISTRY.set_source
+remove_source = REGISTRY.remove_source
+specs = REGISTRY.specs
+get_spec = REGISTRY.get
+sources = REGISTRY.sources
 
 
-def parameter(key: str, label: str, unit: str = "", description: str = "", digits: int = 2, group: str = "extra",
-              source: str | None = None):
-    """Decoratore: registra la funzione come parametro `key`. Se la chiave esiste già viene sostituita."""
-
-    def deco(fn: ParamFn) -> ParamFn:
-        _REGISTRY[key] = ParamSpec(key, label, fn, unit, description or (fn.__doc__ or "").strip(), digits, group,
-                                   source or _current_source)
-        return fn
-
-    return deco
-
-
-def specs() -> list[ParamSpec]:
-    return list(_REGISTRY.values())
-
-
-def get_spec(key: str) -> ParamSpec | None:
-    return _REGISTRY.get(key)
-
-
-def remove_source(source: str) -> None:
-    for k in [k for k, s in _REGISTRY.items() if s.source == source]:
-        del _REGISTRY[k]
-
-
-def sources() -> list[str]:
-    return sorted({s.source for s in _REGISTRY.values()})
-
-
-def compute_all(analysis: Analysis) -> Analysis:
-    """Riempie `Pair.values` di ogni coppia con tutti i parametri registrati. Un parametro che solleva
-    un'eccezione vale NaN per le coppie in cui fallisce e l'errore resta in `errors`."""
-    keys = [s.key for s in _REGISTRY.values()]
-    for k in keys:
-        errors.pop(k, None)
-    for pair in analysis.pairs:
-        ctx = analysis.pair_context(pair)
-        pair.values = {}
-        for s in _REGISTRY.values():
-            try:
-                v = float(s.fn(ctx))
-            except Exception as e:  # un plugin difettoso non deve fermare l'analisi
-                v = math.nan
-                errors[s.key] = f"{type(e).__name__}: {e}\n{traceback.format_exc(limit=3)}"
-            pair.values[s.key] = v
-    analysis.param_keys = keys
-    return analysis
+def compute_all(analysis: Analysis, registry: Registry | None = None) -> Analysis:
+    """Calcola tutti i parametri di `registry` (per impostazione quello predefinito) sulle coppie di `analysis`."""
+    return (registry or REGISTRY).compute_all(analysis)
