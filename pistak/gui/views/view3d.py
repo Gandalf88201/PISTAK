@@ -145,6 +145,9 @@ class View3D(PairView):
         self.opts = Options(show_h=bool(cfg.get("show_hydrogens", True)))
         self.scene: Scene | None = None
         self.ctx = None
+        #: Da che cosa è stata costruita la scena corrente (vedi `on_pair`).
+        self._scene_structure = None
+        self._scene_key: tuple | None = None
 
         self.style_combo = QComboBox()
         self.style_combo.addItems([tr(s) for s in STYLES])
@@ -199,11 +202,27 @@ class View3D(PairView):
             self.scene = self.ctx = None
             self._draw(False)
 
+    def _shown_as(self) -> tuple | None:
+        """Ciò da cui dipende la scena: la coppia (contatto e tipo) e la sua colonna, sulla stessa struttura."""
+        a, p = self.analysis, self.pair
+        if not (a and p):
+            return None
+        col = a.column_for(p)
+        return (p.key, p.kind, tuple(col.molecules) if col else None)
+
     def on_pair(self, index: int) -> None:
+        # con le soglie in tempo reale la stessa coppia torna a ogni scatto del cursore: se la scena non cambia
+        # (stessa struttura, stesso contatto, stesso tipo e colonna) non si ricostruisce
+        if self.scene is not None and self.analysis is not None and self._scene_structure is self.analysis.structure \
+                and self._scene_key is not None and self._scene_key == self._shown_as():
+            self.ctx = self.analysis.pair_context(self.pair)
+            return
         self._rebuild(keep_camera=self.lock_cam.isChecked())
 
     def _rebuild(self, keep_camera: bool) -> None:
         pair = self.pair
+        self._scene_structure = self.analysis.structure if self.analysis else None
+        self._scene_key = self._shown_as()
         if not (self.analysis and pair):
             self.scene = self.ctx = None
         else:

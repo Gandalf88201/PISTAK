@@ -11,6 +11,11 @@ compaia in tabella, negli assi dello scatter, negli istogrammi e nelle esportazi
 
 `ctx` ha: .pair, .A, .B (molecole), .core_a, .core_b (nuclei), .frame (L, W, n), .d (vettore tra i
 baricentri), .pos_a, .pos_b, .proj_a, .proj_b (atomi nel sistema della coppia), .limits, .analysis.
+
+Con ``geometric=True`` si promette che il valore dipende solo dalla geometria della coppia (molecole, frammenti,
+traslazione), non dal suo tipo, dalle altre coppie o dalle soglie del criterio di stack: allora, quando cambiano solo
+quelle soglie (`pistak.core.stages`, stadio `pairs`), il valore si riusa invece di ricalcolarlo. Per impostazione è
+False: i parametri si ricalcolano sempre.
 """
 from __future__ import annotations
 
@@ -35,6 +40,8 @@ class ParamSpec:
     digits: int = 2
     group: str = "extra"
     source: str = "builtin"  # "builtin" | "extra" | nome del file plugin
+    #: Il valore dipende solo dalla geometria della coppia: si riusa quando cambiano le soglie del criterio di stack.
+    geometric: bool = False
 
     @property
     def name(self) -> str:
@@ -69,12 +76,12 @@ class Registry:
 
     # ---- registrazione -------------------------------------------------------------------
     def parameter(self, key: str, label: str, unit: str = "", description: str = "", digits: int = 2,
-                  group: str = "extra", source: str | None = None):
+                  group: str = "extra", source: str | None = None, geometric: bool = False):
         """Decoratore: registra la funzione come parametro `key`. Se la chiave esiste già viene sostituita."""
 
         def deco(fn: ParamFn) -> ParamFn:
             self.add(ParamSpec(key, label, fn, unit, description or (fn.__doc__ or "").strip(), digits, group,
-                               source or self._source))
+                               source or self._source, geometric))
             return fn
 
         return deco
@@ -113,18 +120,27 @@ class Registry:
     # ---- calcolo -------------------------------------------------------------------------
     def compute_all(self, analysis: Analysis) -> Analysis:
         """Riempie `Pair.values` di ogni coppia con tutti i parametri del registro. Un parametro che solleva
-        un'eccezione vale NaN per le coppie in cui fallisce; l'errore resta in `analysis.param_errors`."""
+        un'eccezione vale NaN per le coppie in cui fallisce; l'errore resta in `analysis.param_errors`. I valori dei
+        parametri `geometric` già calcolati per la stessa coppia misurata (`analysis.cache`) si riusano."""
         specs = self.specs()
         analysis.param_errors = {}
+        cache = analysis.cache.values if analysis.cache is not None else None
         for pair in analysis.pairs:
             ctx = analysis.pair_context(pair)
+            known = cache.setdefault(pair.key, {}) if cache is not None else {}
             pair.values = {}
             for s in specs:
+                if s.geometric and s.key in known:
+                    pair.values[s.key] = known[s.key]
+                    continue
                 try:
                     v = float(s.fn(ctx))
                 except Exception as e:  # un plugin difettoso non deve fermare l'analisi
                     v = math.nan
                     analysis.param_errors[s.key] = f"{type(e).__name__}: {e}\n{traceback.format_exc(limit=3)}"
+                else:
+                    if s.geometric:  # gli errori no: si ripresentano (e si segnalano) a ogni calcolo
+                        known[s.key] = v
                 pair.values[s.key] = v
         analysis.param_keys = [s.key for s in specs]
         return analysis

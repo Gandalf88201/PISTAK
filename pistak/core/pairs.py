@@ -28,7 +28,7 @@ from __future__ import annotations
 import itertools
 import math
 from collections.abc import Iterator, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import numpy as np
 from scipy.spatial.distance import cdist
@@ -113,6 +113,9 @@ class Pair:
     fb: int = 0
     #: Vero se almeno una delle due molecole ha più di un frammento π (allora conta quali sono fa e fb).
     fragmented: bool = False
+    #: Area comune dei contorni proiettati / area del contorno minore (0–1): la sovrapposizione del criterio
+    #: `overlap_measure = "area"`. Si misura sempre, così cambiare criterio non richiede di rimisurare.
+    overlap_area: float = math.nan
 
     def get(self, key: str, default: float = float("nan")) -> float:
         """Valore di un parametro del registro per questa coppia."""
@@ -149,6 +152,16 @@ def classify(dihedral: float, interplanar: float, overlap: float, slip: float, l
     return "parallel"
 
 
+def stack_overlap(p: Pair, limits: Limits) -> float:
+    """La sovrapposizione della coppia misurata come chiede il criterio di stack."""
+    return p.overlap_area if limits.overlap_measure == "area" else p.overlap
+
+
+def reclassify(p: Pair, limits: Limits) -> str:
+    """Il tipo di una coppia già misurata secondo altre soglie (stadio `pairs`: nessuna geometria da rifare)."""
+    return classify(p.dihedral, p.interplanar, stack_overlap(p, limits), p.slip, limits)
+
+
 def _heavy_contact(s: Structure, a: int, b: int, v: np.ndarray) -> float:
     A, B = s.molecules[a], s.molecules[b]
     ha, hb = A.heavy, B.heavy
@@ -172,16 +185,16 @@ def _measure(s: Structure, ca: Core, cb0: Core, a: int, b: int, shift: Shift, li
     qa = f.project(pa[ca.atoms])[:, :2]
     qb = f.project(pb[cb.atoms])[:, :2]
     hull_a, hull_b = convex_hull(qa), convex_hull(qb)
-    overlap = max(points_inside(hull_a, qb).mean(), points_inside(hull_b, qa).mean())
+    overlap = float(max(points_inside(hull_a, qb).mean(), points_inside(hull_b, qa).mean()))
+    area = float(area_overlap(hull_a, hull_b))
     interplanar = abs(z)
     slip = float(np.linalg.norm(sv))
-    measured = overlap if limits.overlap_measure != "area" else area_overlap(hull_a, hull_b)
-    kind = classify(dihedral, interplanar, float(measured), slip, limits)
+    kind = classify(dihedral, interplanar, area if limits.overlap_measure == "area" else overlap, slip, limits)
     return Pair(
         a=a, b=b, shift=shift, kind=kind, interplanar=interplanar,
         long_slip=abs(float(np.dot(sv, f.L))), lat_slip=abs(float(np.dot(sv, f.W))), slip=slip,
-        dihedral=dihedral, centroid_distance=float(np.linalg.norm(d)), contact=contact, overlap=float(overlap),
-        fa=fa, fb=fb, fragmented=fragmented,
+        dihedral=dihedral, centroid_distance=float(np.linalg.norm(d)), contact=contact, overlap=overlap,
+        fa=fa, fb=fb, fragmented=fragmented, overlap_area=area,
     )
 
 
@@ -302,10 +315,25 @@ def collect_pairs(s: Structure, cores: Sequence, limits: Limits) -> tuple[list[P
     """Coppie di frammenti vicini, con quelle equivalenti raccolte in una sola, e, a parte, tutti gli archi `stack`
     tra molecole diverse (nei due versi: servono a ricostruire le colonne)."""
     frags = as_fragments(cores)
+    contacts = list(iter_neighbour_pairs(s, frags, limits))
+    return group_pairs(contacts, contact_keys(s, frags, contacts, limits), limits)
+
+
+def contact_keys(s: Structure, frags: Fragments, contacts: list[Pair], limits: Limits) -> list[Member] | None:
+    """La chiave di simmetria di ogni coppia misurata (modalità canonical); None nel modo del sito, dove le coppie
+    equivalenti si riconoscono dai valori e quindi dipendono dalla classificazione."""
     if limits.pair_mode == "site":
-        pairs, stack_edges = _collect_site(s, frags, limits)
-    else:
-        pairs, stack_edges = _collect_canonical(s, frags, limits)
+        return None
+    fmaps = fragment_maps(s, frags) if any(len(f) > 1 for f in frags) else None
+    return [symmetry_key(s, p.a, p.b, p.shift, p.fa, p.fb, fmaps) for p in contacts]
+
+
+def group_pairs(contacts: list[Pair], keys: list[Member] | None, limits: Limits) -> tuple[list[Pair], list[StackEdge]]:
+    """Classifica con `limits` copie fresche delle coppie misurate, raccoglie quelle equivalenti (per chiave di
+    simmetria, o per valori arrotondati se `keys` è None) e le ordina. Le coppie misurate non vengono toccate: si
+    può ripetere con altre soglie dello stadio `pairs`."""
+    fresh = [replace(p, kind=reclassify(p, limits), count=1, members=[], values={}, index=-1) for p in contacts]
+    pairs, stack_edges = _group_site(fresh) if keys is None else _group_canonical(fresh, keys)
     order = {k: i for i, k in enumerate(KINDS)}
     pairs.sort(key=lambda p: (order[p.kind], p.interplanar, p.contact))
     for i, p in enumerate(pairs):
@@ -313,10 +341,10 @@ def collect_pairs(s: Structure, cores: Sequence, limits: Limits) -> tuple[list[P
     return pairs, stack_edges
 
 
-def _collect_site(s: Structure, frags: Fragments, limits: Limits) -> tuple[list[Pair], list[StackEdge]]:
+def _group_site(contacts: list[Pair]) -> tuple[list[Pair], list[StackEdge]]:
     found: dict[str, Pair] = {}
     stack_edges: list[StackEdge] = []
-    for p in iter_neighbour_pairs(s, frags, limits):
+    for p in contacts:
         if p.kind == "stack" and not p.intramolecular:
             stack_edges.append((p.a, p.b, p.shift, p))
         key = "|".join([p.kind, f"{p.interplanar:.2f}", f"{p.long_slip:.2f}", f"{p.lat_slip:.2f}",
@@ -373,14 +401,13 @@ def symmetry_key(s: Structure, a: int, b: int, sh: Shift, fa: int = 0, fb: int =
     return best
 
 
-def _collect_canonical(s: Structure, frags: Fragments, limits: Limits) -> tuple[list[Pair], list[StackEdge]]:
+def _group_canonical(contacts: list[Pair], keys: list[Member]) -> tuple[list[Pair], list[StackEdge]]:
     classes: dict[tuple, list[Pair]] = {}
     stack_edges: list[StackEdge] = []
-    fmaps = fragment_maps(s, frags) if any(len(f) > 1 for f in frags) else None
-    for p in iter_neighbour_pairs(s, frags, limits):
+    for p, key in zip(contacts, keys, strict=True):
         if p.kind == "stack" and not p.intramolecular:
             stack_edges += [(p.a, p.b, p.shift, p), (p.b, p.a, _neg(p.shift), p)]
-        classes.setdefault(symmetry_key(s, p.a, p.b, p.shift, p.fa, p.fb, fmaps), []).append(p)
+        classes.setdefault(key, []).append(p)
     pairs = []
     for key, members in classes.items():
         members.sort(key=lambda p: p.key)

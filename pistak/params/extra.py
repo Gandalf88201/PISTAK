@@ -1,12 +1,20 @@
-"""Parametri aggiuntivi rispetto al sito (fase 2). Si possono modificare liberamente o copiare in `plugins/`."""
+"""Parametri aggiuntivi rispetto al sito (fase 2). Si possono modificare liberamente o copiare in `plugins/`.
+
+Dipendono tutti solo dalla geometria della coppia (`geometric=True`): cambiando le soglie del criterio di stack si
+riusano invece di ricalcolarli. Chi ne copia uno in un plugin e lo fa dipendere dal tipo della coppia o dalle soglie
+deve togliere `geometric`."""
 from __future__ import annotations
+
+from functools import partial
 
 import numpy as np
 from scipy.spatial.distance import cdist
 
 from pistak.core.elements import vdw_radius
 from pistak.core.geometry import acute_angle_deg, clip_convex, convex_hull, polygon_area
-from pistak.params.registry import parameter
+from pistak.params.registry import parameter as _parameter
+
+parameter = partial(_parameter, geometric=True)
 
 G = "angoli"
 

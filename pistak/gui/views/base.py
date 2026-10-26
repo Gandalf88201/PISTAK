@@ -4,9 +4,15 @@ Per scrivere una vista nuova basta ereditare da `PairView`, riempire `self.body`
 implementare gli hook (`on_analysis`, `on_pair`, `on_subset`, `on_params`). La sincronizzazione è già
 gestita: la vista chiama `self.choose(indice)` quando l'utente sceglie una coppia e riceve `on_pair`
 quando cambia la selezione del suo gruppo. Poi si registra in `views/__init__.py` (VIEW_TYPES).
+
+Una nuova analisi arriva con `refresh()`: on_analysis, on_subset, on_pair in quest'ordine. Durante `refresh()`
+`self.refreshing` è vero, così una vista che ridisegna tutto in on_subset/on_pair può saltare on_analysis. Una
+vista nascosta (dietro un'altra scheda) rimanda il lavoro a quando torna visibile: con i cursori delle soglie in
+tempo reale le analisi si susseguono e ridisegnare ciò che non si vede rallenterebbe tutto.
 """
 from __future__ import annotations
 
+from PySide6.QtGui import QShowEvent
 from PySide6.QtWidgets import QComboBox, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
 from pistak.core.analysis import Analysis
@@ -29,6 +35,10 @@ class PairView(QWidget):
         self.group: str | None = group
         self._local = -1  # selezione propria, usata solo se group è None
         self._local_subset: set[int] | None = None
+        #: Vero durante `refresh()` (on_pair e on_subset stanno per arrivare).
+        self.refreshing = False
+        #: Qualcosa è cambiato mentre la vista era nascosta: si rifà tutto quando torna visibile.
+        self._stale = False
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(4, 2, 4, 4)
@@ -101,20 +111,49 @@ class PairView(QWidget):
         self.on_pair(self.index)
         self.on_subset(self.subset)
 
+    def refresh(self) -> None:
+        """Tutto da capo: dati, filtro e coppia selezionata."""
+        if self._hidden():
+            self._stale = True
+            return
+        self._stale = False
+        self.refreshing = True
+        try:
+            self.on_analysis()
+            self.on_subset(self.subset)
+        finally:
+            self.refreshing = False
+        self.on_pair(self.index)
+
+    def _hidden(self) -> bool:
+        """Nascosta in una finestra visibile (scheda non in primo piano, pannello chiuso). Una vista mai mostrata
+        (prove, finestre in costruzione) non conta come nascosta."""
+        w = self.window()
+        return w is not self and w.isVisible() and not self.isVisible()
+
+    def showEvent(self, e: QShowEvent) -> None:  # noqa: N802
+        super().showEvent(e)
+        if self._stale:
+            self.refresh()
+
     def _analysis_changed(self) -> None:
         self._local = 0 if self.analysis and self.analysis.pairs else -1
         self._local_subset = None
-        self.on_analysis()
-        self.on_subset(self.subset)
-        self.on_pair(self.index)
+        self.refresh()
 
     def _selection_changed(self, group: str, index: int) -> None:
         if group == self.group:
-            self.on_pair(index)
+            if self._hidden():
+                self._stale = True
+            else:
+                self.on_pair(index)
 
     def _subset_changed(self, group: str, indices) -> None:
         if group == self.group:
-            self.on_subset(indices)
+            if self._hidden():
+                self._stale = True
+            else:
+                self.on_subset(indices)
 
     # ---- salvataggio della sessione ------------------------------------------------
     def state(self) -> dict:

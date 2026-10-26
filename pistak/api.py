@@ -30,6 +30,13 @@ def analyse_file(path: str | Path, limits: Limits | None = None, block: str | in
     return finish(_core.analyse_file(path, limits or load_limits(), block))
 
 
+def reanalyse(analysis: Analysis, limits: Limits) -> Analysis:
+    """L'analisi con altre soglie, rifacendo solo gli stadi che le soglie cambiate toccano (`pistak.core.stages`) e
+    riusando i parametri geometrici già calcolati. Se le soglie sono le stesse ritorna `analysis`."""
+    new = _core.reanalyse(analysis, limits)
+    return new if new is analysis else finish(new)
+
+
 def uncertainty(analysis: Analysis, samples: int = 100, seed: int = 0, keys=None, include_cell: bool = True, progress=None):
     """σ dei parametri dalle s.u. del CIF con un Monte Carlo (vedi `pistak.core.uncertainty`); il risultato va anche
     in `analysis.uncertainty`."""

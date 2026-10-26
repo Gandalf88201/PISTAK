@@ -50,7 +50,8 @@ class SettingsDialog(QDialog):
             self.editors[f.name] = w
             form.addRow(tr(m["label"]), w)
         self._set_values(limits)
-        note = QLabel(tf("Cambiare una soglia rifà l'analisi. «Salva» le scrive in {path}.", path=user_config_file()))
+        note = QLabel(tf("Cambiare una soglia rifà solo la parte dell'analisi che ne dipende. «Salva» le scrive in {path}.",
+                      path=user_config_file()))
         note.setWordWrap(True)
         reset = QPushButton(tr("Valori predefiniti"))
         reset.clicked.connect(lambda: self._set_values(Limits()))

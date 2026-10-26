@@ -157,3 +157,61 @@ def test_finestra_di_confronto(app):
     assert len(win.entries) == 6
     win.clear()
     assert win.struct.rowCount() == 0
+
+
+def _loaded(app, limits=None):
+    win = new_window(app)
+    if limits is not None:
+        win.session.limits = limits
+    win.session.load_file(EX / "herringbone_anthracene.cif")
+    wait(app, lambda: win.session.analysis is not None)
+    return win
+
+
+def test_cursori_delle_soglie_in_tempo_reale(app):
+    win = _loaded(app)
+    s, panel = win.session, win.limits_dock.widget()
+    a0 = s.analysis
+    assert [p.kind for p in a0.pairs].count("stack") == 1
+    s.select("A", 1)
+    key = a0.pairs[1].key
+    sc = view(win, ScatterView)
+    sc.y_combo.setCurrentIndex(sc.y_combo.findData("interplanar"))
+    row = panel.rows["max_interplanar"]
+    row.slider.setValue(round((3.0 - row.lo) / row.step))  # come trascinare il cursore
+    assert row.spin.value() == pytest.approx(3.0)
+    panel._commit()  # senza aspettare il timer
+    a1 = s.analysis
+    assert a1 is not a0 and s.limits.max_interplanar == pytest.approx(3.0)
+    assert "stack" not in [p.kind for p in a1.pairs]  # riclassificate subito, nel thread dell'interfaccia
+    assert a1.structure is a0.structure and a1.cache.contacts is a0.cache.contacts  # nessuna geometria rifatta
+    assert a1.pairs[s.selection("A")].key == key  # la selezione resta sulla stessa coppia
+    assert "0" in panel.summary.text()
+    lines = [ln.value() for ln in sc.lines if ln.angle == 0]
+    assert lines == [pytest.approx(3.0)]  # la linea della soglia segue il cursore
+    win.close()
+
+
+def test_soglie_che_rimisurano_in_un_thread(app):
+    win = _loaded(app)
+    s, panel = win.session, win.limits_dock.widget()
+    a0 = s.analysis
+    assert panel.rows["contact_cutoff"].heavy and not panel.rows["max_slip"].heavy
+    for v in (3.5, 3.6, 3.7):  # richieste ravvicinate: si fondono, vince l'ultima
+        s.set_limits(s.limits.with_values(contact_cutoff=v))
+    wait(app, lambda: s.analysis is not a0 and not s._limits_task and s.analysis.limits.contact_cutoff == pytest.approx(3.7))
+    assert s.analysis.structure is a0.structure and s.analysis.cache.contacts is not a0.cache.contacts
+    assert panel.rows["contact_cutoff"].value() == pytest.approx(3.7)  # il pannello segue le soglie della sessione
+    win.close()
+
+
+def test_soglie_da_altrove_aggiornano_il_pannello(app):
+    win = _loaded(app)
+    s, panel = win.session, win.limits_dock.widget()
+    s.set_limits(s.limits.with_values(max_dihedral=12.0, overlap_measure="area"))
+    assert panel.rows["max_dihedral"].value() == pytest.approx(12.0)
+    assert panel.measure.currentData() == "area"
+    assert s.analysis.limits.max_dihedral == pytest.approx(12.0)
+    panel._site()
+    assert s.limits.max_dihedral == Limits.site().max_dihedral and s.limits.pair_mode == "site"
+    win.close()

@@ -89,7 +89,8 @@ def perturbed(analysis: Analysis, rng: np.random.Generator, include_cell: bool =
     for m_old, m_new, fs in zip(s.molecules, mols, analysis.fragments or [[c] if c else [] for c in analysis.cores]):
         ij = axis_atoms(m_old, spec) if spec else None
         frags.append([_refit(f, m_new.pos, ij) for f in fs])
-    return replace(analysis, structure=s2, fragments=frags, cores=[f[0] if f else None for f in frags], uncertainty=None)
+    return replace(analysis, structure=s2, fragments=frags, cores=[f[0] if f else None for f in frags], uncertainty=None,
+                   cache=None)
 
 
 def _refit(f: Core, pos: np.ndarray, ij: tuple[int, int] | None) -> Core:

@@ -1,6 +1,8 @@
 """Proiezione dei parametri: ogni coppia è un punto in un grafico a due assi scelti tra tutti i parametri
 del registro. Un clic seleziona la coppia (e muove le viste sincronizzate); con "Selezione a riquadro" si
-trascina un rettangolo e le coppie dentro diventano il filtro del gruppo (la tabella le mostra da sole)."""
+trascina un rettangolo e le coppie dentro diventano il filtro del gruppo (la tabella le mostra da sole).
+Se un asse mostra un parametro confrontato da una soglia del criterio di stack, la soglia è una linea tratteggiata
+che segue il pannello «Soglie in tempo reale»."""
 from __future__ import annotations
 
 import math
@@ -18,6 +20,15 @@ from pistak.i18n import tf, tr
 from pistak.params import get_spec, specs
 
 KIND_COLOR = "kind"  # valore interno per «colora per tipo di coppia» (non tradotto)
+#: Parametro → la soglia che lo confronta (None se con queste soglie non si applica).
+THRESHOLDS = {
+    "interplanar": lambda lim: lim.max_interplanar,
+    "dihedral": lambda lim: lim.max_dihedral,
+    "slip": lambda lim: lim.max_slip if lim.max_slip > 0 else None,
+    "overlap": lambda lim: lim.min_overlap if lim.overlap_measure != "area" else None,
+    "overlap_ratio": lambda lim: lim.min_overlap if lim.overlap_measure == "area" else None,
+    "contact": lambda lim: lim.contact_cutoff,
+}
 
 
 class ScatterView(PairView):
@@ -51,6 +62,7 @@ class ScatterView(PairView):
         self.plot.addItem(self.cloud)
         self.plot.addItem(self.marker)
         self.roi: pg.RectROI | None = None
+        self.lines: list[pg.InfiniteLine] = []
         self._fill_combos()
         for c in (self.x_combo, self.y_combo, self.c_combo):
             c.currentIndexChanged.connect(self._axes_changed)
@@ -80,7 +92,8 @@ class ScatterView(PairView):
         self._fill_combos()
 
     def on_analysis(self) -> None:
-        self._redraw()
+        if not self.refreshing:  # durante refresh() ridisegna on_subset
+            self._redraw()
 
     def on_pair(self, index: int) -> None:
         self._update_marker()
@@ -127,9 +140,26 @@ class ScatterView(PairView):
         self.cloud.setData(x[ok], y[ok], brush=[b for b, k in zip(brushes, ok) if k], pen=[q for q, k in zip(pens, ok) if k],
                            size=[s for s, k in zip(size, ok) if k], data=[p.index for p, k in zip(a.pairs, ok) if k])
         self._update_marker()
+        self._threshold_lines(kx, ky)
         self.plot.autoRange()
         n_sub = len(sub) if sub is not None else len(a.pairs)
         self.info.setText(tf("{n} / {tot} coppie in evidenza · dimensione del punto ∝ coppie equivalenti", n=n_sub, tot=len(a.pairs)))
+
+    def _threshold_lines(self, kx: str, ky: str) -> None:
+        for line in self.lines:
+            self.plot.removeItem(line)
+        self.lines = []
+        a = self.analysis
+        if a is None:
+            return
+        pen = pg.mkPen(theme.foreground(), width=1, style=Qt.PenStyle.DashLine)
+        for key, angle in ((kx, 90), (ky, 0)):
+            v = THRESHOLDS[key](a.limits) if key in THRESHOLDS else None
+            if v is not None:
+                line = pg.InfiniteLine(pos=v, angle=angle, pen=pen, movable=False)
+                line.setToolTip(tr("Soglia del criterio di stack (Analisi ▸ Soglie in tempo reale)"))
+                self.plot.addItem(line)
+                self.lines.append(line)
 
     def _update_marker(self) -> None:
         pair = self.pair

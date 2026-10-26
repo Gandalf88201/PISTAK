@@ -80,6 +80,7 @@ class MainWindow(QMainWindow):
         session.busyChanged.connect(self._busy)
         session.analysisChanged.connect(self._analysis_changed)
 
+        self.limits_dock = self._limits_dock()
         self._build_menus()
         self.default_layout()
         self.fit_to_screen()  # dopo aver creato i pannelli: aggiungerli può far crescere la finestra oltre lo schermo
@@ -98,6 +99,28 @@ class MainWindow(QMainWindow):
         dock.destroyed.connect(lambda _=None, d=dock: self.docks.remove(d) if d in self.docks else None)
         self.docks.append(dock)
         return dock
+
+    def _limits_dock(self) -> QDockWidget:
+        """Il pannello dei cursori delle soglie: fuori da `self.docks` (non è una vista delle coppie), nascosto
+        all'inizio, si apre da Analisi ▸ Soglie in tempo reale."""
+        from pistak.gui.limits_panel import LimitsPanel
+
+        dock = QDockWidget(tr("Soglie in tempo reale"), self)
+        dock.setObjectName("limits-panel")
+        dock.setWidget(LimitsPanel(self.session))
+        dock.setAllowedAreas(Qt.DockWidgetArea.AllDockWidgetAreas)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock)
+        dock.setFloating(True)
+        dock.hide()
+        return dock
+
+    def show_limits_panel(self) -> None:
+        d = self.limits_dock
+        if d.isFloating() and not d.isVisible():
+            d.resize(420, 360)
+            clamp_into_screen(d)
+        d.show()
+        d.raise_()
 
     def clear_docks(self) -> None:
         for d in list(self.docks):
@@ -145,9 +168,7 @@ class MainWindow(QMainWindow):
         for d in self.docks:
             v = d.widget()
             if isinstance(v, PairView):
-                v.on_analysis()
-                v.on_subset(v.subset)
-                v.on_pair(v.index)
+                v.refresh()
 
     def _new_view(self, kind: str) -> None:
         dock = self.add_view(kind, "A")
@@ -156,10 +177,7 @@ class MainWindow(QMainWindow):
         dock.resize(min(640, self.width() - 40), min(480, self.height() - 40))
         dock.show()
         if self.session.analysis:
-            v = dock.widget()
-            v.on_analysis()
-            v.on_subset(v.subset)
-            v.on_pair(v.index)
+            dock.widget().refresh()
 
     # ---- menu ----------------------------------------------------------------------
     def _act(self, menu, text: str, slot, shortcut: str | QKeySequence.StandardKey | None = None) -> QAction:
@@ -199,6 +217,7 @@ class MainWindow(QMainWindow):
 
         a = mb.addMenu(tr("&Analisi"))
         self._act(a, tr("Soglie…"), self.edit_limits, "Ctrl+,")
+        self._act(a, tr("Soglie in tempo reale"), self.show_limits_panel, "Ctrl+Shift+L")
         self._act(a, tr("Rianalizza"), self.session.reanalyse, "Ctrl+R")
         self._act(a, tr("Incertezze (Monte Carlo)…"), self._uncertainty)
         a.addSeparator()
@@ -495,6 +514,7 @@ class MainWindow(QMainWindow):
         self._build_docks_from(st)
         if st.get("limits"):
             self.session.limits = Limits.from_dict(st["limits"], self.session.limits)
+            self.session.limitsChanged.emit()
         src = st.get("source") or {}
         loaded = True
         if src.get("text"):

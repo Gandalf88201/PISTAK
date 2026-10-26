@@ -52,7 +52,8 @@ class ProjectionView(PairView):
         self.body.addWidget(self.caption)
 
     def on_analysis(self) -> None:
-        self._redraw()
+        if not self.refreshing:  # durante refresh() ridisegna on_pair
+            self._redraw()
 
     def on_pair(self, index: int) -> None:
         self._redraw()

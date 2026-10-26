@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 
-from PySide6.QtCore import QAbstractTableModel, QModelIndex, QSortFilterProxyModel, Qt
+from PySide6.QtCore import QAbstractTableModel, QItemSelectionModel, QModelIndex, QSortFilterProxyModel, Qt
 from PySide6.QtGui import QBrush
 from PySide6.QtWidgets import QCheckBox, QHeaderView, QMenu, QTableView, QToolButton
 
@@ -107,7 +107,10 @@ class TableView(PairView):
         self.table.setSelectionMode(QTableView.SelectionMode.SingleSelection)
         self.table.setEditTriggers(QTableView.EditTrigger.NoEditTriggers)
         self.table.verticalHeader().hide()
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        # larghezze calcolate quando cambiano struttura o colonne (`_fit_columns`), non a ogni selezione: con
+        # ResizeToContents Qt rileggerebbe tutte le celle a ogni clic e a ogni scatto dei cursori delle soglie
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        self._fitted: tuple | None = None
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.setAlternatingRowColors(True)
         self.table.selectionModel().currentRowChanged.connect(self._row_changed)
@@ -155,7 +158,16 @@ class TableView(PairView):
         if on:
             keys = [s.key for s in specs() if s.key in keys or s.key == key]
         self.model.set_data(self.model.pairs, keys)
+        self._fit_columns(force=True)
         self._restore_selection()
+
+    def _fit_columns(self, force: bool = False) -> None:
+        """Larghezze delle colonne sul contenuto, se sono cambiate la struttura o le colonne (o con `force`)."""
+        a = self.analysis
+        sig = (a.structure if a else None, tuple(self.model.keys), len(self.model.pairs))
+        if force or self._fitted is None or self._fitted[0] is not sig[0] or self._fitted[1:] != sig[1:]:
+            self.table.resizeColumnsToContents()
+            self._fitted = sig
 
     # ---- hook ----------------------------------------------------------------------
     def on_analysis(self) -> None:
@@ -165,6 +177,7 @@ class TableView(PairView):
         self.proxy.subset = None
         self.proxy.refresh()
         self.table.sortByColumn(-1, Qt.SortOrder.AscendingOrder)
+        self._fit_columns()
 
     def on_params(self) -> None:
         self._build_menu()
@@ -185,12 +198,18 @@ class TableView(PairView):
 
     def _restore_selection(self) -> None:
         idx = self.index
+        cur = self.table.currentIndex()
+        if cur.isValid() and self.proxy.mapToSource(cur).row() == idx and self.table.selectionModel().isRowSelected(cur.row()):
+            return  # già selezionata (succede in refresh(): on_subset e on_pair la ripristinano entrambi)
         self._updating = True
         try:
             for r in range(self.proxy.rowCount()):
                 if self.proxy.mapToSource(self.proxy.index(r, 0)).row() == idx:
-                    self.table.selectRow(r)
-                    self.table.scrollTo(self.proxy.index(r, 0))
+                    # come selectRow, ma senza che Qt rilegga tutte le celle (decine di ms con molte coppie)
+                    ix = self.proxy.index(r, 0)
+                    flags = QItemSelectionModel.SelectionFlag.ClearAndSelect | QItemSelectionModel.SelectionFlag.Rows
+                    self.table.selectionModel().setCurrentIndex(ix, flags)
+                    self.table.scrollTo(ix)
                     return
             self.table.clearSelection()
         finally:
@@ -207,6 +226,7 @@ class TableView(PairView):
     def apply_state(self, st: dict) -> None:
         keys = [k for k in st.get("columns", self.model.keys) if get_spec(k)]
         self.model.set_data(self.model.pairs, keys or list(DEFAULT_COLUMNS))
+        self._fit_columns(force=True)
         self._build_menu()
         hidden = set(st.get("hidden_kinds", []))
         for kind, cb in self.kind_boxes.items():

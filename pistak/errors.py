@@ -9,6 +9,7 @@ ERROR_TEXT = {  # testi italiani: si traducono al momento dell'uso, con tr()
     "empty": "il file è vuoto", "noCell": "mancano i parametri di cella", "noAtoms": "non ci sono atomi con coordinate frazionarie",
     "noSymops": "mancano le operazioni di simmetria (e il gruppo non è P1)", "badSymop": "operazione di simmetria illeggibile",
     "tooLarge": "troppi atomi nella cella", "fileTooLarge": "file troppo grande", "noBlock": "blocco data_ non trovato:",
+    "noSource": "per cambiare la regola di disordine bisogna rileggere il file CIF",
     "qcIntramolecular": "una coppia intramolecolare non si può dividere in due monomeri:",
     "qcUnsupported": "combinazione non disponibile:", "qcOptions": "opzione non valida:",
 }

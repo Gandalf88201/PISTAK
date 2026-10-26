@@ -13,7 +13,7 @@ class PistakError(Exception):
 
 
 class InputError(PistakError):
-    """Il file in ingresso non si può leggere. `code`: fileTooLarge."""
+    """Il file in ingresso non si può leggere. `code`: fileTooLarge, noSource (manca il testo per rileggerlo)."""
 
 
 class CifError(PistakError):

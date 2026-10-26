@@ -40,12 +40,14 @@ pistak/
     ringpairs.py    parametri anello–anello (Cg···Cg, α, β, γ)
     config.py       soglie (Limits) e preferenze: pistak/default.toml + user.toml dell'utente
     errors.py       errori con codice stabile (CifError, StructureError, InputError)
-    analysis.py     la catena completa, il PairContext e il riepilogo per molecola (MoleculeContact)
+    stages.py       stadi dell'analisi e soglie da cui dipende ciascuno (rianalisi parziale con cache)
+    analysis.py     la catena completa, `reanalyse`, il PairContext e il riepilogo per molecola (MoleculeContact)
     uncertainty.py  incertezze dei parametri con un Monte Carlo sulle s.u. del CIF
   params/    registro dei parametri misurabili (Registry; builtin = sito, extra = fase 2, plugins)
   io/        export CSV/JSON/XYZ con chiavi fisse; batch (parallelo), stats (statistiche), compare (confronto);
              qc = input del dimero per ORCA, Psi4, Gaussian
   gui/       finestra (PySide6): session.py = stato condiviso e sincronizzazione; views/ = le viste;
+             limits_panel.py = cursori delle soglie in tempo reale;
              collection_window.py = confronto e statistiche; session_file.py = formato .pistak
   errors.py  messaggi degli errori nella lingua corrente
   labels.py  testi per l'utente costruiti dai risultati (relazione della coppia, tipo di colonna)
@@ -186,6 +188,18 @@ Tutte si scelgono in *Analisi ▸ Soglie…*, in `user.toml` (`[limits]`) o da t
   - Il file inizia con un commento che dice da dove viene (CIF, blocco, coppia, simmetria, distanza, idrogeni) ed è
     tutto ASCII. Le coppie intramolecolari (tra frammenti della stessa molecola) non si esportano: non sono un dimero.
     Le parole chiave seguono le versioni correnti (ORCA 5–6, Psi4 1.7+, Gaussian 16): controllale con la tua.
+* **Analisi a stadi e soglie in tempo reale**: la catena è divisa in stadi (`core/stages.py`) — lettura del CIF
+  (`disorder`), struttura (legami, cella), frammenti π (anelli, asse lungo), contatti (`contact_cutoff`,
+  `neighbour_shells`, `pair_mode`: la misura di tutte le coppie, la parte costosa) e coppie (il criterio di stack:
+  `max_dihedral`, `max_interplanar`, `min_overlap`, `max_slip`, `overlap_measure`). Cambiando le soglie si rifà solo
+  dal primo stadio toccato (`pistak.api.reanalyse(analisi, soglie)`; la finestra lo fa da sola): con quelle del
+  criterio di stack le coppie già misurate si riclassificano senza rifare la geometria (pochi ms anche con decine
+  di coppie), e i parametri del registro dichiarati `geometric=True` (tutti quelli di `params/extra.py`) si riusano.
+  *Analisi ▸ Soglie in tempo reale* (Ctrl+Shift+L) apre i cursori: tabella, scatter (con le soglie come linee
+  tratteggiate), istogramma e colonne seguono il cursore, selezione e filtri restano sulle stesse coppie; il contatto
+  massimo rimisura e si applica al rilascio, in un thread a parte. *Salva come predefinite* scrive `user.toml`. Le
+  incertezze del Monte Carlo vanno ricalcolate dopo un cambio di soglie. Un plugin che dipende solo dalla
+  geometria della coppia può dichiararlo con `@parameter(..., geometric=True)`.
 * **Atomi disordinati** (`disorder`): `major` (predefinito) tiene, per ogni assemblaggio (`_atom_site_disorder_assembly`),
   il gruppo con l'occupanza media più alta; `first` il gruppo 1 (il sito); `all` tutti; un numero, quel gruppo.
 * **Criterio di stack**: oltre ad angolo tra i piani e distanza interplanare, la sovrapposizione dei nuclei proiettati

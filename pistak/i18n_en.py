@@ -69,8 +69,26 @@ TEXT: dict[str, str] = {
     "file troppo grande": "file too large",
     # ---- soglie -------------------------------------------------------------------------
     "Soglie dell'analisi": "Analysis thresholds",
-    "Cambiare una soglia rifà l'analisi. «Salva» le scrive in {path}.":
-        "Changing a threshold re-runs the analysis. “Save” writes them to {path}.",
+    "Cambiare una soglia rifà solo la parte dell'analisi che ne dipende. «Salva» le scrive in {path}.":
+        "Changing a threshold re-runs only the part of the analysis that depends on it. “Save” writes them to {path}.",
+    # ---- soglie in tempo reale ---------------------------------------------------------
+    "Soglie in tempo reale": "Live thresholds",
+    "Rimisura le coppie: si applica quando lasci il cursore.": "Re-measures the pairs: applied when you release the slider.",
+    "<b>{stack}</b> stack · {parallel} parallele · {tilted} inclinate · {cols} colonne":
+        "<b>{stack}</b> stacked · {parallel} parallel · {tilted} tilted · {cols} columns",
+    "Le coppie già misurate si riclassificano mentre muovi i cursori: la geometria non si rifà. "
+    "Le incertezze del Monte Carlo vanno ricalcolate.":
+        "Pairs already measured are reclassified as you move the sliders: the geometry is not recomputed. "
+        "Monte Carlo uncertainties have to be computed again.",
+    "Salva come predefinite": "Save as defaults",
+    "Scrive le soglie in {path}": "Writes the thresholds to {path}",
+    "Soglie salvate": "Saved thresholds",
+    "Torna alle soglie di user.toml (o a quelle predefinite)": "Back to the thresholds in user.toml (or the defaults)",
+    "Soglie salvate in {path}": "Thresholds saved to {path}",
+    "Rianalisi di {name} con le nuove soglie…": "Re-analysing {name} with the new thresholds…",
+    "{name}: {stack} stack, {parallel} parallele, {tilted} inclinate · {cols} colonne":
+        "{name}: {stack} stacked, {parallel} parallel, {tilted} tilted · {cols} columns",
+    "Soglia del criterio di stack (Analisi ▸ Soglie in tempo reale)": "Stack-criterion threshold (Analysis ▸ Live thresholds)",
     "Valori del sito": "Website values",
     "Applica": "Apply",
     "Applica e salva": "Apply and save",
@@ -489,4 +507,5 @@ TEXT: dict[str, str] = {
     "mancano le operazioni di simmetria (e il gruppo non è P1)": "the symmetry operations are missing (and the group is not P1)",
     "operazione di simmetria illeggibile": "unreadable symmetry operation",
     "troppi atomi nella cella": "too many atoms in the cell",
+    "per cambiare la regola di disordine bisogna rileggere il file CIF": "changing the disorder policy requires re-reading the CIF file",
 }

@@ -1,4 +1,7 @@
-"""Catena completa: testo CIF → cella → molecole → frammenti π → coppie vicine → colonne e contatti tra molecole."""
+"""Catena completa: testo CIF → cella → molecole → frammenti π → coppie vicine → colonne e contatti tra molecole.
+
+La catena è divisa in stadi (`pistak.core.stages`): `reanalyse` rifà con nuove soglie solo gli stadi che quelle
+soglie toccano e riusa le misure conservate nell'analisi (`Analysis.cache`)."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -12,8 +15,20 @@ from pistak.core.cif import Cif, parse_cif
 from pistak.core.config import Limits, load_limits
 from pistak.core.cores import Core, apply_axis, pi_fragments
 from pistak.core.errors import InputError
-from pistak.core.pairs import Frame, Pair, Shift, _canon, collect_pairs, frame_for, molecule_key
+from pistak.core.pairs import (
+    Frame,
+    Pair,
+    Shift,
+    _canon,
+    as_fragments,
+    contact_keys,
+    frame_for,
+    group_pairs,
+    iter_neighbour_pairs,
+    molecule_key,
+)
 from pistak.core.stacks import StackColumn, find_stacks
+from pistak.core.stages import STAGES, StageCache, first_stage
 from pistak.core.structure import Molecule, Structure, build_structure
 
 if TYPE_CHECKING:
@@ -76,6 +91,8 @@ class Analysis:
     fragments: list[list[Core]] = field(default_factory=list)
     #: Incertezze dal Monte Carlo (`pistak.api.uncertainty`), se calcolate.
     uncertainty: Uncertainty | None = None
+    #: Risultati intermedi per rifare l'analisi solo dagli stadi toccati da nuove soglie (`reanalyse`).
+    cache: StageCache | None = field(default=None, repr=False, compare=False)
 
     def fragment(self, molecule: int, index: int = 0) -> Core | None:
         if self.fragments:
@@ -180,20 +197,68 @@ class PairContext:
         return self.frame.project(self.pos_b)
 
 
-def analyse_cif(cif: Cif, name: str = "", limits: Limits | None = None) -> Analysis:
+def _fragments(structure: Structure, limits: Limits) -> list[list[Core]]:
+    return [[] if m.extended else apply_axis(m, pi_fragments(m, limits), limits.long_axis_atoms) for m in structure.molecules]
+
+
+def _contacts(structure: Structure, fragments: list[list[Core]], limits: Limits, text: str | None,
+              block: str | int | None) -> StageCache:
+    """Stadio `contacts`: misura tutte le coppie di frammenti vicini (la parte costosa) e le loro chiavi di simmetria."""
+    contacts = list(iter_neighbour_pairs(structure, fragments, limits))
+    return StageCache(text, block, contacts, contact_keys(structure, fragments, contacts, limits))
+
+
+def _assemble(name: str, cif: Cif, structure: Structure, fragments: list[list[Core]], limits: Limits,
+              cache: StageCache) -> Analysis:
+    """Stadio `pairs`: classificazione, raccolta delle coppie equivalenti e colonne, dalle misure della cache."""
+    pairs, stack_edges = group_pairs(cache.contacts, cache.keys, limits)
+    return Analysis(name, cif, structure, [f[0] if f else None for f in fragments], pairs, limits,
+                    stacks=find_stacks(structure, stack_edges), fragments=fragments, cache=cache)
+
+
+def analyse_cif(cif: Cif, name: str = "", limits: Limits | None = None, text: str | None = None,
+                block: str | int | None = None) -> Analysis:
+    """Analisi di un CIF già letto. `text` e `block` (da dove viene) servono solo a `reanalyse`, per cambiare poi la
+    regola di disordine."""
     limits = limits or load_limits()
     structure = build_structure(cif, limits)
-    fragments = [[] if m.extended else apply_axis(m, pi_fragments(m, limits), limits.long_axis_atoms) for m in structure.molecules]
-    cores = [f[0] if f else None for f in fragments]
-    pairs, stack_edges = collect_pairs(structure, fragments, limits)
-    return Analysis(name or cif.name, cif, structure, cores, pairs, limits, stacks=find_stacks(structure, stack_edges),
-                    fragments=fragments)
+    fragments = _fragments(structure, limits)
+    return _assemble(name or cif.name, cif, structure, fragments, limits, _contacts(structure, fragments, limits, text, block))
 
 
 def analyse_text(text: str, name: str = "", limits: Limits | None = None, block: str | int | None = None) -> Analysis:
     """Analisi di un blocco del CIF (per impostazione il primo che contiene atomi)."""
     limits = limits or load_limits()
-    return analyse_cif(parse_cif(text, block=block, disorder=limits.disorder), name, limits)
+    return analyse_cif(parse_cif(text, block=block, disorder=limits.disorder), name, limits, text, block)
+
+
+def reanalyse(analysis: Analysis, limits: Limits) -> Analysis:
+    """La stessa struttura con altre soglie, rifacendo solo gli stadi che le soglie cambiate toccano: con le soglie
+    del criterio di stack (angolo, distanza interplanare, sovrapposizione, slittamento) nessuna geometria si
+    rimisura. L'analisi di partenza resta com'è; se le soglie sono le stesse si riottiene lei. Le incertezze del
+    Monte Carlo e i parametri del registro non passano alla nuova analisi (`pistak.api.reanalyse` li ricalcola)."""
+    stage = first_stage(analysis.limits, limits)
+    if stage is None:
+        return analysis
+    cache = analysis.cache
+    if cache is None and stage == "pairs":
+        stage = "contacts"  # nessuna misura da riusare
+    cache = cache or StageCache()
+    start = STAGES.index(stage)
+
+    def redo(s: str) -> bool:
+        return start <= STAGES.index(s)
+
+    if redo("cif"):
+        if cache.text is None:
+            raise InputError("noSource")
+        cif = parse_cif(cache.text, block=cache.block, disorder=limits.disorder)
+    else:
+        cif = analysis.cif
+    structure = build_structure(cif, limits) if redo("structure") else analysis.structure
+    fragments = _fragments(structure, limits) if redo("fragments") else (analysis.fragments or as_fragments(analysis.cores))
+    new_cache = _contacts(structure, fragments, limits, cache.text, cache.block) if redo("contacts") else cache.derived()
+    return _assemble(analysis.name, cif, structure, fragments, limits, new_cache)
 
 
 def read_cif_file(path: str | Path) -> str:

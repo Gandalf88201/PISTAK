@@ -28,6 +28,9 @@ Any intermolecular pair can be exported as a dimer input for quantum-chemistry c
 quantum chemistry*, `pistak qc`): ORCA, Psi4 and Gaussian, DFT-D with counterpoise correction (default
 B3LYP-D3(BJ)/def2-TZVP) or SAPT (Psi4 only, default SAPT0/jun-cc-pVDZ). The monomers are the two whole molecules in
 the crystal geometry, with X–H bonds extended to neutron-diffraction lengths (C–H 1.083 Å; `--raw-h` keeps the CIF ones).
+The analysis is staged (`pistak/core/stages.py`): changing thresholds re-runs only from the first stage they affect
+(`pistak.api.reanalyse`). *Analysis ▸ Live thresholds* (Ctrl+Shift+L) opens sliders for the stack criterion: pairs
+already measured are reclassified in a few milliseconds, without recomputing any geometry, and all views follow.
 Disorder policy (`--disorder major|first|all|N`), stack criterion (`--overlap-measure`, `--min-overlap`, `--max-slip`),
 multi-block CIFs (`--block`) and missing symmetry operations (derived from the Hall or H-M symbol) are described in `README.md`.
 Personal settings (`user.toml`), the last session and a `plugins/` folder live in the user's config folder
