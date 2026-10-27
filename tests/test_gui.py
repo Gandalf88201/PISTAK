@@ -115,6 +115,52 @@ def test_scena_fuori_schermo_con_pyvista(world):
         pytest.skip(f"rendering non disponibile: {e}")
 
 
+def test_scena_misure_sugli_assi(world):
+    s, a, _ = world
+    pair = a.pairs[0]
+    scene = build_scene(a.pair_context(pair))
+    assert [p.color for p in scene.axes] == [p.color for p in scene.paths[:3]]  # L, W, n con i colori dei gradini
+    texts = [lb.text for lb in scene.labels]
+    assert {"L", "W", "n"} <= set(texts)
+    for name, value in (("L", pair.long_slip), ("W", pair.lat_slip), ("n", pair.interplanar)):
+        assert f"{name} {value:.2f} Å" in texts  # gli stessi valori della tabella
+
+
+def test_vista_dall_alto_come_la_proiezione(world):
+    """La camera «dall'alto» (quella di partenza) mette a schermo L a destra e W in alto, con la stessa scala sui due
+    assi: ogni atomo cade dove lo disegna la Proiezione, a meno di traslazione e ingrandimento."""
+    pv = pytest.importorskip("pyvista")
+    from pistak.gui.views.view3d import view_directions
+
+    s, a, _ = world
+    ctx = a.pair_context(a.pairs[0])
+    scene = build_scene(ctx, show_h=False)
+    direction, up = view_directions(ctx.frame)["top"]
+    try:
+        pl = pv.Plotter(off_screen=True, window_size=(400, 300))
+    except Exception as e:  # noqa: BLE001
+        pytest.skip(f"rendering non disponibile: {e}")
+    pl.enable_parallel_projection()
+    c = scene.center
+    pl.camera_position = [tuple(c - direction * 30), tuple(c), tuple(up)]
+    pl.camera.parallel_scale = 8
+    ren = pl.renderer
+    screen = []
+    for p in scene.pos:
+        ren.SetWorldPoint(*p, 1.0)
+        ren.WorldToDisplay()
+        screen.append(ren.GetDisplayPoint()[:2])
+    pl.close()
+    screen = np.array(screen)
+    q = ctx.frame.project(scene.pos)[:, :2]  # coordinate (L, W) della Proiezione
+    # schermo = k · (L, W) + t, con k > 0 uguale sui due assi (niente rotazioni né specchiature)
+    A = np.column_stack([q, np.ones(len(q))])
+    coef, *_ = np.linalg.lstsq(A, screen, rcond=None)
+    assert np.allclose(A @ coef, screen, atol=0.5)
+    k = coef[0, 0]
+    assert k > 0 and np.isclose(coef[1, 1], k, rtol=1e-3) and abs(coef[1, 0]) < 1e-3 * k and abs(coef[0, 1]) < 1e-3 * k
+
+
 def test_incertezze_nel_dettaglio(world):
     s, a, v = world
     from test_uncertainty import with_su

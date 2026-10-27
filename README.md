@@ -121,6 +121,8 @@ file della finestra di confronto. Si riapre da *File ▸ Apri una sessione…*, 
   `./start.py --lang en`, `PISTAK_LANG=en`, o `language = "en"` in `user.toml` (sezione `[gui]`; `auto` = lingua del sistema).
   I testi sono scritti in italiano dentro `tr("...")` e tradotti da `pistak/i18n_en.py`; `python -m pistak.i18n_check` elenca
   quelli senza traduzione. I plugin traducono le proprie etichette con `pistak.i18n.add_translations("en", {...})`.
+* **Tema chiaro / scuro:** menu *Vista ▸ Tema* (automatico come il sistema, chiaro, scuro), oppure `background` in
+  `user.toml` (sezione `[gui]`).
 * **Finestre:** la finestra principale non supera mai lo schermo (94% dell'area utile), si può rimpicciolire fino a circa
   640×420 e ingrandire a piacere; le barre degli strumenti delle viste vanno a capo invece di allargare la finestra; le
   sessioni salvate su uno schermo più grande vengono riportate dentro lo schermo.

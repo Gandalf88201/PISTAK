@@ -287,3 +287,35 @@ def test_cambio_lingua_a_finestra_aperta_conserva_la_sessione(app, monkeypatch):
     for _ in range(20):
         app.processEvents()
     assert app.main_window.docks[0].windowTitle() == "Tabella" and app.main_window.session.selection("A") == 2
+
+
+def test_cambio_tema_a_finestra_aperta_conserva_la_sessione(app, monkeypatch):
+    from pistak.gui import theme
+    from pistak.gui.main_window import MainWindow
+    from pistak.gui.session import Session
+    from pistak.gui.views.scatter_view import ScatterView
+
+    monkeypatch.setattr(theme, "save_mode", lambda m: None)  # non scrive user.toml durante i test
+    monkeypatch.setattr(theme, "_mode", "light")
+    win = MainWindow(Session())
+    win.autosave = False
+    win.session.limits = Limits.site()
+    win.session.load_file(EX / "herringbone_anthracene.cif")
+    wait(app, lambda: win.session.analysis is not None)
+    for _ in range(20):
+        app.processEvents()
+    win.session.select("A", 2)
+
+    win.change_theme("dark")
+    for _ in range(20):
+        app.processEvents()
+    new = app.main_window
+    assert new is not win and not win.isVisible() and theme.mode() == "dark"
+    assert new.session is win.session and new.session.selection("A") == 2
+    scatter = next(d.widget() for d in new.docks if isinstance(d.widget(), ScatterView))
+    assert scatter.plot.backgroundBrush().color().getRgb()[:3] == theme.background() == (30, 32, 36)
+
+    new.change_theme("light")
+    for _ in range(20):
+        app.processEvents()
+    assert theme.mode() == "light" and app.main_window.session.selection("A") == 2

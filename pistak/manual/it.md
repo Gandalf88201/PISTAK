@@ -135,7 +135,7 @@ coppie* lo toglie).
 | menu | voci |
 |---|---|
 | File | apri CIF, apri il cristallo dimostrativo, recenti, salva/apri sessione, riapri l'ultima, **Esporta** (CSV, JSON, XYZ, calcoli quantistici, PNG della 3D) |
-| Vista | nuova vista, reimposta la disposizione |
+| Vista | nuova vista, reimposta la disposizione, **Tema** (automatico come il sistema, chiaro, scuro: la finestra si ricostruisce conservando tutto) |
 | Analisi | Soglie… (Ctrl+,), Soglie in tempo reale (Ctrl+Maiusc+L), Rianalizza (Ctrl+R), Incertezze (Monte Carlo), plugin, elenco dei parametri, Confronto e statistiche (Ctrl+Maiusc+C), Elabora una cartella di CIF |
 | Lingua | italiano / inglese (la finestra si ricostruisce conservando tutto) |
 | Aiuto | Manuale (F1), Informazioni |
@@ -176,8 +176,12 @@ sue copie per simmetria. La linea tratteggiata è il valore della coppia selezio
 La coppia selezionata: la molecola A con i colori degli elementi e il piano medio arancione, la B con i carboni e il
 piano azzurri; *Nucleo* ingrandisce gli atomi dei nuclei π, *H* mostra gli idrogeni; con *Colonna* le altre molecole
 della colonna di stack in grigio chiaro. *Piani* disegna i piani medi, *Vettori* la scomposizione dello slittamento (L rosso,
-W verde, distanza interplanare blu), *Cella* gli spigoli della cella. Stili: sfere e bastoncini, bastoncini, spazio
-occupato (vdW). Le viste predefinite: *Obliqua*, *Dall'alto* (perpendicolare ai piani), *Di lato*, *Lungo L*.
+W verde, distanza interplanare blu), *Misure* gli assi L, W, n che passano per Cg A con il valore di ogni componente
+(gli stessi della tabella), *Cella* gli spigoli della cella. Stili: sfere e bastoncini, bastoncini, spazio
+occupato (vdW). Le viste predefinite: *Dall'alto* (perpendicolare ai piani), *Obliqua*, *Di lato*, *Lungo L*.
+La 3D parte *Dall'alto* e in proiezione *Ortogonale* (senza prospettiva): L a destra, W in alto, stesso centro
+della **Proiezione**, così le due viste coincidono; finché non si muove la camera l'inquadratura segue le dimensioni
+del pannello. Togliendo *Ortogonale* si torna alla prospettiva.
 *Blocca camera* tiene il punto di vista quando cambia la coppia; *PNG…* salva l'immagine.
 
 ### Proiezione

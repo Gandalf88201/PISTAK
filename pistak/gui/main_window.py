@@ -32,7 +32,7 @@ from pistak import i18n
 from pistak.core.analysis import read_cif_file
 from pistak.core.cif import block_names
 from pistak.core.config import ROOT, Limits, user_config_dir
-from pistak.gui import session_file
+from pistak.gui import session_file, theme
 from pistak.gui.screen import clamp_into_screen, fit_to_screen
 from pistak.gui.session import GROUPS, Session
 from pistak.gui.settings_dialog import SettingsDialog
@@ -250,6 +250,15 @@ class MainWindow(QMainWindow):
         for kind in VIEW_TYPES:
             self._act(new, view_title(kind), lambda k=kind: self._new_view(k))
         self._act(v, tr("Reimposta la disposizione"), lambda: (self.default_layout(), self.fit_to_screen()))
+        theme_menu = v.addMenu(tr("Tema"))
+        group = QActionGroup(self)
+        group.setExclusive(True)
+        for mode, name in theme.MODES.items():
+            act = QAction(tr(name), self, checkable=True)
+            act.setChecked(mode == theme.mode())
+            act.triggered.connect(lambda _=False, m=mode: QTimer.singleShot(0, lambda: self.change_theme(m)))
+            group.addAction(act)
+            theme_menu.addAction(act)
 
         a = mb.addMenu(tr("&Analisi"))
         self._act(a, tr("Soglie…"), self.edit_limits, "Ctrl+,")
@@ -589,6 +598,23 @@ class MainWindow(QMainWindow):
             i18n.save_language(lang)
         except OSError:
             pass  # la scelta vale comunque per questa esecuzione
+        self._replace_window(st, tf("Lingua: {name}", name=i18n.LANGS[lang]))
+
+    def change_theme(self, mode: str) -> None:
+        """Passa al tema chiaro, scuro o di sistema: salva la scelta e ricostruisce la finestra come per la lingua
+        (i grafici prendono i colori quando nascono)."""
+        if mode == theme.mode():
+            return
+        st = self.state()
+        theme.set_mode(mode)
+        try:
+            theme.save_mode(mode)
+        except OSError:
+            pass
+        self._replace_window(st, tf("Tema: {name}", name=tr(theme.MODES[mode])))
+
+    def _replace_window(self, st: dict, message: str) -> None:
+        """Una finestra nuova con i pannelli, la disposizione e la selezione di `st` al posto di questa."""
         new = MainWindow(self.session)
         new.autosave, new.session_path = self.autosave, self.session_path
         new._build_docks_from(st)
@@ -597,7 +623,7 @@ class MainWindow(QMainWindow):
             new._apply_selection(st)
         new.show()
         new._restore_collection(st)
-        new.status_label.setText(tf("Lingua: {name}", name=i18n.LANGS[lang]))
+        new.status_label.setText(message)
         self.autosave = False
         if self.collection is not None:
             self.collection.close()

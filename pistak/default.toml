@@ -28,7 +28,7 @@ long_axis_atoms = ""       # asse lungo da due atomi, per etichetta ("C1,C9"); v
 
 [gui]
 language = "it"            # it | en | auto (auto = lingua del sistema) — si cambia anche dal menu Lingua
-background = "auto"        # auto | light | dark
+background = "auto"        # auto | light | dark — si cambia anche da Vista ▸ Tema
 show_hydrogens = true
 sphere_scale = 0.28
 stick_radius = 0.11

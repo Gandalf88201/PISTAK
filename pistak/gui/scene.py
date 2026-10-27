@@ -35,6 +35,15 @@ class Path:
     points: np.ndarray  # K×3
     color: RGB
     radius: float = 0.05
+    arrow: bool = False  # punta di freccia sull'ultimo punto
+
+
+@dataclass
+class Label:
+    pos: np.ndarray
+    text: str
+    color: RGB
+    size: int = 13
 
 
 @dataclass
@@ -57,6 +66,8 @@ class Scene:
     polygons: list[Polygon] = field(default_factory=list)
     paths: list[Path] = field(default_factory=list)
     markers: list[Marker] = field(default_factory=list)
+    axes: list[Path] = field(default_factory=list)  # assi L, W, n della coppia, dal baricentro del primo nucleo
+    labels: list[Label] = field(default_factory=list)  # nomi degli assi e valori misurati lungo ciascuno
     ghost_pos: np.ndarray = field(default_factory=lambda: np.zeros((0, 3)))  # altre molecole della colonna
     ghost_bonds: np.ndarray = field(default_factory=lambda: np.zeros((0, 2), dtype=int))
     box: np.ndarray = field(default_factory=lambda: np.zeros((0, 2, 3)))  # E×2×3: spigoli della cella
@@ -141,6 +152,17 @@ def build_scene(ctx: PairContext, show_h: bool = True, show_cell: bool = False, 
     p3 = p2 + f.n * dn
     scene.paths += [Path(np.array([p0, p1]), COLOR_L), Path(np.array([p1, p2]), COLOR_W), Path(np.array([p2, p3]), COLOR_N)]
     scene.paths.append(Path(np.array([p0, cb.centroid]), (90, 90, 90), 0.025))
+    # le misure proiettate sugli assi: L, W, n passano per Cg A e ogni gradino porta il suo valore (quelli della tabella)
+    reach = max(abs(dl), abs(dw), abs(dn), 2.0) + 1.5
+    # (il nome di n è scostato lungo -W: guardando dall'alto la punta di n cade su Cg A)
+    for axis, col, name, aside in ((f.L, COLOR_L, "L", 0.0), (f.W, COLOR_W, "W", 0.0), (f.n, COLOR_N, "n", -0.7)):
+        scene.axes.append(Path(np.array([p0 - axis * reach, p0 + axis * reach]), col, 0.018, arrow=True))
+        scene.labels.append(Label(p0 + axis * (reach + 0.45) + f.W * aside, name, col, 16))
+    # etichette scostate dal proprio gradino, dalla parte opposta agli altri (n: oltre Cg B, che dall'alto la coprirebbe)
+    sl, sw = (1.0 if dl >= 0 else -1.0), (1.0 if dw >= 0 else -1.0)
+    for pos, value, col, name in (((p0 + p1) / 2 - f.W * sw * 0.5, dl, COLOR_L, "L"), ((p1 + p2) / 2 + f.L * sl * 0.3, dw, COLOR_W, "W"),
+                                  ((p2 + p3) / 2 + f.W * sw * 0.7, dn, COLOR_N, "n")):
+        scene.labels.append(Label(pos, f"{name} {abs(value):.2f} Å", col))
     scene.markers += [Marker(ca.centroid, COLOR_PLANE_A, 0.16, "Cg A"), Marker(cb.centroid, COLOR_PLANE_B, 0.16, "Cg B")]
 
     if show_column:

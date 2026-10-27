@@ -31,13 +31,15 @@ class Options:
     show_h: bool = True
     show_planes: bool = True
     show_vectors: bool = True
+    show_measures: bool = True  # assi L, W, n e valori misurati lungo ciascuno
     show_cell: bool = False
     show_column: bool = True
     highlight_core: bool = True
     labels: bool = True
+    ortho: bool = True  # proiezione ortogonale: dall'alto la vista coincide con la Proiezione
 
 
-def _sticks(scene: Scene, radius: float) -> pv.PolyData | None:
+def _sticks(scene: Scene, colors: np.ndarray, radius: float) -> pv.PolyData | None:
     """Legami come cilindri, ciascuna metà del colore del suo atomo."""
     if not len(scene.bonds):
         return None
@@ -47,7 +49,7 @@ def _sticks(scene: Scene, radius: float) -> pv.PolyData | None:
     pts = np.empty((4 * n, 3))
     pts[0::4], pts[1::4], pts[2::4], pts[3::4] = pi, mid, mid, pj
     rgb = np.empty((4 * n, 3), dtype=np.uint8)
-    ci, cj = scene.colors[scene.bonds[:, 0]], scene.colors[scene.bonds[:, 1]]
+    ci, cj = colors[scene.bonds[:, 0]], colors[scene.bonds[:, 1]]
     rgb[0::4] = rgb[1::4] = ci
     rgb[2::4] = rgb[3::4] = cj
     lines = np.empty((2 * n, 3), dtype=np.int64)
@@ -69,13 +71,16 @@ def populate(plotter: pv.Plotter, scene: Scene, opts: Options, sphere_scale: flo
         radii = scene.radii * sphere_scale
     if opts.highlight_core and opts.style != 2:
         radii = np.where(scene.in_core, radii * 1.3, radii)
+    colors = scene.colors
+    if not theme.is_dark():  # idrogeni bianchi su fondo bianco: un grigio chiaro
+        colors = np.where((colors == 255).all(axis=1, keepdims=True), np.uint8(200), colors).astype(np.uint8)
     atoms = pv.PolyData(scene.pos)
-    atoms["rgb"] = scene.colors
+    atoms["rgb"] = colors
     atoms["radius"] = radii
     glyphs = atoms.glyph(scale="radius", factor=1.0, orient=False, geom=pv.Sphere(radius=1.0, theta_resolution=24, phi_resolution=24))
     plotter.add_mesh(glyphs, scalars="rgb", rgb=True, smooth_shading=True, specular=0.4)
     if opts.style != 2:
-        sticks = _sticks(scene, stick_radius)
+        sticks = _sticks(scene, colors, stick_radius)
         if sticks is not None:
             plotter.add_mesh(sticks, scalars="rgb", rgb=True, smooth_shading=True)
     if opts.show_planes:
@@ -86,14 +91,21 @@ def populate(plotter: pv.Plotter, scene: Scene, opts: Options, sphere_scale: flo
                              edge_color=tuple(c / 255 for c in poly.color), line_width=1.5)
     if opts.show_vectors:
         for p in scene.paths:
-            seg = pv.Line(p.points[0], p.points[1]).tube(radius=p.radius, n_sides=10)
-            plotter.add_mesh(seg, color=tuple(c / 255 for c in p.color), smooth_shading=True)
+            _add_path(plotter, p)
         for m in scene.markers:
             plotter.add_mesh(pv.Sphere(radius=m.radius, center=m.pos), color=tuple(c / 255 for c in m.color))
         if opts.labels and scene.markers:
             plotter.add_point_labels(np.array([m.pos for m in scene.markers]), [m.label for m in scene.markers],
                                      font_size=14, shape=None, show_points=False, always_visible=True,
                                      text_color=tuple(c / 255 for c in theme.foreground()))
+    if opts.show_measures:
+        for p in scene.axes:
+            _add_path(plotter, p, opacity=0.8)
+        for color_, group in _by_color(scene.labels).items():
+            for size, labels in group.items():
+                plotter.add_point_labels(np.array([lb.pos for lb in labels]), [lb.text for lb in labels], font_size=size, bold=True,
+                                         shape="rounded_rect", shape_color=tuple(c / 255 for c in theme.background()), shape_opacity=0.7,
+                                         margin=2, show_points=False, always_visible=True, text_color=tuple(c / 255 for c in color_))
     if len(scene.ghost_pos):
         ghost = pv.PolyData(scene.ghost_pos)
         plotter.add_mesh(ghost.glyph(scale=False, factor=0.2, orient=False, geom=pv.Sphere(radius=1.0, theta_resolution=12, phi_resolution=12)),
@@ -105,6 +117,26 @@ def populate(plotter: pv.Plotter, scene: Scene, opts: Options, sphere_scale: flo
     if len(scene.box):
         for a, b in scene.box:
             plotter.add_mesh(pv.Line(a, b), color="gray", line_width=1, opacity=0.6)
+
+
+def _add_path(plotter: pv.Plotter, p, opacity: float = 1.0) -> None:
+    color_ = tuple(c / 255 for c in p.color)
+    a, b = p.points[0], p.points[-1]
+    if p.arrow:  # la punta occupa l'ultimo tratto del segmento
+        axis = (b - a) / np.linalg.norm(b - a)
+        head = min(0.45, 0.3 * float(np.linalg.norm(b - a)))
+        plotter.add_mesh(pv.Cone(center=b - axis * head / 2, direction=axis, height=head, radius=max(4 * p.radius, 0.09), resolution=16),
+                         color=color_, opacity=opacity)
+        b = b - axis * head
+    plotter.add_mesh(pv.Line(a, b).tube(radius=p.radius, n_sides=10), color=color_, smooth_shading=True, opacity=opacity)
+
+
+def _by_color(labels) -> dict:
+    """Etichette raggruppate per colore e dimensione: una chiamata a add_point_labels per gruppo."""
+    out: dict = {}
+    for lb in labels:
+        out.setdefault(tuple(lb.color), {}).setdefault(lb.size, []).append(lb)
+    return out
 
 
 def view_directions(frame) -> dict[str, tuple[np.ndarray, np.ndarray]]:
@@ -156,9 +188,11 @@ class View3D(PairView):
         self.boxes: dict[str, QCheckBox] = {}
         for attr, text, tip in (("show_h", "H", tr("Mostra gli idrogeni")), ("show_planes", tr("Piani"), tr("Piani medi dei nuclei π")),
                                 ("show_vectors", tr("Vettori"), tr("Scomposizione dello slittamento: L, W e distanza interplanare")),
+                                ("show_measures", tr("Misure"), tr("Assi L, W, n della coppia con i valori misurati lungo ciascuno")),
                                 ("highlight_core", tr("Nucleo"), tr("Ingrandisce gli atomi del nucleo π")),
                                 ("show_column", tr("Colonna"), tr("Mostra le altre molecole della colonna di stack (grigio)")),
-                                ("show_cell", tr("Cella"), tr("Spigoli della cella elementare"))):
+                                ("show_cell", tr("Cella"), tr("Spigoli della cella elementare")),
+                                ("ortho", tr("Ortogonale"), tr("Proiezione ortogonale, senza prospettiva: vista dall'alto coincide con la Proiezione"))):
             cb = QCheckBox(text)
             cb.setToolTip(tip)
             cb.setChecked(getattr(self.opts, attr))
@@ -168,9 +202,9 @@ class View3D(PairView):
         self.lock_cam = QCheckBox(tr("Blocca camera"))
         self.lock_cam.setToolTip(tr("Non riporta la camera sulla coppia quando cambia la selezione"))
         self.toolbar.addWidget(self.lock_cam)
-        for text, key in ((tr("Obliqua"), "oblique"), (tr("Dall'alto"), "top"), (tr("Di lato"), "side"), (tr("Lungo L"), "end")):
+        for text, key in ((tr("Dall'alto"), "top"), (tr("Obliqua"), "oblique"), (tr("Di lato"), "side"), (tr("Lungo L"), "end")):
             b = QPushButton(text)
-            b.setToolTip({"top": tr("Guarda perpendicolarmente ai piani"), "side": tr("Guarda di lato: si vede la distanza interplanare"),
+            b.setToolTip({"top": tr("Guarda perpendicolarmente ai piani, orientata come la Proiezione (L a destra, W in alto)"), "side": tr("Guarda di lato: si vede la distanza interplanare"),
                           "end": tr("Guarda lungo l'asse lungo della molecola"), "oblique": tr("Vista di tre quarti")}[key])
             b.clicked.connect(lambda _=False, k=key: self.look(k))
             self.toolbar.addWidget(b)
@@ -179,6 +213,9 @@ class View3D(PairView):
         self.toolbar.addWidget(shot)
 
         self._pending_camera = None
+        self._pending_scale: float | None = None
+        #: L'inquadratura data da `look` (vista, camera): finché l'utente non muove la camera, segue le dimensioni del pannello.
+        self._auto_view: tuple[str, tuple] | None = None
         try:
             if os.environ.get("PISTAK_NO_3D"):
                 raise RuntimeError(tr("disattivata con PISTAK_NO_3D"))
@@ -191,7 +228,10 @@ class View3D(PairView):
     # ---- opzioni -------------------------------------------------------------------
     def _set(self, attr: str, value) -> None:
         setattr(self.opts, attr, value)
-        if attr in ("show_h", "show_cell", "show_column"):
+        if attr == "ortho":
+            self._apply_projection()
+            self.plotter.render()
+        elif attr in ("show_h", "show_cell", "show_column"):
             self._rebuild(keep_camera=True)
         else:
             self._draw(keep_camera=True)
@@ -233,29 +273,86 @@ class View3D(PairView):
     def _draw(self, keep_camera: bool) -> None:
         pl = self.plotter
         cam = pl.camera_position if keep_camera and self.scene is not None else None
+        scale = self._parallel_scale() if keep_camera else None
         pl.clear()
         pl.set_background(theme.background())
         if self.scene is not None:
             populate(pl, self.scene, self.opts, self.sphere_scale, self.stick_radius)
+            self._apply_projection()
             if self._pending_camera is not None:  # camera ripristinata da una sessione
                 pl.camera_position, self._pending_camera = self._pending_camera, None
+                self._set_parallel_scale(self._pending_scale)
+                self._pending_scale = None
             elif cam is not None:
                 pl.camera_position = cam
+                self._set_parallel_scale(scale)
             else:
-                self.look("oblique", render=False)
+                self.look("top", render=False)  # si parte come la Proiezione
         pl.render()
+
+    # ---- camera --------------------------------------------------------------------
+    def _camera(self):
+        return None if isinstance(self.plotter, _NullPlotter) else self.plotter.camera
+
+    def _apply_projection(self) -> None:
+        cam = self._camera()
+        if cam is not None and bool(cam.GetParallelProjection()) != self.opts.ortho:
+            cam.SetParallelProjection(self.opts.ortho)
+
+    def _parallel_scale(self) -> float | None:
+        cam = self._camera()
+        return float(cam.GetParallelScale()) if cam is not None else None
+
+    def _set_parallel_scale(self, scale: float | None) -> None:
+        cam = self._camera()
+        if cam is not None and scale:
+            cam.SetParallelScale(scale)
+
+    def _framing(self, key: str) -> tuple[np.ndarray, float]:
+        """Centro e semi-altezza (Å) dell'inquadratura. Dall'alto: lo stesso riquadro della Proiezione, cioè gli
+        atomi nel piano (L, W) della coppia, centrati come lì."""
+        if key != "top":
+            return self.scene.center, max(self.scene.size, 4.0) * 0.51
+        f = self.ctx.frame
+        q = f.project(self.scene.pos)
+        lo, hi = q[:, :2].min(axis=0), q[:, :2].max(axis=0)
+        mid = (lo + hi) / 2
+        center = f.origin + f.L * mid[0] + f.W * mid[1] + f.n * float(q[:, 2].mean())
+        w = self.plotter.interactor.width() or 1
+        h = self.plotter.interactor.height() or 1
+        half = max((hi[1] - lo[1]) / 2, (hi[0] - lo[0]) / 2 * h / w)
+        return center, max(half, 2.0) * 1.08
 
     def look(self, key: str, render: bool = True) -> None:
         if self.scene is None or self.ctx is None:
             return
         direction, up = view_directions(self.ctx.frame)[key]
         direction = direction / np.linalg.norm(direction)
-        center = self.scene.center
-        dist = max(self.scene.size, 4.0) * 1.9
+        center, half = self._framing(key)
+        # in prospettiva, la distanza a cui `half` riempie metà dell'angolo di vista (30°)
+        dist = max(half / np.tan(np.radians(15)), max(self.scene.size, 4.0))
+        self._apply_projection()
         self.plotter.camera_position = [tuple(center - direction * dist), tuple(center), tuple(up)]
+        self._set_parallel_scale(half)
         self.plotter.reset_camera_clipping_range()
+        self._auto_view = (key, self._camera_state())
         if render:
             self.plotter.render()
+
+    def _camera_state(self) -> tuple:
+        cam = self.plotter.camera_position
+        return (np.array([list(map(float, p)) for p in cam]) if cam is not None else None, self._parallel_scale())
+
+    def _still_auto(self) -> bool:
+        if self._auto_view is None or self.scene is None:
+            return False
+        (pos, scale), (pos0, scale0) = self._camera_state(), self._auto_view[1]
+        return pos is not None and pos0 is not None and np.allclose(pos, pos0) and scale == scale0
+
+    def resizeEvent(self, event) -> None:  # noqa: N802
+        super().resizeEvent(event)
+        if self._still_auto():  # il pannello si è assestato dopo il primo disegno: si rifà la stessa inquadratura
+            self.look(self._auto_view[0])
 
     def _save_png(self) -> None:
         path, _ = QFileDialog.getSaveFileName(self, tr("Salva immagine"), "vista3d.png", "PNG (*.png)")
@@ -268,7 +365,7 @@ class View3D(PairView):
     def extra_state(self) -> dict:
         cam = self.plotter.camera_position
         return {"opts": asdict(self.opts), "lock_camera": self.lock_cam.isChecked(),
-                "camera": [list(map(float, p)) for p in cam] if cam is not None else None}
+                "camera": [list(map(float, p)) for p in cam] if cam is not None else None, "scale": self._parallel_scale()}
 
     def apply_state(self, st: dict) -> None:
         names = {f.name for f in fields(Options)}
@@ -285,6 +382,7 @@ class View3D(PairView):
         self.lock_cam.setChecked(bool(st.get("lock_camera", False)))
         cam = st.get("camera")
         self._pending_camera = [tuple(p) for p in cam] if cam else None
+        self._pending_scale = st.get("scale")
 
     def closeEvent(self, event) -> None:  # noqa: N802
         try:

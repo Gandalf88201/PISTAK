@@ -37,6 +37,11 @@ TEXT: dict[str, str] = {
         "<b>{app}</b> — π-stack analysis from CIF files.<br>Based on the moleculesfriends.eu algorithm.<br>Code in <code>pistak/</code>; parameters and views can be extended with plugins.",
     "{app} — analisi dei π-stack": "{app} — π-stack analysis",
     "Lingua: {name}": "Language: {name}",
+    "Tema": "Theme",
+    "Tema: {name}": "Theme: {name}",
+    "Automatico (come il sistema)": "Automatic (follow the system)",
+    "Chiaro": "Light",
+    "Scuro": "Dark",
     # ---- file, sessioni, messaggi ---------------------------------------------------------
     "Apri un file CIF": "Open a CIF file",
     "CIF (*.cif *.CIF);;Tutti i file (*)": "CIF (*.cif *.CIF);;All files (*)",
@@ -230,6 +235,11 @@ TEXT: dict[str, str] = {
     "Piani medi dei nuclei π": "Mean planes of the π cores",
     "Vettori": "Vectors",
     "Scomposizione dello slittamento: L, W e distanza interplanare": "Slip decomposition: L, W and interplanar distance",
+    "Misure": "Measures",
+    "Assi L, W, n della coppia con i valori misurati lungo ciascuno": "The pair's L, W, n axes with the value measured along each",
+    "Ortogonale": "Orthographic",
+    "Proiezione ortogonale, senza prospettiva: vista dall'alto coincide con la Proiezione":
+        "Orthographic projection, no perspective: the view from above matches the Projection",
     "Nucleo": "Core",
     "Ingrandisce gli atomi del nucleo π": "Enlarges the atoms of the π core",
     "Colonna": "Column",
@@ -243,7 +253,8 @@ TEXT: dict[str, str] = {
     "Di lato": "Side view",
     "Lungo L": "Along L",
     "Vista di tre quarti": "Three-quarter view",
-    "Guarda perpendicolarmente ai piani": "Look perpendicular to the planes",
+    "Guarda perpendicolarmente ai piani, orientata come la Proiezione (L a destra, W in alto)":
+        "Look perpendicular to the planes, oriented like the Projection (L to the right, W up)",
     "Guarda di lato: si vede la distanza interplanare": "Side view: shows the interplanar distance",
     "Guarda lungo l'asse lungo della molecola": "Look along the long axis of the molecule",
     "PNG…": "PNG…",

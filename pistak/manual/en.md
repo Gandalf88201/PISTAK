@@ -135,7 +135,7 @@ removes it).
 | menu | items |
 |---|---|
 | File | open CIF, open the demo crystal, recent files, save/open session, reopen the last session, **Export** (CSV, JSON, XYZ, quantum chemistry, PNG of the 3D view) |
-| View | new view, reset the layout |
+| View | new view, reset the layout, **Theme** (automatic like the system, light, dark: the window rebuilds itself and keeps everything) |
 | Analysis | Thresholds… (Ctrl+,), Live thresholds (Ctrl+Shift+L), Re-analyse (Ctrl+R), Uncertainties (Monte Carlo), plugins, list of parameters, Comparison and statistics (Ctrl+Shift+C), Process a folder of CIF files |
 | Language | Italian / English (the window rebuilds itself and keeps everything) |
 | Help | Manual (F1), About |
@@ -176,9 +176,12 @@ the value of the selected pair. A click on a bar = filter.
 The selected pair: molecule A with element colours and an orange mean plane, molecule B with cyan carbons and plane;
 *Core* enlarges the atoms of the π cores, *H* shows hydrogens; with *Column* the other molecules of the stack column
 appear in light grey. *Planes* draws the mean planes, *Vectors* the slip decomposition (L red, W green, interplanar
-distance blue), *Cell* the cell edges. Styles: ball and stick, sticks, space-filling (vdW). Preset views: *Oblique*,
-*From above* (perpendicular to the planes), *Side view*, *Along L*. *Lock camera* keeps the point of view when the
-pair changes; *PNG…* saves the image.
+distance blue), *Measures* the L, W, n axes through Cg A with the value of each component (the same as in the
+table), *Cell* the cell edges. Styles: ball and stick, sticks, space-filling (vdW). Preset views: *From above*
+(perpendicular to the planes), *Oblique*, *Side view*, *Along L*. The 3D view starts *From above* with an
+*Orthographic* projection (no perspective): L to the right, W up, same centre as the **Projection**, so the two views
+match; until you move the camera the framing follows the panel size. Untick *Orthographic* to get perspective back.
+*Lock camera* keeps the point of view when the pair changes; *PNG…* saves the image.
 
 ### Projection
 
