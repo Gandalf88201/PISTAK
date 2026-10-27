@@ -56,7 +56,7 @@ class PeriodicDialog(QDialog):
         form.addRow(tr("Programma"), self.program)
         form.addRow(tr("Calcolo"), self.task)
         form.addRow(tr("Funzionale"), self.functional)
-        form.addRow(tr("Dispersione"), self.dispersion)
+        form.addRow(tr("Correzione di dispersione"), self.dispersion)
         form.addRow(tr("Lunghezza per i punti k"), self.kpoints)
         form.addRow("", self.normalize_h)
         note = QLabel(tr("Tutti gli atomi della cella in P1, con la regola di disordine dell'analisi. Pseudopotenziali e basi "

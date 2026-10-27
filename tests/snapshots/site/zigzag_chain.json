@@ -1,5 +1,30 @@
 {
+ "alerts": [
+  [
+   "B",
+   "noHydrogens",
+   {}
+  ],
+  [
+   "G",
+   "formulaUnchecked",
+   {}
+  ],
+  [
+   "G",
+   "noRefinement",
+   {}
+  ]
+ ],
  "cell_atoms": 12,
+ "geometry": {
+  "contacts": [],
+  "counts": {
+   "angle": 4,
+   "bond": 5,
+   "torsion": 3
+  }
+ },
  "molecules": [
   {
    "atoms": 6,
@@ -263,5 +288,21 @@
     ]
    ]
   }
- ]
+ ],
+ "structure": {
+  "alerts_a": 0.0,
+  "alerts_b": 1.0,
+  "alerts_c": 0.0,
+  "density_calc": 0.4986183692,
+  "density_cif": null,
+  "goof": null,
+  "r1": null,
+  "rho_max": null,
+  "rho_min": null,
+  "temperature": null,
+  "volume": 480.0,
+  "wr2": null,
+  "z": null,
+  "z_prime": null
+ }
 }

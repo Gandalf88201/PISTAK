@@ -1,7 +1,9 @@
 """Istantanee dei risultati: ogni modifica al calcolo che cambia un numero deve essere voluta.
 
-Per ogni CIF di `examples/` si salva tutto ciò che l'analisi produce (molecole, nuclei π, coppie con tutti i
-parametri predefiniti — builtin ed extra, non i plugin —, coppie di anelli e colonne di stack) in due modi:
+Per ogni CIF di `examples/` e di `tests/data/cod/` si salva tutto ciò che l'analisi produce (molecole, nuclei π,
+coppie con tutti i parametri predefiniti — builtin ed extra, non i plugin —, coppie di anelli, colonne di stack,
+grandezze della struttura, avvisi dei controlli rapidi e la geometria delle molecole: quante misure per tipo e
+l'elenco dei contatti di van der Waals) in due modi:
 
     tests/snapshots/site/<nome>.json        Limits.site(): le convenzioni del sito (devono restare quelle di sempre)
     tests/snapshots/canonical/<nome>.json   Limits(): i valori predefiniti (coppie uniche, equivalenza per simmetria)
@@ -25,8 +27,9 @@ import pytest
 
 from pistak.core.analysis import Analysis, analyse_file
 from pistak.core.config import Limits
+from pistak.core.intramolecular import molecule_geometry
 from pistak.core.ringpairs import ring_pairs
-from pistak.params import compute_all, specs
+from pistak.params import compute_all, compute_structure, specs, structure_specs
 
 ROOT = Path(__file__).resolve().parents[1]
 SNAP_DIR = ROOT / "tests" / "snapshots"
@@ -37,7 +40,8 @@ MODES = {"site": Limits.site, "canonical": Limits}
 
 
 def _cases() -> list[tuple[str, Path, Path, str]]:
-    cifs = [("", p) for p in sorted((ROOT / "examples").glob("*.cif")) if not p.name.startswith(".")]
+    cifs = [("", p) for d in (ROOT / "examples", ROOT / "tests" / "data" / "cod")
+            for p in sorted(d.glob("*.cif")) if not p.name.startswith(".")]
     extra = os.environ.get("PISTAK_SNAPSHOT_DIR")
     if extra:
         cifs += [("local/", p) for p in sorted(Path(extra).expanduser().glob("*.cif")) if not p.name.startswith(".")]
@@ -91,9 +95,19 @@ def snapshot(a: Analysis) -> dict:
     stacks = [{"rank": c.rank, "molecules": sorted(c.molecules), "translations": [list(t) for t in c.translations],
                "repeat": None if c.repeat is None else _num(c.repeat), "edges": len(c.edges),
                "mean_interplanar": _num(c.mean("interplanar"))} for c in a.stacks]
+    structure = {s.key: _num(a.structure_values.get(s.key, math.nan)) for s in structure_specs() if s.source == "builtin"}
+    alerts = sorted(([al.level, al.code, {k: _num(v) if isinstance(v, float) else v for k, v in al.values.items()}]
+                     for al in a.alerts or []), key=lambda x: (x[0], x[1], json.dumps(x[2], sort_keys=True)))
+    geometry = molecule_geometry(a.structure, a.cif)
+    counts: dict[str, int] = {}
+    for g in geometry:
+        counts[g.kind] = counts.get(g.kind, 0) + 1
+    contacts = [{"atoms": list(g.atoms), "codes": list(g.codes), "d": _num(g.value), "vdw": _num(g.vdw)}
+                for g in geometry if g.kind == "contact"]
     return {
         "space_group": a.cif.space_group, "cell_atoms": a.structure.n_cell_atoms,
         "skipped_disorder": a.cif.skipped_disorder, "molecules": molecules, "pairs": pairs, "stacks": stacks,
+        "structure": structure, "alerts": alerts, "geometry": {"counts": counts, "contacts": contacts},
     }
 
 
@@ -119,7 +133,7 @@ def _diff(exp, got, path: str = "$") -> list[str]:
 
 @pytest.mark.parametrize("label,cif,snap,mode", _cases(), ids=[c[0] for c in _cases()])
 def test_risultati_invariati(label, cif, snap, mode, request):
-    got = snapshot(compute_all(analyse_file(cif, MODES[mode]())))
+    got = snapshot(compute_structure(compute_all(analyse_file(cif, MODES[mode]()))))
     if request.config.getoption("--update-snapshots"):
         snap.parent.mkdir(parents=True, exist_ok=True)
         snap.write_text(json.dumps(got, indent=1, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")

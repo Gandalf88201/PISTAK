@@ -34,6 +34,15 @@ def test_con_coppie_nessun_motivo():
     assert why_no_pairs(api.analyse_file(EX / "herringbone_anthracene.cif")) is None
 
 
+def test_struttura_reale_con_anelli_saturi():
+    # COD 1550133: cinque anelli, tutti saturi (scarto dal piano 0,17–0,21 Å): nessun nucleo π
+    a = api.analyse_file(Path(__file__).parent / "data" / "cod" / "1550133.cif")
+    assert not a.pairs
+    r = why_no_pairs(a)
+    assert r.code == "nonPlanarRings" and r.values["n"] == 5
+    assert all(x.saturated for x in ring_planarity(a))
+
+
 def test_anelli_saturi():
     a = analyse(cyclohexane())
     assert not a.pairs

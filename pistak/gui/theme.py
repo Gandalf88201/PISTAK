@@ -106,3 +106,14 @@ def _palette(dark: bool) -> QPalette:
                       (R.Highlight, (47, 111, 214)), (R.HighlightedText, (255, 255, 255)), (R.PlaceholderText, (140, 142, 146))):
         p.setColor(role, QColor(*rgb))
     return p
+
+
+def plot_widget():
+    """Un grafico pyqtgraph con lo sfondo del tema. Il menu contestuale tiene le voci della vista (View All, assi,
+    Export) ma non «Plot Options»: trasformazioni, FFT, medie e trasparenza valgono per le curve e sui punti e sulle
+    barre di PISTAK danno solo errori."""
+    import pyqtgraph as pg
+
+    w = pg.PlotWidget(background=background())
+    w.getPlotItem().setMenuEnabled(False, enableViewBoxMenu=True)
+    return w

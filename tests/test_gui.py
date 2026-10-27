@@ -75,6 +75,14 @@ def test_cambio_di_gruppo_di_una_vista(world):
     assert v["tableA"].group == "B" and v["tableA"].index == 1
 
 
+def test_grafici_senza_plot_options(world):
+    # le voci «Plot Options» di pyqtgraph (FFT, medie, alpha) valgono per le curve: sui punti davano solo errori
+    _s, _a, v = world
+    for key in ("scatterA", "projA", "histA"):
+        item = v[key].plot.getPlotItem()
+        assert not item.menuEnabled() and item.getViewBox().menuEnabled(), key
+
+
 def test_filtro_condiviso_dal_gruppo(world):
     s, a, v = world
     v["scatterA"].filter_to({1, 2})
@@ -204,11 +212,20 @@ def test_dettaglio_geometria_e_controlli(world):
     assert n_bonds > 0 and d.geometry.columnCount() == 5
     d.geom_kind.setCurrentIndex(d.geom_kind.findData("torsion"))
     assert d.geometry.columnCount() == 7 and d.geometry.rowCount() > 0
+    d.geom_kind.setCurrentIndex(d.geom_kind.findData("contact"))
+    assert d.geometry.columnCount() == 7 and d.geometry.rowCount() > 0  # molecola, 2 atomi, d, s.u., Σ r vdW, Δ
+    assert "#1" in d.geometry.item(0, 2).text() and "#1 = " in d.geom_legend.text() and not d.geom_legend.isHidden()
     d.geom_kind.setCurrentIndex(d.geom_kind.findData("bond"))
     d.geom_h.setChecked(False)
     assert 0 < d.geometry.rowCount() < n_bonds
     assert d.checks.rowCount() == len(a.alerts) and d.checks.item(0, 1).text()
     assert "Volume della cella" in d.summary.toPlainText()
+    # lo stato salvato ricorda il tipo di misura e la casella degli idrogeni
+    d.geom_kind.setCurrentIndex(d.geom_kind.findData("angle"))
+    st = d.extra_state()
+    other = DetailView(s, "A")
+    other.apply_state(st)
+    assert other.geom_kind.currentData() == "angle" and not other.geom_h.isChecked() and other.tabs.currentIndex() == 6
 
 
 def test_finestra_calcoli_periodici(app):

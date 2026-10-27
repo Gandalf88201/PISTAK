@@ -1,5 +1,25 @@
 {
+ "alerts": [
+  [
+   "G",
+   "formulaUnchecked",
+   {}
+  ],
+  [
+   "G",
+   "noRefinement",
+   {}
+  ]
+ ],
  "cell_atoms": 18,
+ "geometry": {
+  "contacts": [],
+  "counts": {
+   "angle": 15,
+   "bond": 10,
+   "torsion": 23
+  }
+ },
  "molecules": [
   {
    "atoms": 18,
@@ -195,5 +215,21 @@
     ]
    ]
   }
- ]
+ ],
+ "structure": {
+  "alerts_a": 0.0,
+  "alerts_b": 0.0,
+  "alerts_c": 0.0,
+  "density_calc": 0.7587796163,
+  "density_cif": null,
+  "goof": null,
+  "r1": null,
+  "rho_max": null,
+  "rho_min": null,
+  "temperature": null,
+  "volume": 280.5003326,
+  "wr2": null,
+  "z": null,
+  "z_prime": null
+ }
 }

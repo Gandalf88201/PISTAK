@@ -1,0 +1,113 @@
+{
+ "alerts": [
+  [
+   "C",
+   "partialOccupancy",
+   {
+    "atoms": "C23B, C24B, H23C, H23D, H24C, H24D",
+    "n": 6
+   }
+  ],
+  [
+   "G",
+   "disorderSkipped",
+   {
+    "n": 6,
+    "policy": "major"
+   }
+  ]
+ ],
+ "cell_atoms": 128,
+ "geometry": {
+  "contacts": [
+   {
+    "atoms": [
+     "O2",
+     "H6B"
+    ],
+    "codes": [
+     "",
+     "x+1,y,z"
+    ],
+    "d": 2.431517422,
+    "vdw": 2.62
+   },
+   {
+    "atoms": [
+     "O2",
+     "C6"
+    ],
+    "codes": [
+     "",
+     "x+1,y,z"
+    ],
+    "d": 3.092166984,
+    "vdw": 3.22
+   },
+   {
+    "atoms": [
+     "H14",
+     "O7"
+    ],
+    "codes": [
+     "",
+     "x+1,y,z+1"
+    ],
+    "d": 2.581480494,
+    "vdw": 2.62
+   }
+  ],
+  "counts": {
+   "angle": 130,
+   "bond": 68,
+   "contact": 3,
+   "torsion": 191
+  }
+ },
+ "molecules": [
+  {
+   "atoms": 64,
+   "bonds": 68,
+   "centroid": [
+    1.103010404,
+    9.91474894,
+    5.807885425
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C24H32O8"
+  },
+  {
+   "atoms": 64,
+   "bonds": 68,
+   "centroid": [
+    3.096792407,
+    19.92289894,
+    1.777382305
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C24H32O8"
+  }
+ ],
+ "pairs": [],
+ "skipped_disorder": 6,
+ "space_group": "P 1 21 1",
+ "stacks": [],
+ "structure": {
+  "alerts_a": 0.0,
+  "alerts_b": 0.0,
+  "alerts_c": 1.0,
+  "density_calc": 1.311269691,
+  "density_cif": 1.313,
+  "goof": 1.102,
+  "r1": 0.0396,
+  "rho_max": 0.196,
+  "rho_min": -0.174,
+  "temperature": 100.0,
+  "volume": 1134.709173,
+  "wr2": 0.1098,
+  "z": 2.0,
+  "z_prime": 1.0
+ }
+}

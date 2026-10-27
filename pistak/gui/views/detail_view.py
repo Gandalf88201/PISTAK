@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 )
 
 from pistak.core.diagnosis import why_no_pairs
-from pistak.core.intramolecular import molecule_geometry
+from pistak.core.intramolecular import molecule_geometry, symmetry_codes
 from pistak.core.ringpairs import HEADERS, ring_pairs
 from pistak.gui import theme
 from pistak.gui.session import Session
@@ -34,7 +34,8 @@ from pistak.labels import ALERT_LEVELS, alert_text, no_pairs_text, rank_name, re
 from pistak.params import load_errors, specs, structure_specs
 
 #: Tipi di misura della scheda Geometria: chiave → (titolo, unità, decimali).
-GEOMETRY_KINDS = {"bond": ("Legami", "Å", 4), "angle": ("Angoli", "°", 2), "torsion": ("Torsioni", "°", 2)}
+GEOMETRY_KINDS = {"bond": ("Legami", "Å", 4), "angle": ("Angoli", "°", 2), "torsion": ("Torsioni", "°", 2),
+                  "contact": ("Contatti", "Å", 3)}
 #: Colori dei livelli degli avvisi (testo), leggibili sia sul tema chiaro sia su quello scuro.
 LEVEL_COLORS = {"A": QColor(214, 48, 49), "B": QColor(230, 126, 34), "C": QColor(180, 150, 20)}
 
@@ -99,8 +100,10 @@ class DetailView(PairView):
         self.geom_h = QCheckBox(tr("Idrogeni"))
         self.geom_h.setChecked(True)
         self.geom_info = QLabel()
-        self.geom_info.setToolTip(tr("Solo le molecole indipendenti per simmetria; ′ = atomo generato dalla simmetria. "
-                                     "s.u. dalle incertezze delle coordinate del CIF (vuota per gli atomi senza s.u.)."))
+        self.geom_info.setToolTip(tr("Solo le molecole indipendenti per simmetria. C2#1 = atomo C2 portato dall'operazione "
+                                     "#1 (legenda sotto la tabella). Contatti: coppie di atomi di molecole diverse più "
+                                     "vicine della somma dei raggi di van der Waals. s.u. dalle incertezze delle coordinate "
+                                     "del CIF (vuota per gli atomi senza s.u.)."))
         bar.addWidget(self.geom_kind)
         bar.addWidget(self.geom_h)
         bar.addStretch(1)
@@ -110,6 +113,10 @@ class DetailView(PairView):
         self.geometry.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.geometry.setSortingEnabled(True)
         lay.addWidget(self.geometry)
+        self.geom_legend = QLabel()
+        self.geom_legend.setWordWrap(True)
+        self.geom_legend.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        lay.addWidget(self.geom_legend)
         self.geom_kind.currentIndexChanged.connect(lambda _i: self._fill_geometry())
         self.geom_h.toggled.connect(lambda _b: self._fill_geometry())
         return w
@@ -120,6 +127,7 @@ class DetailView(PairView):
         a = self.analysis
         if a is None:
             self.geometry.setRowCount(0)
+            self.geom_legend.clear()
             return
         key = (id(a.structure), self.geom_h.isChecked())
         if key != self._geometry_key:
@@ -128,17 +136,22 @@ class DetailView(PairView):
         kind = self.geom_kind.currentData()
         title, unit, digits = GEOMETRY_KINDS[kind]
         rows = [g for g in self._geometry_items or [] if g.kind == kind]
-        n_atoms = {"bond": 2, "angle": 3, "torsion": 4}[kind]
+        labels, legend = symmetry_codes(rows)
+        n_atoms = {"bond": 2, "angle": 3, "torsion": 4, "contact": 2}[kind]
         heads = [tr("Molecola")] + [tf("Atomo {n}", n=i + 1) for i in range(n_atoms)] + [f"{tr(title)} ({unit})", "s.u."]
+        if kind == "contact":
+            heads += [tr("Σ r vdW (Å)"), tr("d − Σ r vdW (Å)")]
         self.geometry.setSortingEnabled(False)
         self.geometry.clear()
         self.geometry.setColumnCount(len(heads))
         self.geometry.setHorizontalHeaderLabels(heads)
         self.geometry.setRowCount(len(rows))
-        for r, g in enumerate(rows):
+        for r, (g, labs) in enumerate(zip(rows, labels)):
             cells: list[tuple[str, float | None]] = [(str(g.molecule + 1), g.molecule + 1)]
-            cells += [(lab, None) for lab in g.atoms]
+            cells += [(lab, None) for lab in labs]
             cells += [(f"{g.value:.{digits}f}", g.value), ("" if not math.isfinite(g.su) else f"{g.su:.{digits}f}", g.su)]
+            if kind == "contact":
+                cells += [(f"{g.vdw:.2f}", g.vdw), (f"{g.delta:+.3f}", g.delta)]
             for c, (text, num) in enumerate(cells):
                 it = _NumItem(text, num) if num is not None else QTableWidgetItem(text)
                 if num is not None:
@@ -148,6 +161,9 @@ class DetailView(PairView):
         self.geometry.resizeColumnsToContents()
         n_mol = len({g.molecule for g in self._geometry_items or []})
         self.geom_info.setText(tf("{n} misure · {m} molecole indipendenti", n=len(rows), m=n_mol))
+        self.geom_legend.setText(tr("Operazioni di simmetria") + ": " + " · ".join(f"{n} = {op}" for n, op in legend)
+                                 if legend else "")
+        self.geom_legend.setVisible(bool(legend))
 
     def _fill_checks(self) -> None:
         a = self.analysis
@@ -323,7 +339,12 @@ class DetailView(PairView):
         self.tabs.setTabText(2, f"{tr('Anelli')} ({len(rp)})")
 
     def extra_state(self) -> dict:
-        return {"tab": self.tabs.currentIndex()}
+        return {"tab": self.tabs.currentIndex(), "geometry_kind": self.geom_kind.currentData(),
+                "geometry_h": self.geom_h.isChecked()}
 
     def apply_state(self, st: dict) -> None:
+        k = self.geom_kind.findData(st.get("geometry_kind", "bond"))
+        if k >= 0:
+            self.geom_kind.setCurrentIndex(k)
+        self.geom_h.setChecked(bool(st.get("geometry_h", True)))
         self.tabs.setCurrentIndex(int(st.get("tab", 0)))

@@ -15,7 +15,7 @@ comparison and statistics across structures, synchronised 3D / projection / para
 ./start.py stats folder/ --kind stack --corr
 ./start.py qc a.cif --program psi4 --method sapt -o inputs/   # stacked dimers for ORCA / Psi4 / Gaussian
 ./start.py check a.cif           # quick structure checks (formula, density, hydrogens, missed symmetry)
-./start.py geom a.cif --csv geom.csv   # bonds, angles, torsions with s.u.
+./start.py geom a.cif --csv geom.csv   # bonds, angles, torsions, vdW contacts with s.u.
 ./start.py periodic a.cif --program qe -o calc/   # whole cell for VASP / Quantum ESPRESSO / CP2K / CRYSTAL
 ./start.py session.pistak        # reopen a saved session
 ./start.py config                # where personal settings, last session and plugins live
@@ -37,8 +37,8 @@ Whole-crystal quantities (volume, Z′, density from the model, R1/wR2/GoF from 
 (`pistak/params/structure.py`, `@structure_parameter`), and quick checks (`pistak/core/validation.py`) raise A/B/C/G
 alerts in the style of checkCIF without replacing it: formula and density against the model, missing hydrogens,
 overlapping atoms, odd bonds, short contacts, refinement indices, disorder, and missed symmetry through the optional
-`spglib` package (ADDSYM-like). *Detail ▸ Geometry* and `pistak geom` list bonds, angles and torsions of the
-independent molecules with s.u. propagated from the CIF; *Export ▸ Cell for periodic calculations* and `pistak periodic`
+`spglib` package (ADDSYM-like). *Detail ▸ Geometry* and `pistak geom` list bonds, angles, torsions and van der Waals
+contacts of the independent molecules with symmetry codes (C2#1) and s.u. propagated from the CIF; *Export ▸ Cell for periodic calculations* and `pistak periodic`
 write the whole cell (P1, normalised X–H) for VASP, Quantum ESPRESSO, CP2K or CRYSTAL.
 The analysis is staged (`pistak/core/stages.py`): changing thresholds re-runs only from the first stage they affect
 (`pistak.api.reanalyse`). *Analysis ▸ Live thresholds* (Ctrl+Shift+L) opens sliders for the stack criterion: pairs

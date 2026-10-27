@@ -1,5 +1,37 @@
 {
+ "alerts": [
+  [
+   "A",
+   "missedSymmetry",
+   {
+    "declared": "P 1",
+    "found": "P4/mmm (123)",
+    "ops_declared": 1,
+    "ops_found": 16,
+    "tolerance": 0.1
+   }
+  ],
+  [
+   "B",
+   "noHydrogens",
+   {}
+  ],
+  [
+   "G",
+   "formulaUnchecked",
+   {}
+  ],
+  [
+   "G",
+   "noRefinement",
+   {}
+  ]
+ ],
  "cell_atoms": 1,
+ "geometry": {
+  "contacts": [],
+  "counts": {}
+ },
  "molecules": [
   {
    "atoms": 1,
@@ -17,5 +49,21 @@
  "pairs": [],
  "skipped_disorder": 0,
  "space_group": "P 1",
- "stacks": []
+ "stacks": [],
+ "structure": {
+  "alerts_a": 1.0,
+  "alerts_b": 1.0,
+  "alerts_c": 0.0,
+  "density_calc": 0.1947728005,
+  "density_cif": null,
+  "goof": null,
+  "r1": null,
+  "rho_max": null,
+  "rho_min": null,
+  "temperature": null,
+  "volume": 102.4,
+  "wr2": null,
+  "z": null,
+  "z_prime": null
+ }
 }

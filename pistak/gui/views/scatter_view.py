@@ -50,7 +50,7 @@ class ScatterView(PairView):
         self.clear_btn.clicked.connect(lambda: self.filter_to(None))
         self.toolbar.addWidget(self.clear_btn)
 
-        self.plot = pg.PlotWidget(background=theme.background())
+        self.plot = theme.plot_widget()
         self.plot.showGrid(x=True, y=True, alpha=0.2)
         self.body.addWidget(self.plot, 1)
         self.info = QLabel("")

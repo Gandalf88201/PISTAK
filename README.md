@@ -21,7 +21,7 @@ nella finestra: *Aiuto ▸ Manuale* (F1). Questo README è la guida per chi svil
 ./start.py stats cartella/ --kind stack --corr --csv coppie.csv --summary descrizione.csv
 ./start.py qc a.cif --program psi4 --method sapt -o input/  # dimeri degli stack per ORCA / Psi4 / Gaussian
 ./start.py check a.cif                                       # controlli rapidi (formula, densità, H, simmetria mancata)
-./start.py geom a.cif --csv geom.csv                         # legami, angoli, torsioni con le s.u.
+./start.py geom a.cif --csv geom.csv                         # legami, angoli, torsioni, contatti vdW con le s.u.
 ./start.py periodic a.cif --program qe -o calcoli/           # la cella per VASP / Quantum ESPRESSO / CP2K / CRYSTAL
 ./start.py sessione.pistak                                   # riapre una sessione salvata
 ./start.py params                # parametri disponibili (con quelli dei plugin)
@@ -52,7 +52,8 @@ pistak/
     uncertainty.py  incertezze dei parametri con un Monte Carlo sulle s.u. del CIF
     crystal.py      contenuto della cella (con tutte le componenti disordinate), densità, Z′, valori dell'affinamento
     validation.py   controlli rapidi (pre-checkCIF): avvisi A/B/C/G con codici stabili; ADDSYM con spglib facoltativo
-    intramolecular.py  legami, angoli e torsioni delle molecole indipendenti, s.u. propagate dalle coordinate
+    intramolecular.py  legami, angoli, torsioni e contatti di van der Waals delle molecole indipendenti, codici di
+                       simmetria (C2#1), s.u. propagate dalle coordinate
     diagnosis.py    perché un'analisi non ha coppie (anelli saturi, nessun anello, nuclei lontani…), per le viste vuote
     elements.py     numeri atomici, masse, raggi, colori
   params/    registro dei parametri misurabili (Registry; builtin = sito, extra = fase 2, plugins) e registro delle
@@ -259,8 +260,10 @@ stessi capitoli e le stesse figure, che i link interni portino a un titolo e che
 Le figure si rigenerano con lo script sopra (solo i CIF di `examples/`, PNG a 256 colori).
 
 Marcatori: `gui` (finestre), `parity` (confronto con il sito), `snapshot` (istantanee). **Istantanee**:
-`tests/snapshots/site/*.json` e `tests/snapshots/canonical/*.json` contengono tutti i risultati sugli esempi nei due modi
-(molecole, nuclei, coppie con tutti i parametri, coppie di anelli, colonne); ogni cambiamento di un numero fa fallire
+`tests/snapshots/site/*.json` e `tests/snapshots/canonical/*.json` contengono tutti i risultati sugli esempi e sulle
+strutture reali della COD in `tests/data/cod/` (dominio pubblico) nei due modi (molecole, nuclei, coppie con tutti i
+parametri, coppie di anelli, colonne, grandezze della struttura, avvisi, contatti di van der Waals); ogni cambiamento
+di un numero fa fallire
 `pytest -m snapshot`. Dopo un cambiamento voluto: `pytest -m snapshot --update-snapshots` e si controlla il diff. Per
 strutture reali non distribuibili (CSD): `PISTAK_SNAPSHOT_DIR=/cartella/cif pytest -m snapshot --update-snapshots`
 scrive in `tests/snapshots/local/<modo>/`, che resta fuori dal repository.

@@ -205,7 +205,7 @@ Otto schede:
 | Colonne | colonne di stack: tipo (aggregato, colonna, strato, rete 3D), molecole, passo, asse, geometria media |
 | Avvisi | plugin che non si caricano e parametri che hanno dato errore, con il messaggio |
 | Contatti | riepilogo per contatto tra molecole: coppie di frammenti, quante π-stack, contatto più corto, coppia migliore (doppio clic la seleziona) |
-| Geometria | legami, angoli e torsioni delle molecole indipendenti, con le s.u.; *Idrogeni* li toglie (vedi [Geometria delle molecole](#geometria-delle-molecole)) |
+| Geometria | legami, angoli, torsioni e contatti di van der Waals delle molecole indipendenti, con le s.u. e i codici di simmetria; *Idrogeni* li toglie (vedi [Geometria delle molecole](#geometria-delle-molecole)) |
 | Controlli | gli avvisi A, B, C, G dei [controlli rapidi](#grandezze-della-struttura-e-controlli-rapidi), colorati per gravità |
 
 ![Dettaglio: la struttura](img/it/detail_structure.png)
@@ -289,18 +289,33 @@ che falsano l'analisi delle coppie. Livelli: **A** problema serio, **B** possibi
 Da terminale: `./start.py check file.cif` (esce con codice 2 se ci sono avvisi A, comodo negli script; `--csv` li
 scrive). Senza `spglib` installato la ricerca della simmetria mancata si salta con un avviso G.
 
+![Dettaglio: i controlli rapidi](img/it/detail_checks.png)
+
 ### Geometria delle molecole
 
 Legami, angoli di legame e torsioni (con segno, −180…180°) delle sole molecole indipendenti per simmetria: per ogni
 insieme di molecole equivalenti si prende quella con più atomi dell'unità asimmetrica come sono nel CIF. Gli atomi
-generati da un'altra operazione, quando la molecola sta su un elemento di simmetria, hanno l'apice (C1′), e le misure
-uguali per la simmetria interna compaiono una volta. Le **s.u.** si propagano dalle s.u. delle coordinate del CIF
-(tenendo conto che C1 e C1′ si muovono insieme); mancano per gli atomi senza s.u., di solito gli idrogeni in
-posizione calcolata. Rispetto alle tabelle `_geom_` scritte dal programma di affinamento le s.u. possono essere un
-po' più piccole, perché qui la cella è considerata esatta.
+generati da un'altra operazione portano un **codice di simmetria** come nei CIF di SHELXL: C2#1 è l'atomo C2 portato
+dall'operazione #1, e la legenda sotto la tabella dice quale (per esempio `#1 = -x+1,-y,-z`). Le misure uguali per la
+simmetria interna della molecola compaiono una volta, con meno atomi trasformati possibile.
+
+I **contatti** sono le coppie di atomi di due molecole diverse (o di due copie della stessa) più vicine della somma dei
+raggi di van der Waals (Bondi; H 1,10 Å), dal più corto in proporzione: oltre alla distanza danno la somma dei raggi e
+la differenza *d − Σ r vdW*. Il primo atomo è sempre della molecola indipendente; ogni contatto equivalente per
+simmetria compare una volta. Ci finiscono i legami a idrogeno (H···O e H···N sotto 2,6 Å), i contatti stretti delle
+colonne di stack e gli scontri da controllare; quelli più corti di 3,0 Å tra carboni e di 1,8 Å tra idrogeni
+diventano anche avvisi dei controlli rapidi.
+
+Le **s.u.** si propagano dalle s.u. delle coordinate del CIF (tenendo conto che C1 e C1#1 si muovono insieme); mancano
+per gli atomi senza s.u., di solito gli idrogeni in posizione calcolata. Rispetto alle tabelle `_geom_` scritte dal
+programma di affinamento possono scostarsi un po', perché qui la cella è considerata esatta e le coordinate
+indipendenti tra loro (il CIF non riporta le loro correlazioni): di più per le misure tra un atomo e la sua immagine
+per simmetria.
+
+![Dettaglio: i contatti di van der Waals, con i codici di simmetria](img/it/detail_geometry.png)
 
 Dove: Dettaglio ▸ *Geometria*, *File ▸ Esporta ▸ Geometria delle molecole (CSV)* e `./start.py geom file.cif`
-(`--kind bond,angle`, `--no-h`, `--csv`).
+(`--kind bond,angle,torsion,contact`, `--no-h`, `--csv`).
 
 ## 7. Classificazione e soglie
 
@@ -476,7 +491,7 @@ Tutto si esporta in CSV dal menu *Esporta ▾*. Da terminale: `compare` e `stats
 * **Coppia selezionata (XYZ)**: le due molecole, B già nella cella giusta, da aprire in qualunque visualizzatore.
 * **Coppia selezionata per calcoli quantistici**: vedi la sezione seguente.
 * **Cella per calcoli periodici**: vedi [Cella intera per calcoli periodici](#cella-intera-per-calcoli-periodici).
-* **Geometria delle molecole (CSV)**: `kind` (bond, angle, torsion), `molecule`, `atom_1`…`atom_4`, `value`, `su`.
+* **Geometria delle molecole (CSV)**: `kind` (bond, angle, torsion, contact), `molecule`, `atom_1`…`atom_4`, `symop_1`…`symop_4` (l'operazione che genera ogni atomo; vuota per l'atomo del CIF), `value`, `su`, e per i contatti `vdw_sum` e `delta`.
 * **Avvisi dei controlli rapidi (CSV)**: `level`, `code`, `values`.
 * **Vista 3D (PNG)**.
 
@@ -542,6 +557,8 @@ DOS, energia di reticolo, ottimizzazione con la cella. Si sceglie il programma, 
 degli atomi, di atomi e cella), il funzionale, la dispersione e la lunghezza L per la griglia di punti k
 (n = ⌈L / a⌉ lungo ogni asse; 20 Å va bene per gli isolanti molecolari).
 
+![Cella per calcoli periodici](img/it/periodic_dialog.png)
+
 | programma | file | note |
 |---|---|---|
 | VASP | `POSCAR`, `INCAR`, `KPOINTS` in una cartella | `GGA` (PBE, PBEsol…), `IVDW` 11/12/13 per D3, D3(BJ), D4; il `POTCAR` va composto nell'ordine della riga 6 del POSCAR |
@@ -572,7 +589,7 @@ Tutto ciò che fa la finestra si fa anche da terminale (`./start.py COMANDO …`
 | `qc file.cif` | input del dimero per ORCA, Psi4, Gaussian (vedi sopra) |
 | `periodic file.cif` | la cella intera per VASP, Quantum ESPRESSO, CP2K, CRYSTAL; `--program`, `--task`, `--kpoint-length`, `-o` |
 | `check file.cif` | controlli rapidi della struttura; `--csv`; codice d'uscita 2 se ci sono avvisi A |
-| `geom file.cif` | legami, angoli e torsioni con le s.u.; `--kind`, `--no-h`, `--csv` |
+| `geom file.cif` | legami, angoli, torsioni e contatti di van der Waals con le s.u. e i codici di simmetria; `--kind`, `--no-h`, `--csv` |
 | `params` | elenca i parametri disponibili, plugin compresi |
 | `config` | dove stanno impostazioni personali, ultima sessione e plugin |
 | `demo` | scrive il CIF dimostrativo |

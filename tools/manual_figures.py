@@ -3,7 +3,8 @@
     .venv/bin/python tools/manual_figures.py            # italiano e inglese
     .venv/bin/python tools/manual_figures.py --lang en
 
-Le figure usano solo i CIF sintetici di `examples/`. Qt gira «offscreen»; la vista 3D si disegna fuori schermo
+Le figure usano i CIF sintetici di `examples/` e, per la geometria, una struttura reale della COD in
+`tests/data/cod/` (dominio pubblico). Qt gira «offscreen»; la vista 3D si disegna fuori schermo
 con PyVista e compare come immagine al posto della finestra OpenGL, con la stessa scena e la stessa camera.
 Dopo un cambiamento dell'interfaccia basta rilanciare lo script e controllare le immagini.
 """
@@ -23,6 +24,7 @@ os.environ["PISTAK_CONFIG_DIR"] = tempfile.mkdtemp(prefix="pistak-figures-")  # 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 EX = ROOT / "examples"
+COD = ROOT / "tests" / "data" / "cod"
 OUT = ROOT / "pistak" / "manual" / "img"
 
 import pyvista as pv  # noqa: E402
@@ -86,6 +88,7 @@ def save(widget: QWidget, path: Path) -> None:
 def figures(app: QApplication, lang: str) -> None:
     from pistak.gui.collection_window import CollectionWindow
     from pistak.gui.main_window import MainWindow
+    from pistak.gui.periodic_dialog import PeriodicDialog
     from pistak.gui.qc_dialog import QCDialog
     from pistak.gui.session import Session
     from pistak.gui.settings_dialog import SettingsDialog
@@ -112,11 +115,11 @@ def figures(app: QApplication, lang: str) -> None:
     win.resize(1360, 840)
     win.show()
 
-    def load(name: str, limits: Limits | None = None) -> None:
+    def load(name: str | Path, limits: Limits | None = None) -> None:
         if limits is not None:
             win.session.limits = limits
         before = win.session.analysis
-        win.session.load_file(EX / name)
+        win.session.load_file(EX / name)  # un percorso assoluto resta quello
         wait(app, lambda: win.session.analysis is not before and win.session.analysis is not None)
 
     def view(cls):
@@ -151,10 +154,18 @@ def figures(app: QApplication, lang: str) -> None:
     save(proj, out / "projection.png")
     det = view(DetailView)
     alone(det, 680, 560)
-    for i, name in ((0, "detail_structure"), (1, "detail_pair"), (3, "detail_columns")):
+    for i, name in ((0, "detail_structure"), (1, "detail_pair"), (3, "detail_columns"), (7, "detail_checks")):
         det.tabs.setCurrentIndex(i)
         wait(app, lambda: True)
         save(det, out / f"{name}.png")
+
+    # geometria: i contatti di van der Waals di una struttura reale con legami a idrogeno (COD 4500022)
+    load(COD / "4500022.cif")
+    det.tabs.setCurrentIndex(6)
+    det.geom_kind.setCurrentIndex(det.geom_kind.findData("contact"))
+    wait(app, lambda: det.geometry.rowCount() > 0)
+    save(det, out / "detail_geometry.png")
+    det.tabs.setCurrentIndex(0)
 
     # tabella, scatter e istogramma: i dimeri del naftalene hanno uno stack e tre coppie parallele
     load("dimers_naphthalene.cif")
@@ -185,6 +196,11 @@ def figures(app: QApplication, lang: str) -> None:
     wait(app, lambda: True)
     save(qc, out / "qc_dialog.png")
     qc.close()
+    per = PeriodicDialog(parent=win)
+    per.show()
+    wait(app, lambda: True)
+    save(per, out / "periodic_dialog.png")
+    per.close()
 
     # confronto e statistiche su tutti gli esempi
     col: CollectionWindow = win.show_collection()

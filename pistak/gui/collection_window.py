@@ -356,7 +356,7 @@ class CollectionWindow(QMainWindow):
         for w in (self.hist_key, self.hist_by):
             w.currentIndexChanged.connect(self._draw_hist)
         self.hist_bins.valueChanged.connect(self._draw_hist)
-        self.hist_plot = pg.PlotWidget(background=theme.background())
+        self.hist_plot = theme.plot_widget()
         self.hist_plot.showGrid(x=False, y=True, alpha=0.2)
         w = QWidget()
         lay = QVBoxLayout(w)
@@ -401,7 +401,7 @@ class CollectionWindow(QMainWindow):
         self.sx, self.sy, self.sc = QComboBox(), QComboBox(), QComboBox()
         for c in (self.sx, self.sy, self.sc):
             c.currentIndexChanged.connect(self._draw_scatter)
-        self.scatter_plot = pg.PlotWidget(background=theme.background())
+        self.scatter_plot = theme.plot_widget()
         self.scatter_plot.showGrid(x=True, y=True, alpha=0.2)
         self.cloud = pg.ScatterPlotItem(size=10, pxMode=True, hoverable=True, hoverSize=14, tip=self._tip)
         self.cloud.sigClicked.connect(self._picked_point)
@@ -483,7 +483,7 @@ class CollectionWindow(QMainWindow):
         self.corr_list = QListWidget()
         self.corr_list.setMaximumWidth(260)
         self.corr_list.itemChanged.connect(lambda _i: self._draw_corr())
-        self.corr_plot = pg.PlotWidget(background=theme.background())
+        self.corr_plot = theme.plot_widget()
         self.corr_plot.setAspectLocked(True)
         self.corr_plot.invertY(True)
         w = QWidget()

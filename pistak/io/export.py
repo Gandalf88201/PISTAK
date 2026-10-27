@@ -91,16 +91,22 @@ def write_alerts_csv(analysis: Analysis, path: str | Path) -> Path:
 
 
 def write_geometry_csv(analysis: Analysis, path: str | Path, include_h: bool = True) -> Path:
-    """Legami, angoli e torsioni delle molecole indipendenti (`pistak.core.intramolecular`), con le s.u."""
+    """Legami, angoli, torsioni e contatti di van der Waals delle molecole indipendenti (`pistak.core.intramolecular`),
+    con le s.u. Le colonne symop_i danno l'operazione che genera l'atomo i dall'atomo del CIF (vuota: quello del CIF);
+    vdw_sum e delta (distanza − somma dei raggi) solo per i contatti."""
     from pistak.core.intramolecular import molecule_geometry
 
     path = Path(path)
     with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["kind", "molecule", "atom_1", "atom_2", "atom_3", "atom_4", "value", "su"])
+        w.writerow(["kind", "molecule", "atom_1", "atom_2", "atom_3", "atom_4", "symop_1", "symop_2", "symop_3", "symop_4",
+                    "value", "su", "vdw_sum", "delta"])
         for g in molecule_geometry(analysis.structure, analysis.cif, include_h=include_h):
             atoms = list(g.atoms) + [""] * (4 - len(g.atoms))
-            w.writerow([g.kind, g.molecule + 1, *atoms, f"{g.value:.5g}", "" if not math.isfinite(g.su) else f"{g.su:.2g}"])
+            ops = list(g.codes or [""] * len(g.atoms)) + [""] * (4 - len(g.atoms))
+            contact = g.kind == "contact"
+            w.writerow([g.kind, g.molecule + 1, *atoms, *ops, f"{g.value:.5g}", "" if not math.isfinite(g.su) else f"{g.su:.2g}",
+                        f"{g.vdw:.2f}" if contact else "", f"{g.delta:.3f}" if contact else ""])
     return path
 
 

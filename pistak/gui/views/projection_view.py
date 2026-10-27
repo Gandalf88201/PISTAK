@@ -40,7 +40,7 @@ class ProjectionView(PairView):
         self.show_atoms.toggled.connect(lambda _: self._redraw())
         for w in (self.show_atoms, self.show_h, self.show_overlap):
             self.toolbar.addWidget(w)
-        self.plot = pg.PlotWidget(background=theme.background())
+        self.plot = theme.plot_widget()
         self.plot.setAspectLocked(True)
         self.plot.showGrid(x=True, y=True, alpha=0.15)
         self.plot.setLabel("bottom", tr("L (Å) — asse lungo della prima molecola"))

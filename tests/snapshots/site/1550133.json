@@ -1,0 +1,173 @@
+{
+ "alerts": [
+  [
+   "C",
+   "partialOccupancy",
+   {
+    "atoms": "C23A, C24A, H23A, H23B, H24A, H24B",
+    "n": 6
+   }
+  ],
+  [
+   "G",
+   "disorderSkipped",
+   {
+    "n": 6,
+    "policy": "first"
+   }
+  ]
+ ],
+ "cell_atoms": 128,
+ "geometry": {
+  "contacts": [
+   {
+    "atoms": [
+     "O2",
+     "H23A"
+    ],
+    "codes": [
+     "",
+     "-x+1,y-1/2,-z+1"
+    ],
+    "d": 2.245930955,
+    "vdw": 2.62
+   },
+   {
+    "atoms": [
+     "O6",
+     "H24A"
+    ],
+    "codes": [
+     "",
+     "x,y,z+1"
+    ],
+    "d": 2.407559921,
+    "vdw": 2.62
+   },
+   {
+    "atoms": [
+     "O2",
+     "H6B"
+    ],
+    "codes": [
+     "",
+     "x+1,y,z"
+    ],
+    "d": 2.431517422,
+    "vdw": 2.62
+   },
+   {
+    "atoms": [
+     "O2",
+     "C6"
+    ],
+    "codes": [
+     "",
+     "x+1,y,z"
+    ],
+    "d": 3.092166984,
+    "vdw": 3.22
+   },
+   {
+    "atoms": [
+     "O2",
+     "C23A"
+    ],
+    "codes": [
+     "",
+     "-x+1,y-1/2,-z+1"
+    ],
+    "d": 3.097909673,
+    "vdw": 3.22
+   },
+   {
+    "atoms": [
+     "H14",
+     "O7"
+    ],
+    "codes": [
+     "",
+     "x+1,y,z+1"
+    ],
+    "d": 2.581480494,
+    "vdw": 2.62
+   },
+   {
+    "atoms": [
+     "C2",
+     "H23A"
+    ],
+    "codes": [
+     "",
+     "-x+1,y-1/2,-z+1"
+    ],
+    "d": 2.779390372,
+    "vdw": 2.8
+   },
+   {
+    "atoms": [
+     "C2",
+     "C23A"
+    ],
+    "codes": [
+     "",
+     "-x+1,y-1/2,-z+1"
+    ],
+    "d": 3.398016344,
+    "vdw": 3.4
+   }
+  ],
+  "counts": {
+   "angle": 130,
+   "bond": 68,
+   "contact": 8,
+   "torsion": 191
+  }
+ },
+ "molecules": [
+  {
+   "atoms": 64,
+   "bonds": 68,
+   "centroid": [
+    1.118295823,
+    9.899517787,
+    5.793817124
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C24H32O8"
+  },
+  {
+   "atoms": 64,
+   "bonds": 68,
+   "centroid": [
+    3.081506989,
+    19.90766779,
+    1.791450606
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C24H32O8"
+  }
+ ],
+ "pairs": [],
+ "skipped_disorder": 6,
+ "space_group": "P 1 21 1",
+ "stacks": [],
+ "structure": {
+  "alerts_a": 0.0,
+  "alerts_b": 0.0,
+  "alerts_c": 1.0,
+  "density_calc": 1.311198886,
+  "density_cif": 1.313,
+  "goof": 1.102,
+  "r1": 0.0396,
+  "rho_max": 0.196,
+  "rho_min": -0.174,
+  "temperature": 100.0,
+  "volume": 1134.709173,
+  "wr2": 0.1098,
+  "z": 2.0,
+  "z_prime": 1.0
+ }
+}

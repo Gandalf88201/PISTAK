@@ -14,7 +14,8 @@ from pistak.params import StructureRegistry, compute_structure
 
 ROOT = Path(__file__).resolve().parents[1]
 EX = ROOT / "examples"
-REAL = ROOT / "DATI_REALI"
+COD = ROOT / "tests" / "data" / "cod"  # strutture della COD (dominio pubblico)
+REAL = ROOT / "DATI_REALI"  # CIF non distribuibili: se mancano, i test che li usano si saltano
 DEMO = (EX / "demo_naphthalene.cif").read_text(encoding="utf-8")
 
 
@@ -210,15 +211,31 @@ def test_cli_check(capsys, tmp_path):
     assert main(["check", str(EX / "infinite_chain.cif")]) == 2  # avvisi A: codice d'uscita per gli script
 
 
-# ---- strutture reali (facoltative: DATI_REALI/ non è nel repository) -------------------------------------
+# ---- strutture reali ---------------------------------------------------------------------------------------
 def test_cif_reale_z_primo_e_densita():
-    a = api.analyse_file(real("4500022.cif"))
+    a = api.analyse_file(COD / "4500022.cif")
     v = a.structure_values
     assert v["z_prime"] == 3 and v["density_calc"] == pytest.approx(v["density_cif"], abs=0.002)
     assert counts(a.alerts)["A"] == counts(a.alerts)["B"] == 0
     assert formula_text({e: n / 12 for e, n in cell_contents(a.cif).items()}) == "C14 H16 N6 O2"
 
 
+@pytest.mark.parametrize("name, z_prime, alerts", [
+    ("2311088.cif", 0.5, {"goof"}),  # naftalene: GoF dichiarato 0,25
+    ("2012157.cif", 1.0, set()),  # pentacene
+    ("2100417.cif", 0.25, set()),  # rubrene, Cmca (= Cmce) con la molecola su un sito mm
+    ("1550133.cif", 1.0, set()),
+])
+def test_strutture_cod(name, z_prime, alerts):
+    a = api.analyse_file(COD / name)
+    v = a.structure_values
+    assert v["z_prime"] == pytest.approx(z_prime)
+    assert v["density_calc"] == pytest.approx(v["density_cif"], abs=0.003)
+    assert {al.code for al in a.alerts if al.level in "AB"} == alerts
+    assert "missedSymmetry" not in codes(a)
+
+
+# ---- strutture reali non distribuibili (DATI_REALI/ non è nel repository) ---------------------------------
 def test_cif_reale_con_disordine():
     a = api.analyse_file(real("UNITCELL.cif"))
     assert {"highR1", "highWR2", "partialOccupancy", "disorderSkipped"} <= codes(a)

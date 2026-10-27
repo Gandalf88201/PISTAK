@@ -31,7 +31,7 @@ class HistogramView(PairView):
         self.toolbar.addWidget(QLabel(tr("Intervalli")))
         self.toolbar.addWidget(self.bins)
         self.toolbar.addWidget(self.weighted)
-        self.plot = pg.PlotWidget(background=theme.background())
+        self.plot = theme.plot_widget()
         self.plot.showGrid(x=False, y=True, alpha=0.2)
         self.body.addWidget(self.plot, 1)
         self.line = pg.InfiniteLine(angle=90, pen=pg.mkPen(theme.foreground(), width=2, style=pg.QtCore.Qt.PenStyle.DashLine))

@@ -77,7 +77,11 @@ def test_esempio_della_libreria(lang, tmp_path, monkeypatch, capsys):
 
 
 def test_figure_rigenerabili():
-    """Lo script delle figure c'è e non usa CIF fuori da examples/ (le strutture della CSD non si distribuiscono)."""
+    """Lo script delle figure c'è e usa solo i CIF di examples/ e quelli della COD in tests/data/cod/ (dominio
+    pubblico): le strutture della CSD non si distribuiscono."""
     src = (ROOT / "tools" / "manual_figures.py").read_text(encoding="utf-8")
-    assert "examples" in src and not re.search(r"\.cif[\"']\)", src.replace("_anthracene.cif", "").replace("_naphthalene.cif", ""))
+    others = re.sub(r"COD / \"\d+\.cif\"", "", src.replace("_anthracene.cif", "").replace("_naphthalene.cif", ""))
+    assert "examples" in src and "DATI_REALI" not in src and not re.search(r"\.cif[\"']\)", others)
+    for name in re.findall(r"COD / \"(\d+\.cif)\"", src):
+        assert (ROOT / "tests" / "data" / "cod" / name).is_file(), name
     assert os.path.getsize(MANUAL / "img" / "it" / "main_window.png") < 200_000  # PNG a 256 colori

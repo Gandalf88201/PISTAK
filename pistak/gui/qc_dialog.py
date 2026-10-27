@@ -79,7 +79,7 @@ class QCDialog(QDialog):
         form.addRow(tr("Programma"), self.program)
         form.addRow(tr("Metodo"), self.method)
         form.addRow(tr("Funzionale"), self.functional)
-        form.addRow(tr("Dispersione"), self.dispersion)
+        form.addRow(tr("Correzione di dispersione"), self.dispersion)
         form.addRow(tr("Base"), self.basis)
         form.addRow(tr("Livello SAPT"), self.sapt_level)
         form.addRow("", self.counterpoise)

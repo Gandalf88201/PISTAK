@@ -13,7 +13,7 @@
     python -m pistak qc a.cif --pair 1 --program psi4 --method sapt -o dimero.in
                                            il dimero di una coppia come input per ORCA, Psi4 o Gaussian
     python -m pistak check a.cif [--csv avvisi.csv]       controlli rapidi della struttura (formula, H, simmetria…)
-    python -m pistak geom a.cif [--no-h] [--csv geom.csv] legami, angoli e torsioni delle molecole indipendenti
+    python -m pistak geom a.cif [--no-h] [--csv geom.csv] legami, angoli, torsioni e contatti di van der Waals
     python -m pistak periodic a.cif --program vasp|qe|cp2k|crystal [-o cartella]
                                            la cella intera come input per calcoli periodici
     python -m pistak --lang en ...         interfaccia in inglese (anche PISTAK_LANG=en)
@@ -151,24 +151,33 @@ def cmd_check(args) -> int:
 
 
 def cmd_geom(args) -> int:
-    from pistak.core.intramolecular import molecule_geometry
+    from pistak.core.intramolecular import molecule_geometry, symmetry_codes
     from pistak.io import export
 
     a = _analysis_or_error(args)
     if a is None:
         return 1
     items = molecule_geometry(a.structure, a.cif, include_h=not args.no_h)
-    titles = {"bond": tr("Legami (Å)"), "angle": tr("Angoli (°)"), "torsion": tr("Torsioni (°)")}
+    titles = {"bond": tr("Legami (Å)"), "angle": tr("Angoli (°)"), "torsion": tr("Torsioni (°)"),
+              "contact": tr("Contatti più corti della somma dei raggi di van der Waals (Å)")}
     kinds = args.kind.split(",") if args.kind else list(titles)
+    shown = [g for g in items if g.kind in kinds]
+    labels, legend = symmetry_codes(shown)  # numerati una volta per tutto l'elenco
     for kind in kinds:
-        rows = [g for g in items if g.kind == kind]
+        rows = [(g, lab) for g, lab in zip(shown, labels) if g.kind == kind]
         if not rows:
             continue
         print(f"\n{titles[kind]}")
-        digits = 4 if kind == "bond" else 2
-        for g in rows:
+        digits = {"bond": 4, "contact": 3}.get(kind, 2)
+        sep = "···" if kind == "contact" else "–"
+        for g, lab in rows:
             su = "" if g.su != g.su else f"({g.su:.{digits}f})"
-            print(f"  {tf('molecola {n}', n=g.molecule + 1):<12} {'–'.join(g.atoms):<28} {g.value:10.{digits}f} {su}")
+            extra = f"  Σ r vdW {g.vdw:.2f}  Δ {g.delta:+.3f}" if kind == "contact" else ""
+            print(f"  {tf('molecola {n}', n=g.molecule + 1):<12} {sep.join(lab):<32} {g.value:10.{digits}f} {su:<9}{extra}")
+    if legend:
+        print("\n" + tr("Operazioni di simmetria"))
+        for n, op in legend:
+            print(f"  {n:<4} {op}")
     if args.csv:
         print(tr("scritto"), export.write_geometry_csv(a, args.csv, include_h=not args.no_h))
     return 0
@@ -487,10 +496,11 @@ def main(argv: list[str] | None = None) -> int:
     _add_limit_args(p)
     p.set_defaults(fn=cmd_check)
 
-    p = sub.add_parser("geom", help=tr("legami, angoli e torsioni delle molecole indipendenti, con le s.u."))
+    p = sub.add_parser("geom", help=tr("legami, angoli, torsioni e contatti di van der Waals delle molecole "
+                                       "indipendenti, con le s.u."))
     p.add_argument("file")
     p.add_argument("--block")
-    p.add_argument("--kind", help=tr("bond, angle, torsion (separati da virgola; predefinito: tutti)"))
+    p.add_argument("--kind", help=tr("bond, angle, torsion, contact (separati da virgola; predefinito: tutti)"))
     p.add_argument("--no-h", action="store_true", help=tr("senza gli idrogeni"))
     p.add_argument("--csv")
     _add_limit_args(p)
