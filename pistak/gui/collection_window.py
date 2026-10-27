@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import QObject, QRunnable, Qt, QThreadPool, Signal
-from PySide6.QtGui import QBrush, QColor, QPen
+from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -455,7 +455,7 @@ class CollectionWindow(QMainWindow):
             colors = np.array([cmap.map(float(v), mode="byte")[:3] for v in tt]).astype(int)
         brushes = [QBrush(theme.qcolor(tuple(int(v) for v in colors[i]), 220)) for i in idx]
         sizes = [8 + min(10, 2.5 * math.log2(max(1, int(t.counts[i])))) for i in idx]
-        self.cloud.setData(x[idx], y[idx], brush=brushes, pen=QPen(theme.qcolor((0, 0, 0), 90)), size=sizes, data=[int(i) for i in idx])
+        self.cloud.setData(x[idx], y[idx], brush=brushes, pen=[theme.point_pen(tuple(int(v) for v in colors[i]), 220) for i in idx], size=sizes, data=[int(i) for i in idx])
         self.scatter_plot.setLabel("bottom", _title(kx))
         self.scatter_plot.setLabel("left", _title(ky))
         self.scatter_plot.autoRange()

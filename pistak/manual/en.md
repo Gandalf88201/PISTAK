@@ -181,7 +181,10 @@ table), *Cell* the cell edges. Styles: ball and stick, sticks, space-filling (vd
 (perpendicular to the planes), *Oblique*, *Side view*, *Along L*. The 3D view starts *From above* with an
 *Orthographic* projection (no perspective): L to the right, W up, same centre as the **Projection**, so the two views
 match; until you move the camera the framing follows the panel size. Untick *Orthographic* to get perspective back.
-*Lock camera* keeps the point of view when the pair changes; *PNG…* saves the image.
+*Keep the view*: when the pair changes the camera keeps its angle and zoom *relative to the pair* (L, W, n axes, origin
+at Cg A) instead of going back to the view from above, to compare different pairs from the same viewpoint. *PNG…*
+saves the image redrawn three times larger than the panel, with text and lines to scale (`export_scale` in the `[gui]`
+section of `user.toml`).
 
 ### Projection
 

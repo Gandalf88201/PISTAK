@@ -193,3 +193,45 @@ def test_finestra_calcoli_quantistici(app):
     d.program.setCurrentIndex(d.program.findData("gaussian"))  # Gaussian non ha D4
     assert d.options().dispersion == "d3bj"
     d.options().check()
+
+
+@pytest.fixture()
+def view3d(world):
+    pytest.importorskip("pyvistaqt")
+    from pistak.gui.views.view3d import View3D, _NullPlotter
+
+    s, a, _ = world
+    v = View3D(s, "A")
+    if isinstance(v.plotter, _NullPlotter):
+        pytest.skip("rendering non disponibile")
+    v.resize(600, 400)
+    v.refresh()
+    yield s, a, v
+    v.close()
+
+
+def test_png_della_3d_in_alta_risoluzione(view3d, tmp_path):
+    from PySide6.QtGui import QImage
+
+    _, _, v = view3d
+    out = tmp_path / "v.png"
+    v.screenshot(str(out), scale=3)
+    im = QImage(str(out))
+    w, h = max(v.plotter.interactor.width(), 100), max(v.plotter.interactor.height(), 100)  # senza schermo il pannello è minuscolo
+    assert (im.width(), im.height()) == (3 * w, 3 * h)
+
+
+def test_mantieni_la_vista_rispetto_alla_coppia(view3d):
+    s, a, v = view3d
+    v.lock_cam.setChecked(True)
+    v.look("side")
+    v.plotter.camera.Azimuth(25)  # l'utente ruota: la vista non è più quella automatica
+    before = v._relative_camera()
+    s.select("A", 2)
+    after = v._relative_camera()
+    assert v.ctx.pair is a.pairs[2]
+    for k in ("pos", "focal", "up"):
+        assert np.allclose(before[k], after[k], atol=1e-6)
+    v.lock_cam.setChecked(False)
+    s.select("A", 0)
+    assert v._still_auto() and v._auto_view[0] == "top"  # senza: si torna alla vista dall'alto

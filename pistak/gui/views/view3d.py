@@ -39,7 +39,7 @@ class Options:
     ortho: bool = True  # proiezione ortogonale: dall'alto la vista coincide con la Proiezione
 
 
-def _sticks(scene: Scene, colors: np.ndarray, radius: float) -> pv.PolyData | None:
+def _sticks(scene: Scene, colors: np.ndarray, radius: float, sides: int = 14) -> pv.PolyData | None:
     """Legami come cilindri, ciascuna metà del colore del suo atomo."""
     if not len(scene.bonds):
         return None
@@ -58,11 +58,14 @@ def _sticks(scene: Scene, colors: np.ndarray, radius: float) -> pv.PolyData | No
     lines[1::2] = np.column_stack([np.full(n, 2), base + 2, base + 3])
     mesh = pv.PolyData(pts, lines=lines.ravel())
     mesh["rgb"] = rgb
-    return mesh.tube(radius=radius, n_sides=14)
+    return mesh.tube(radius=radius, n_sides=sides)
 
 
-def populate(plotter: pv.Plotter, scene: Scene, opts: Options, sphere_scale: float = 0.28, stick_radius: float = 0.11) -> None:
-    """Disegna la scena (senza svuotare il plotter né toccare la camera)."""
+def populate(plotter: pv.Plotter, scene: Scene, opts: Options, sphere_scale: float = 0.28, stick_radius: float = 0.11,
+             px: float = 1.0) -> None:
+    """Disegna la scena (senza svuotare il plotter né toccare la camera). `px` moltiplica ciò che si misura in pixel
+    (testi, spessori delle linee) e affina sfere e cilindri: per le immagini esportate più grandi della finestra."""
+    res = 24 if px <= 1 else 48
     if opts.style == 2:
         radii = np.array([vdw_radius(e) for e in scene.el])
     elif opts.style == 1:
@@ -77,10 +80,10 @@ def populate(plotter: pv.Plotter, scene: Scene, opts: Options, sphere_scale: flo
     atoms = pv.PolyData(scene.pos)
     atoms["rgb"] = colors
     atoms["radius"] = radii
-    glyphs = atoms.glyph(scale="radius", factor=1.0, orient=False, geom=pv.Sphere(radius=1.0, theta_resolution=24, phi_resolution=24))
+    glyphs = atoms.glyph(scale="radius", factor=1.0, orient=False, geom=pv.Sphere(radius=1.0, theta_resolution=res, phi_resolution=res))
     plotter.add_mesh(glyphs, scalars="rgb", rgb=True, smooth_shading=True, specular=0.4)
     if opts.style != 2:
-        sticks = _sticks(scene, colors, stick_radius)
+        sticks = _sticks(scene, colors, stick_radius, res // 2 + 2)
         if sticks is not None:
             plotter.add_mesh(sticks, scalars="rgb", rgb=True, smooth_shading=True)
     if opts.show_planes:
@@ -88,24 +91,24 @@ def populate(plotter: pv.Plotter, scene: Scene, opts: Options, sphere_scale: flo
             n = len(poly.points)
             face = pv.PolyData(poly.points, faces=np.r_[n, np.arange(n)])
             plotter.add_mesh(face, color=tuple(c / 255 for c in poly.color), opacity=poly.opacity, show_edges=True,
-                             edge_color=tuple(c / 255 for c in poly.color), line_width=1.5)
+                             edge_color=tuple(c / 255 for c in poly.color), line_width=1.5 * px)
     if opts.show_vectors:
         for p in scene.paths:
-            _add_path(plotter, p)
+            _add_path(plotter, p, sides=res // 2)
         for m in scene.markers:
-            plotter.add_mesh(pv.Sphere(radius=m.radius, center=m.pos), color=tuple(c / 255 for c in m.color))
+            plotter.add_mesh(pv.Sphere(radius=m.radius, center=m.pos, theta_resolution=res, phi_resolution=res), color=tuple(c / 255 for c in m.color))
         if opts.labels and scene.markers:
             plotter.add_point_labels(np.array([m.pos for m in scene.markers]), [m.label for m in scene.markers],
-                                     font_size=14, shape=None, show_points=False, always_visible=True,
+                                     font_size=round(14 * px), shape=None, show_points=False, always_visible=True,
                                      text_color=tuple(c / 255 for c in theme.foreground()))
     if opts.show_measures:
         for p in scene.axes:
-            _add_path(plotter, p, opacity=0.8)
+            _add_path(plotter, p, opacity=0.8, sides=res // 2)
         for color_, group in _by_color(scene.labels).items():
             for size, labels in group.items():
-                plotter.add_point_labels(np.array([lb.pos for lb in labels]), [lb.text for lb in labels], font_size=size, bold=True,
+                plotter.add_point_labels(np.array([lb.pos for lb in labels]), [lb.text for lb in labels], font_size=round(size * px), bold=True,
                                          shape="rounded_rect", shape_color=tuple(c / 255 for c in theme.background()), shape_opacity=0.7,
-                                         margin=2, show_points=False, always_visible=True, text_color=tuple(c / 255 for c in color_))
+                                         margin=round(2 * px), show_points=False, always_visible=True, text_color=tuple(c / 255 for c in color_))
     if len(scene.ghost_pos):
         ghost = pv.PolyData(scene.ghost_pos)
         plotter.add_mesh(ghost.glyph(scale=False, factor=0.2, orient=False, geom=pv.Sphere(radius=1.0, theta_resolution=12, phi_resolution=12)),
@@ -116,19 +119,19 @@ def populate(plotter: pv.Plotter, scene: Scene, opts: Options, sphere_scale: flo
             plotter.add_mesh(pv.PolyData(scene.ghost_pos, lines=lines).tube(radius=0.05, n_sides=8), color=(0.62, 0.62, 0.66), opacity=0.35)
     if len(scene.box):
         for a, b in scene.box:
-            plotter.add_mesh(pv.Line(a, b), color="gray", line_width=1, opacity=0.6)
+            plotter.add_mesh(pv.Line(a, b), color="gray", line_width=px, opacity=0.6)
 
 
-def _add_path(plotter: pv.Plotter, p, opacity: float = 1.0) -> None:
+def _add_path(plotter: pv.Plotter, p, opacity: float = 1.0, sides: int = 12) -> None:
     color_ = tuple(c / 255 for c in p.color)
     a, b = p.points[0], p.points[-1]
     if p.arrow:  # la punta occupa l'ultimo tratto del segmento
         axis = (b - a) / np.linalg.norm(b - a)
         head = min(0.45, 0.3 * float(np.linalg.norm(b - a)))
-        plotter.add_mesh(pv.Cone(center=b - axis * head / 2, direction=axis, height=head, radius=max(4 * p.radius, 0.09), resolution=16),
+        plotter.add_mesh(pv.Cone(center=b - axis * head / 2, direction=axis, height=head, radius=max(4 * p.radius, 0.09), resolution=2 * sides),
                          color=color_, opacity=opacity)
         b = b - axis * head
-    plotter.add_mesh(pv.Line(a, b).tube(radius=p.radius, n_sides=10), color=color_, smooth_shading=True, opacity=opacity)
+    plotter.add_mesh(pv.Line(a, b).tube(radius=p.radius, n_sides=sides), color=color_, smooth_shading=True, opacity=opacity)
 
 
 def _by_color(labels) -> dict:
@@ -173,6 +176,8 @@ class View3D(PairView):
 
         cfg = load_section("gui")
         self.sphere_scale = float(cfg.get("sphere_scale", 0.28))
+        #: Le immagini PNG si disegnano tante volte più grandi del pannello (testi e linee in proporzione).
+        self.export_scale = max(1, int(cfg.get("export_scale", 3)))
         self.stick_radius = float(cfg.get("stick_radius", 0.11))
         self.opts = Options(show_h=bool(cfg.get("show_hydrogens", True)))
         self.scene: Scene | None = None
@@ -199,8 +204,9 @@ class View3D(PairView):
             cb.toggled.connect(lambda on, a=attr: self._set(a, on))
             self.boxes[attr] = cb
             self.toolbar.addWidget(cb)
-        self.lock_cam = QCheckBox(tr("Blocca camera"))
-        self.lock_cam.setToolTip(tr("Non riporta la camera sulla coppia quando cambia la selezione"))
+        self.lock_cam = QCheckBox(tr("Mantieni la vista"))
+        self.lock_cam.setToolTip(tr("Cambiando coppia la camera conserva angolazione e zoom rispetto alla coppia (assi L, W, n) "
+                                    "invece di tornare alla vista dall'alto: per confrontare coppie diverse dallo stesso punto di vista"))
         self.toolbar.addWidget(self.lock_cam)
         for text, key in ((tr("Dall'alto"), "top"), (tr("Obliqua"), "oblique"), (tr("Di lato"), "side"), (tr("Lungo L"), "end")):
             b = QPushButton(text)
@@ -220,6 +226,8 @@ class View3D(PairView):
             if os.environ.get("PISTAK_NO_3D"):
                 raise RuntimeError(tr("disattivata con PISTAK_NO_3D"))
             self.plotter = QtInteractor(self)
+            # su macOS il multisampling dentro Qt non agisce e i bordi escono a gradini: supersampling
+            self.plotter.enable_anti_aliasing("ssaa")
         except Exception as e:  # noqa: BLE001  (nessun contesto OpenGL)
             self.plotter = _NullPlotter(self, str(e))
         self.plotter.set_background(theme.background())
@@ -260,6 +268,11 @@ class View3D(PairView):
         self._rebuild(keep_camera=self.lock_cam.isChecked())
 
     def _rebuild(self, keep_camera: bool) -> None:
+        # la camera si conserva rispetto alla coppia (assi L, W, n, origine in Cg A), non nello spazio del cristallo:
+        # così vale anche passando a un'altra coppia, che può stare altrove nella cella. Un'inquadratura ancora automatica
+        # (un pulsante, mai toccata) si rifà con lo stesso pulsante sulla coppia nuova.
+        auto = self._auto_view[0] if keep_camera and self._still_auto() else None
+        relative = self._relative_camera() if keep_camera and auto is None else None
         pair = self.pair
         self._scene_structure = self.analysis.structure if self.analysis else None
         self._scene_key = self._shown_as()
@@ -268,9 +281,9 @@ class View3D(PairView):
         else:
             self.ctx = self.analysis.pair_context(pair)
             self.scene = build_scene(self.ctx, self.opts.show_h, self.opts.show_cell, self.opts.show_column)
-        self._draw(keep_camera)
+        self._draw(False, relative=relative, view=auto or "top")
 
-    def _draw(self, keep_camera: bool) -> None:
+    def _draw(self, keep_camera: bool, relative: dict | None = None, view: str = "top") -> None:
         pl = self.plotter
         cam = pl.camera_position if keep_camera and self.scene is not None else None
         scale = self._parallel_scale() if keep_camera else None
@@ -283,11 +296,13 @@ class View3D(PairView):
                 pl.camera_position, self._pending_camera = self._pending_camera, None
                 self._set_parallel_scale(self._pending_scale)
                 self._pending_scale = None
+            elif relative is not None:
+                self._apply_relative_camera(relative)
             elif cam is not None:
                 pl.camera_position = cam
                 self._set_parallel_scale(scale)
             else:
-                self.look("top", render=False)  # si parte come la Proiezione
+                self.look(view, render=False)  # di norma «top»: si parte come la Proiezione
         pl.render()
 
     # ---- camera --------------------------------------------------------------------
@@ -339,6 +354,22 @@ class View3D(PairView):
         if render:
             self.plotter.render()
 
+    def _relative_camera(self) -> dict | None:
+        """La camera nelle coordinate (L, W, n) della coppia mostrata, con origine in Cg A."""
+        if self.ctx is None or self._camera() is None or self.plotter.camera_position is None:
+            return None
+        f = self.ctx.frame
+        axes = np.column_stack([f.L, f.W, f.n])
+        pos, focal, up = (np.array(list(map(float, p))) for p in self.plotter.camera_position)
+        return {"pos": (pos - f.origin) @ axes, "focal": (focal - f.origin) @ axes, "up": up @ axes, "scale": self._parallel_scale()}
+
+    def _apply_relative_camera(self, rel: dict) -> None:
+        f = self.ctx.frame
+        axes = np.column_stack([f.L, f.W, f.n])
+        self.plotter.camera_position = [tuple(f.origin + axes @ rel["pos"]), tuple(f.origin + axes @ rel["focal"]), tuple(axes @ rel["up"])]
+        self._set_parallel_scale(rel["scale"])
+        self.plotter.reset_camera_clipping_range()
+
     def _camera_state(self) -> tuple:
         cam = self.plotter.camera_position
         return (np.array([list(map(float, p)) for p in cam]) if cam is not None else None, self._parallel_scale())
@@ -359,8 +390,28 @@ class View3D(PairView):
         if path:
             self.screenshot(path)
 
-    def screenshot(self, path: str) -> None:
-        self.plotter.screenshot(path)
+    def screenshot(self, path: str, scale: int | None = None) -> None:
+        """Salva la vista in PNG ad alta risoluzione: la scena si ridisegna fuori schermo `scale` volte più grande del
+        pannello, con la stessa camera, testi e linee in proporzione e supersampling."""
+        scale = scale or self.export_scale
+        cam = self._camera()
+        if self.scene is None or cam is None:
+            self.plotter.screenshot(path)
+            return
+        w, h = max(self.plotter.interactor.width(), 100), max(self.plotter.interactor.height(), 100)
+        pl = pv.Plotter(off_screen=True, window_size=(w * scale, h * scale))
+        try:
+            pl.set_background(theme.background())
+            populate(pl, self.scene, self.opts, self.sphere_scale, self.stick_radius, px=scale)
+            pl.camera_position = self.plotter.camera_position
+            pl.camera.SetParallelProjection(cam.GetParallelProjection())
+            pl.camera.SetParallelScale(cam.GetParallelScale())
+            pl.camera.SetViewAngle(cam.GetViewAngle())
+            pl.reset_camera_clipping_range()
+            pl.enable_anti_aliasing("ssaa")
+            pl.screenshot(path)
+        finally:
+            pl.close()
 
     def extra_state(self) -> dict:
         cam = self.plotter.camera_position

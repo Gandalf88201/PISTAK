@@ -32,3 +32,4 @@ background = "auto"        # auto | light | dark — si cambia anche da Vista �
 show_hydrogens = true
 sphere_scale = 0.28
 stick_radius = 0.11
+export_scale = 3           # i PNG della vista 3D si disegnano 3 volte più grandi del pannello

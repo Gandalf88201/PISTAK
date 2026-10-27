@@ -10,7 +10,7 @@ import math
 import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QBrush, QPen
+from PySide6.QtGui import QBrush
 from PySide6.QtWidgets import QCheckBox, QComboBox, QLabel, QPushButton
 
 from pistak.gui import theme
@@ -134,7 +134,7 @@ class ScatterView(PairView):
                 rgb = theme.KIND_COLORS[p.kind]
             alpha = 230 if (sub is None or p.index in sub) else 40
             brushes.append(QBrush(theme.qcolor(tuple(int(v) for v in rgb), alpha)))
-            pens.append(QPen(theme.qcolor((0, 0, 0), alpha // 2)))
+            pens.append(theme.point_pen(tuple(int(v) for v in rgb), alpha))
         size = [8 + min(10, 2.5 * math.log2(p.count)) if p.count > 0 else 8 for p in a.pairs]
         ok = np.isfinite(x) & np.isfinite(y)
         self.cloud.setData(x[ok], y[ok], brush=[b for b, k in zip(brushes, ok) if k], pen=[q for q, k in zip(pens, ok) if k],

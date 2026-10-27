@@ -246,8 +246,9 @@ TEXT: dict[str, str] = {
     "Mostra le altre molecole della colonna di stack (grigio)": "Shows the other molecules of the stack column (grey)",
     "Cella": "Cell",
     "Spigoli della cella elementare": "Edges of the unit cell",
-    "Blocca camera": "Lock camera",
-    "Non riporta la camera sulla coppia quando cambia la selezione": "Does not recentre the camera on the pair when the selection changes",
+    "Mantieni la vista": "Keep the view",
+    "Cambiando coppia la camera conserva angolazione e zoom rispetto alla coppia (assi L, W, n) invece di tornare alla vista dall'alto: per confrontare coppie diverse dallo stesso punto di vista":
+        "When the pair changes the camera keeps its angle and zoom relative to the pair (L, W, n axes) instead of going back to the view from above: to compare different pairs from the same viewpoint",
     "Obliqua": "Oblique",
     "Dall'alto": "From above",
     "Di lato": "Side view",

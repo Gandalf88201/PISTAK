@@ -182,7 +182,10 @@ occupato (vdW). Le viste predefinite: *Dall'alto* (perpendicolare ai piani), *Ob
 La 3D parte *Dall'alto* e in proiezione *Ortogonale* (senza prospettiva): L a destra, W in alto, stesso centro
 della **Proiezione**, così le due viste coincidono; finché non si muove la camera l'inquadratura segue le dimensioni
 del pannello. Togliendo *Ortogonale* si torna alla prospettiva.
-*Blocca camera* tiene il punto di vista quando cambia la coppia; *PNG…* salva l'immagine.
+*Mantieni la vista*: cambiando coppia la camera conserva angolazione e zoom *rispetto alla coppia* (assi L, W, n, con
+origine in Cg A), invece di tornare alla vista dall'alto: serve a confrontare coppie diverse dallo stesso punto di vista.
+*PNG…* salva l'immagine ridisegnata tre volte più grande del pannello, con testi e linee in proporzione (`export_scale`
+nella sezione `[gui]` di `user.toml`).
 
 ### Proiezione
 

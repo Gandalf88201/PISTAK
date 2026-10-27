@@ -6,7 +6,7 @@ Il tema si sceglie da Vista ▸ Tema (o con `background` nella sezione [gui] di 
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QGuiApplication, QPalette
+from PySide6.QtGui import QColor, QGuiApplication, QPalette, QPen
 
 from pistak.core.config import load_section, save_user_config
 from pistak.i18n import tr
@@ -64,6 +64,15 @@ def foreground() -> tuple[int, int, int]:
 
 def qcolor(rgb: tuple[int, int, int], alpha: int = 255) -> QColor:
     return QColor(rgb[0], rgb[1], rgb[2], alpha)
+
+
+def point_pen(rgb: tuple[int, int, int], alpha: int = 255) -> QPen:
+    """Bordo dei punti degli scatter: un pixel, una tonalità più scura del riempimento. Penna cosmetica: una penna
+    normale pyqtgraph la ingrandisce insieme al simbolo e dietro ogni punto resta un quadrato grigio."""
+    pen = QPen(qcolor(rgb, alpha).darker(150))
+    pen.setWidthF(1.0)
+    pen.setCosmetic(True)
+    return pen
 
 
 def apply() -> None:
