@@ -714,9 +714,18 @@ fallisce dà NaN su quella coppia e l'errore compare in **Dettaglio ▸ Avvisi**
 
 ## 20. Problemi frequenti
 
-**«Nessuna coppia con nuclei π».** La molecola non ha anelli abbastanza planari: prova ad alzare `ring_rms` e
-`molecule_rms`, oppure controlla in **Dettaglio ▸ Struttura** se le molecole sono «estese» (rete di legami che non
-si chiude).
+**Le viste restano vuote: «Nessuna coppia di nuclei π da mostrare».** Al posto della tabella, dello scatter e delle
+altre viste delle coppie compare il motivo, con i numeri (lo ripetono la cima di **Dettaglio ▸ Struttura** e
+`analyze`):
+
+* *anelli saturi*: gli anelli ci sono ma non sono planari (a sedia, a busta: scarto dal piano medio ben sopra
+  `ring_rms`) e hanno carboni con quattro legami, quindi niente elettroni π. È il caso di molti prodotti naturali e
+  zuccheri: PISTAK non ha nulla da misurare, ed è giusto così;
+* *anelli insaturi o quasi planari*: forse aromatici distorti; alza `ring_rms` (e se serve `molecule_rms`);
+* *nessun anello* e molecola non planare; *rete di legami estesa* (polimero o solido, nessuna molecola separata);
+* *nuclei π troppo lontani*: ci sono, ma nessuna coppia entro `contact_cutoff`.
+
+In ogni caso restano disponibili **Dettaglio ▸ Struttura, Geometria e Controlli** e i comandi `check` e `geom`.
 
 **La struttura ha atomi disordinati.** Con `disorder = major` si tiene la componente maggiore; per la minore usa il
 numero del gruppo (`--disorder 2`), per tutto `all`. Quanti atomi sono stati scartati lo dice **Dettaglio ▸ Struttura**.

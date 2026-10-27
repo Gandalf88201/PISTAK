@@ -713,8 +713,17 @@ fails gives NaN for that pair and the error appears in **Detail ▸ Warnings**: 
 
 ## 20. Troubleshooting
 
-**"No pair with π cores".** The molecule has no ring planar enough: try raising `ring_rms` and `molecule_rms`, or
-check in **Detail ▸ Structure** whether the molecules are "extended" (bond network that does not close).
+**The views stay empty: "No π-core pairs to show".** Instead of the table, the scatter and the other pair views the
+reason appears, with the numbers (repeated at the top of **Detail ▸ Structure** and by `analyze`):
+
+* *saturated rings*: there are rings but they are not planar (chair, envelope: deviation from the mean plane well
+  above `ring_rms`) and they have carbons with four bonds, hence no π electrons. This is the case of many natural
+  products and sugars: PISTAK has nothing to measure, and rightly so;
+* *unsaturated or nearly planar rings*: perhaps distorted aromatics; raise `ring_rms` (and `molecule_rms` if needed);
+* *no rings* and a non-planar molecule; *extended bond network* (polymer or solid, no separate molecules);
+* *π cores too far apart*: they exist, but no pair within `contact_cutoff`.
+
+In every case **Detail ▸ Structure, Geometry and Checks** and the `check` and `geom` commands remain available.
 
 **The structure has disordered atoms.** With `disorder = major` the major component is kept; for the minor one use
 the group number (`--disorder 2`), for everything `all`. **Detail ▸ Structure** says how many atoms were discarded.

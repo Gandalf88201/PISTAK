@@ -3,8 +3,8 @@ contatti tra molecole (riepilogo per molecola delle coppie di frammenti π), avv
 geometria delle molecole (legami, angoli, torsioni) e controlli rapidi della struttura."""
 from __future__ import annotations
 
-import html
 import math
+from html import escape as _esc
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QBrush, QColor
@@ -23,13 +23,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from pistak.core.diagnosis import why_no_pairs
 from pistak.core.intramolecular import molecule_geometry
 from pistak.core.ringpairs import HEADERS, ring_pairs
 from pistak.gui import theme
 from pistak.gui.session import Session
 from pistak.gui.views.base import PairView
 from pistak.i18n import tf, tr
-from pistak.labels import ALERT_LEVELS, alert_text, rank_name, relation
+from pistak.labels import ALERT_LEVELS, alert_text, no_pairs_text, rank_name, relation
 from pistak.params import load_errors, specs, structure_specs
 
 #: Tipi di misura della scheda Geometria: chiave → (titolo, unità, decimali).
@@ -51,6 +52,7 @@ class _NumItem(QTableWidgetItem):
 
 class DetailView(PairView):
     TITLE = "Dettaglio"
+    EMPTY_NOTICE = False  # senza coppie restano Struttura, Geometria e Controlli; il motivo va in cima a Struttura
 
     def __init__(self, session: Session, group: str | None = "A", parent=None):
         super().__init__(session, group, parent)
@@ -184,7 +186,10 @@ class DetailView(PairView):
             (tr("Cella"), f"a {c.a:.3f} · b {c.b:.3f} · c {c.c:.3f} Å<br>α {c.alpha:.2f}° · β {c.beta:.2f}° · γ {c.gamma:.2f}°"),
             (tr("Atomi nella cella"), str(a.structure.n_cell_atoms)),
         ]
-        html = "<table cellpadding=3>" + "".join(f"<tr><td><b>{k}</b></td><td>{v}</td></tr>" for k, v in rows) + f"</table><h4>{tr('Molecole')}</h4><ul>"
+        reason = why_no_pairs(a)
+        html = "" if reason is None else \
+            f"<p style='color:{LEVEL_COLORS['B'].name()}'><b>{tr('Nessuna coppia di nuclei π')}</b>: {_esc(no_pairs_text(reason))}</p>"
+        html += "<table cellpadding=3>" + "".join(f"<tr><td><b>{k}</b></td><td>{v}</td></tr>" for k, v in rows) + f"</table><h4>{tr('Molecole')}</h4><ul>"
         for g in a.molecule_groups():
             sub = "".join(f"{e}<sub>{n}</sub>" if n > 1 else e for e, n in g.formula)
             html += f"<li><b>{g.count} ×</b> {sub} · " + tf("{n} con nucleo π", n=g.with_core)
@@ -216,7 +221,7 @@ class DetailView(PairView):
                 continue
             unit = f" {s.unit}" if s.unit else ""
             groups.setdefault(s.group_name, []).append(
-                f'<tr><td title="{html.escape(s.info)}">{html.escape(s.name)}</td><td align=right>{v:.{s.digits}f}{unit}</td></tr>')
+                f'<tr><td title="{_esc(s.info)}">{_esc(s.name)}</td><td align=right>{v:.{s.digits}f}{unit}</td></tr>')
         return "".join(f"<h4>{g}</h4><table cellpadding=2>{''.join(rows)}</table>" for g, rows in groups.items())
 
     def _fill_contacts(self) -> None:

@@ -53,6 +53,7 @@ pistak/
     crystal.py      contenuto della cella (con tutte le componenti disordinate), densità, Z′, valori dell'affinamento
     validation.py   controlli rapidi (pre-checkCIF): avvisi A/B/C/G con codici stabili; ADDSYM con spglib facoltativo
     intramolecular.py  legami, angoli e torsioni delle molecole indipendenti, s.u. propagate dalle coordinate
+    diagnosis.py    perché un'analisi non ha coppie (anelli saturi, nessun anello, nuclei lontani…), per le viste vuote
     elements.py     numeri atomici, masse, raggi, colori
   params/    registro dei parametri misurabili (Registry; builtin = sito, extra = fase 2, plugins) e registro delle
              grandezze dell'intera struttura (structure.py: StructureRegistry, `@structure_parameter`)

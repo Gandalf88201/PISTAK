@@ -52,6 +52,37 @@ ALERT_TEXT = {
     "addsymUnavailable": "Ricerca della simmetria mancata non eseguita: serve il pacchetto spglib.",
     "checkFailed": "Il controllo «{check}» non è riuscito: {error}",
 }
+#: Perché un'analisi non ha coppie (`pistak.core.diagnosis`), in italiano: si traducono al momento dell'uso.
+NO_PAIRS_TEXT = {
+    "extendedOnly": "La struttura è una rete di legami estesa (polimero o solido), senza molecole separate: PISTAK "
+                    "misura le coppie tra molecole.",
+    "noContacts": "{n} molecole hanno un nucleo π, ma nessuna coppia di nuclei ha atomi pesanti più vicini di {limit} Å "
+                  "(Soglie ▸ Contatto massimo tra atomi pesanti).",
+    "noRings": "Le molecole non hanno anelli (fino a {size} atomi) e non sono planari nel complesso (scarto dal piano "
+               "medio {rms} Å, soglia {limit} Å): non c'è un nucleo π.",
+    "nonPlanarRings": "Le molecole hanno {n} anelli, ma nessuno è planare: scarto dal piano medio {min}–{max} Å, la soglia "
+                      "è {limit} Å. Sono anelli saturi (a sedia, a busta), senza elettroni π.",
+    "nearlyPlanarRings": "Nessun anello è planare, ma {n} sono insaturi o quasi planari: scarto dal piano medio "
+                         "{min}–{max} Å, sopra la soglia di {limit} Å. Se sono anelli aromatici distorti, alza la soglia "
+                         "in Soglie ▸ Planarità massima di un anello.",
+    "coreNotPlanar": "Ci sono {planar} anelli planari, ma i sistemi che formano non sono planari nel complesso (soglia "
+                     "{limit} Å, Soglie ▸ Planarità massima del nucleo).",
+}
+#: Che cosa resta da guardare quando non ci sono coppie.
+NO_PAIRS_HINT = "Restano disponibili, nel Dettaglio, le schede Struttura, Geometria e Controlli."
+
+
+def no_pairs_text(reason) -> str:
+    """Il motivo per cui non ci sono coppie (`pistak.core.diagnosis.NoPairsReason`), nella lingua corrente."""
+    template = NO_PAIRS_TEXT.get(reason.code)
+    if template is None:
+        return reason.code
+    try:
+        return tr(template).format(**reason.values)
+    except (KeyError, IndexError, ValueError):
+        return reason.code
+
+
 #: Che cosa vuol dire ciascun livello degli avvisi.
 ALERT_LEVELS = {"A": "problema serio", "B": "possibile problema", "C": "da controllare", "G": "informazione"}
 

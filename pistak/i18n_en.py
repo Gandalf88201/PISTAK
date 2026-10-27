@@ -643,4 +643,21 @@ TEXT: dict[str, str] = {
     "griglia di punti k: n = ⌈L / a⌉ (Å, 20)": "k-point grid: n = ⌈L / a⌉ (Å, 20)",
     "energia di taglio: eV per VASP, Ry per QE (0 = predefinita)": "cutoff energy: eV for VASP, Ry for QE (0 = default)",
     "cartella; senza: QE e CP2K su stdout, VASP e CRYSTAL in <file>_<programma>/": "folder; without: QE and CP2K to stdout, VASP and CRYSTAL into <file>_<program>/",
+    # ---- perché non ci sono coppie ----------------------------------------------------------------
+    "Nessuna coppia di nuclei π": "No π-core pairs",
+    "Nessuna coppia di nuclei π da mostrare": "No π-core pairs to show",
+    "Restano disponibili, nel Dettaglio, le schede Struttura, Geometria e Controlli.":
+        "The Structure, Geometry and Checks tabs of the Detail view are still available.",
+    "La struttura è una rete di legami estesa (polimero o solido), senza molecole separate: PISTAK misura le coppie tra molecole.":
+        "The structure is an extended bond network (polymer or solid) with no separate molecules: PISTAK measures pairs between molecules.",
+    "{n} molecole hanno un nucleo π, ma nessuna coppia di nuclei ha atomi pesanti più vicini di {limit} Å (Soglie ▸ Contatto massimo tra atomi pesanti).":
+        "{n} molecules have a π core, but no pair of cores has heavy atoms closer than {limit} Å (Thresholds ▸ Maximum contact between heavy atoms).",
+    "Le molecole non hanno anelli (fino a {size} atomi) e non sono planari nel complesso (scarto dal piano medio {rms} Å, soglia {limit} Å): non c'è un nucleo π.":
+        "The molecules have no rings (up to {size} atoms) and are not planar as a whole (deviation from the mean plane {rms} Å, threshold {limit} Å): there is no π core.",
+    "Le molecole hanno {n} anelli, ma nessuno è planare: scarto dal piano medio {min}–{max} Å, la soglia è {limit} Å. Sono anelli saturi (a sedia, a busta), senza elettroni π.":
+        "The molecules have {n} rings, but none is planar: deviation from the mean plane {min}–{max} Å, the threshold is {limit} Å. They are saturated rings (chair, envelope), with no π electrons.",
+    "Nessun anello è planare, ma {n} sono insaturi o quasi planari: scarto dal piano medio {min}–{max} Å, sopra la soglia di {limit} Å. Se sono anelli aromatici distorti, alza la soglia in Soglie ▸ Planarità massima di un anello.":
+        "No ring is planar, but {n} are unsaturated or nearly planar: deviation from the mean plane {min}–{max} Å, above the {limit} Å threshold. If they are distorted aromatic rings, raise the threshold in Thresholds ▸ Maximum planarity of a ring.",
+    "Ci sono {planar} anelli planari, ma i sistemi che formano non sono planari nel complesso (soglia {limit} Å, Soglie ▸ Planarità massima del nucleo).":
+        "There are {planar} planar rings, but the systems they form are not planar as a whole (threshold {limit} Å, Thresholds ▸ Maximum planarity of the core).",
 }

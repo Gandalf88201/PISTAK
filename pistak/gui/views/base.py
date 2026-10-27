@@ -12,14 +12,19 @@ tempo reale le analisi si susseguono e ridisegnare ciò che non si vede rallente
 """
 from __future__ import annotations
 
+import html
+
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QShowEvent
 from PySide6.QtWidgets import QComboBox, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
 from pistak.core.analysis import Analysis
+from pistak.core.diagnosis import why_no_pairs
 from pistak.core.pairs import Pair
 from pistak.gui.flow_layout import FlowLayout
 from pistak.gui.session import GROUPS, Session
 from pistak.i18n import tf, tr
+from pistak.labels import NO_PAIRS_HINT, no_pairs_text
 
 
 def sync_choices() -> list[tuple[str, str | None]]:
@@ -28,6 +33,8 @@ def sync_choices() -> list[tuple[str, str | None]]:
 
 class PairView(QWidget):
     TITLE = "Vista"
+    #: Senza coppie mostra il motivo al posto del contenuto (il Dettaglio no: ha altro da mostrare).
+    EMPTY_NOTICE = True
 
     def __init__(self, session: Session, group: str | None = "A", parent: QWidget | None = None):
         super().__init__(parent)
@@ -55,6 +62,14 @@ class PairView(QWidget):
         bar.addWidget(QLabel("🔗"))
         bar.addWidget(self.sync_combo)
         outer.addLayout(bar)
+        # al posto del contenuto quando l'analisi non ha coppie: il perché, invece di una vista vuota
+        self.empty_notice = QLabel()
+        self.empty_notice.setWordWrap(True)
+        self.empty_notice.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.empty_notice.setTextFormat(Qt.TextFormat.RichText)
+        self.empty_notice.setMargin(16)
+        self.empty_notice.hide()
+        outer.addWidget(self.empty_notice, 1)
         self.body = QVBoxLayout()
         self.body.setContentsMargins(0, 0, 0, 0)
         outer.addLayout(self.body, 1)
@@ -117,6 +132,7 @@ class PairView(QWidget):
             self._stale = True
             return
         self._stale = False
+        self._update_empty_notice()
         self.refreshing = True
         try:
             self.on_analysis()
@@ -124,6 +140,18 @@ class PairView(QWidget):
         finally:
             self.refreshing = False
         self.on_pair(self.index)
+
+    def _update_empty_notice(self) -> None:
+        """Senza coppie il contenuto della vista lascia il posto al motivo (`EMPTY_NOTICE = False` per non farlo)."""
+        reason = why_no_pairs(self.analysis) if self.analysis is not None and self.EMPTY_NOTICE else None
+        if reason is not None:
+            self.empty_notice.setText(f"<p><b>{tr('Nessuna coppia di nuclei π da mostrare')}</b></p>"
+                                      f"<p>{html.escape(no_pairs_text(reason))}</p><p><i>{tr(NO_PAIRS_HINT)}</i></p>")
+        self.empty_notice.setVisible(reason is not None)
+        for i in range(self.body.count()):
+            w = self.body.itemAt(i).widget()
+            if w is not None:
+                w.setVisible(reason is None)
 
     def _hidden(self) -> bool:
         """Nascosta in una finestra visibile (scheda non in primo piano, pannello chiuso). Una vista mai mostrata

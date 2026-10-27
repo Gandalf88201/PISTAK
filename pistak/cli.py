@@ -75,7 +75,13 @@ def cmd_analyze(args) -> int:
               + frags + ")")
     _print_structure(a)
     if not a.pairs:
+        from pistak.core.diagnosis import why_no_pairs
+        from pistak.labels import no_pairs_text
+
         print(tr("nessuna coppia di molecole vicine con nuclei π"))
+        reason = why_no_pairs(a)
+        if reason is not None:
+            print("  " + no_pairs_text(reason))
     else:
         print(f"{'#':>3} {tr('tipo'):<8} {tr('interpl.'):>8} {'L-slip':>7} {'W-slip':>7} {tr('diedro'):>7} {'Cg-Cg':>7} "
               f"{tr('contatto'):>8}  {tr('relazione')}")
