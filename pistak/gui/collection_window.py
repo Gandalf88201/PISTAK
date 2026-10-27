@@ -307,7 +307,7 @@ class CollectionWindow(QMainWindow):
         rows = cmp.compare(self.entries, self.reference) if self.entries else []
         keys = ["interplanar", "long_slip", "lat_slip", "dihedral"]
         heads = (["", "File", tr("Gruppo"), tr("Molecole"), "π-stack", tr("Colonne"), tr("Interpl. (Å)"), tr("Slitt. L (Å)"), tr("Slitt. W (Å)"), tr("Angolo (°)"),
-                  tr("Δ interpl."), tr("Δ slitt. L"), tr("Δ slitt. W"), tr("Distanza motivo (Å)")])
+                  tr("Δ interpl."), tr("Δ slitt. L"), tr("Δ slitt. W"), tr("Distanza motivo (Å)"), "Z′", "R1", tr("Avvisi A/B/C")])
         self.struct.clear()
         self.struct.setColumnCount(len(heads))
         self.struct.setHorizontalHeaderLabels(heads)
@@ -320,6 +320,9 @@ class CollectionWindow(QMainWindow):
                 cells += [_num(row.best.get(k, math.nan)) for k in keys]
                 cells += [("–" if k not in row.delta else f"{row.delta[k]:+.2f}") for k in keys[:3]]
                 cells += [_num(row.motif_distance)]
+                st = self.entries[r].structure
+                cells += [_num(st.get("z_prime", math.nan)), _num(st.get("r1", math.nan), 3),
+                          "/".join(_num(st.get(f"alerts_{lev}", math.nan), 0) for lev in "abc")]
             for c, v in enumerate(cells):
                 it = QTableWidgetItem(v)
                 if c >= 4:

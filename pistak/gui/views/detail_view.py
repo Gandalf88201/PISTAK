@@ -1,19 +1,52 @@
 """Dettaglio: riepilogo del cristallo, tutti i parametri della coppia scelta, coppie di anelli (Janiak), colonne,
-contatti tra molecole (riepilogo per molecola delle coppie di frammenti π) e avvisi (file non letti, plugin con errori)."""
+contatti tra molecole (riepilogo per molecola delle coppie di frammenti π), avvisi (file non letti, plugin con errori),
+geometria delle molecole (legami, angoli, torsioni) e controlli rapidi della struttura."""
 from __future__ import annotations
 
+import html
 import math
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QTabWidget, QTextBrowser, QTreeWidget, QTreeWidgetItem
+from PySide6.QtGui import QBrush, QColor
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QHBoxLayout,
+    QLabel,
+    QTableWidget,
+    QTableWidgetItem,
+    QTabWidget,
+    QTextBrowser,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
 
+from pistak.core.intramolecular import molecule_geometry
 from pistak.core.ringpairs import HEADERS, ring_pairs
 from pistak.gui import theme
 from pistak.gui.session import Session
 from pistak.gui.views.base import PairView
 from pistak.i18n import tf, tr
-from pistak.labels import rank_name, relation
-from pistak.params import load_errors, specs
+from pistak.labels import ALERT_LEVELS, alert_text, rank_name, relation
+from pistak.params import load_errors, specs, structure_specs
+
+#: Tipi di misura della scheda Geometria: chiave → (titolo, unità, decimali).
+GEOMETRY_KINDS = {"bond": ("Legami", "Å", 4), "angle": ("Angoli", "°", 2), "torsion": ("Torsioni", "°", 2)}
+#: Colori dei livelli degli avvisi (testo), leggibili sia sul tema chiaro sia su quello scuro.
+LEVEL_COLORS = {"A": QColor(214, 48, 49), "B": QColor(230, 126, 34), "C": QColor(180, 150, 20)}
+
+
+class _NumItem(QTableWidgetItem):
+    """Cella che si ordina per valore numerico (i NaN in fondo), non per testo."""
+
+    def __init__(self, text: str, value: float):
+        super().__init__(text)
+        self.value = value if math.isfinite(value) else math.inf
+
+    def __lt__(self, other) -> bool:
+        return self.value < other.value if isinstance(other, _NumItem) else super().__lt__(other)
 
 
 class DetailView(PairView):
@@ -43,12 +76,107 @@ class DetailView(PairView):
         self.tabs.addTab(self.columns, tr("Colonne"))
         self.tabs.addTab(self.notes, tr("Avvisi"))
         self.tabs.addTab(self.contacts, tr("Contatti"))
+        self.tabs.addTab(self._build_geometry(), tr("Geometria"))
+        self.checks = QTableWidget()
+        self.checks.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.checks.setWordWrap(True)
+        self.tabs.addTab(self.checks, tr("Controlli"))
         self.body.addWidget(self.tabs)
+        self._geometry_items: list | None = None  # calcolata alla prima apertura della scheda, per analisi
+        self._geometry_key: tuple | None = None
+        self.tabs.currentChanged.connect(lambda _i: self._fill_geometry())
+
+    def _build_geometry(self) -> QWidget:
+        w = QWidget()
+        lay = QVBoxLayout(w)
+        lay.setContentsMargins(0, 0, 0, 0)
+        bar = QHBoxLayout()
+        self.geom_kind = QComboBox()
+        for key, (title, unit, _d) in GEOMETRY_KINDS.items():
+            self.geom_kind.addItem(f"{tr(title)} ({unit})", key)
+        self.geom_h = QCheckBox(tr("Idrogeni"))
+        self.geom_h.setChecked(True)
+        self.geom_info = QLabel()
+        self.geom_info.setToolTip(tr("Solo le molecole indipendenti per simmetria; ′ = atomo generato dalla simmetria. "
+                                     "s.u. dalle incertezze delle coordinate del CIF (vuota per gli atomi senza s.u.)."))
+        bar.addWidget(self.geom_kind)
+        bar.addWidget(self.geom_h)
+        bar.addStretch(1)
+        bar.addWidget(self.geom_info)
+        lay.addLayout(bar)
+        self.geometry = QTableWidget()
+        self.geometry.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.geometry.setSortingEnabled(True)
+        lay.addWidget(self.geometry)
+        self.geom_kind.currentIndexChanged.connect(lambda _i: self._fill_geometry())
+        self.geom_h.toggled.connect(lambda _b: self._fill_geometry())
+        return w
+
+    def _fill_geometry(self) -> None:
+        if self.tabs.currentIndex() != 6:
+            return  # si calcola solo se la scheda è visibile
+        a = self.analysis
+        if a is None:
+            self.geometry.setRowCount(0)
+            return
+        key = (id(a.structure), self.geom_h.isChecked())
+        if key != self._geometry_key:
+            self._geometry_items = molecule_geometry(a.structure, a.cif, include_h=self.geom_h.isChecked())
+            self._geometry_key = key
+        kind = self.geom_kind.currentData()
+        title, unit, digits = GEOMETRY_KINDS[kind]
+        rows = [g for g in self._geometry_items or [] if g.kind == kind]
+        n_atoms = {"bond": 2, "angle": 3, "torsion": 4}[kind]
+        heads = [tr("Molecola")] + [tf("Atomo {n}", n=i + 1) for i in range(n_atoms)] + [f"{tr(title)} ({unit})", "s.u."]
+        self.geometry.setSortingEnabled(False)
+        self.geometry.clear()
+        self.geometry.setColumnCount(len(heads))
+        self.geometry.setHorizontalHeaderLabels(heads)
+        self.geometry.setRowCount(len(rows))
+        for r, g in enumerate(rows):
+            cells: list[tuple[str, float | None]] = [(str(g.molecule + 1), g.molecule + 1)]
+            cells += [(lab, None) for lab in g.atoms]
+            cells += [(f"{g.value:.{digits}f}", g.value), ("" if not math.isfinite(g.su) else f"{g.su:.{digits}f}", g.su)]
+            for c, (text, num) in enumerate(cells):
+                it = _NumItem(text, num) if num is not None else QTableWidgetItem(text)
+                if num is not None:
+                    it.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                self.geometry.setItem(r, c, it)
+        self.geometry.setSortingEnabled(True)
+        self.geometry.resizeColumnsToContents()
+        n_mol = len({g.molecule for g in self._geometry_items or []})
+        self.geom_info.setText(tf("{n} misure · {m} molecole indipendenti", n=len(rows), m=n_mol))
+
+    def _fill_checks(self) -> None:
+        a = self.analysis
+        alerts = (a.alerts or []) if a else []
+        heads = [tr("Livello"), tr("Avviso")]
+        self.checks.clear()
+        self.checks.setColumnCount(len(heads))
+        self.checks.setHorizontalHeaderLabels(heads)
+        self.checks.setRowCount(len(alerts))
+        for r, al in enumerate(alerts):
+            level = QTableWidgetItem(al.level)
+            level.setToolTip(tr(ALERT_LEVELS[al.level]))
+            level.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            text = QTableWidgetItem(alert_text(al))
+            text.setToolTip(f"{al.code}\n{alert_text(al)}")
+            if al.level in LEVEL_COLORS:
+                for it in (level, text):
+                    it.setForeground(QBrush(LEVEL_COLORS[al.level]))
+            self.checks.setItem(r, 0, level)
+            self.checks.setItem(r, 1, text)
+        self.checks.horizontalHeader().setStretchLastSection(True)
+        self.checks.resizeColumnToContents(0)
+        self.checks.resizeRowsToContents()
+        serious = sum(al.level != "G" for al in alerts)
+        self.tabs.setTabText(7, f"{tr('Controlli')} ({serious})" if serious else tr("Controlli"))
 
     def on_analysis(self) -> None:
         a = self.analysis
         if not a:
             self.summary.setHtml("")
+            self._fill_checks()
             return
         c = a.cif.cell
         rows = [
@@ -68,11 +196,28 @@ class DetailView(PairView):
             html += tr("<p><i>La rete di legami non si chiude (polimero o solido esteso): quelle parti sono escluse.</i></p>")
         if a.cif.skipped_disorder:
             html += "<p><i>" + tf("{n} atomi di componenti disordinate secondarie ignorati.", n=a.cif.skipped_disorder) + "</i></p>"
+        html += self._structure_html()
         html += f"<h4>{tr('Soglie')}</h4><p>{', '.join(f'{k} = {v}' for k, v in a.limits.to_dict().items())}</p>"
         self.summary.setHtml(html)
         self._fill_columns()
         self._fill_contacts()
         self._notes()
+        self._fill_checks()
+        self._geometry_key = None
+        self._fill_geometry()
+
+    def _structure_html(self) -> str:
+        """Le grandezze del registro di struttura che hanno un valore, per gruppo, con la descrizione nel tooltip."""
+        a = self.analysis
+        groups: dict[str, list[str]] = {}
+        for s in structure_specs():
+            v = a.structure_values.get(s.key, math.nan)
+            if not math.isfinite(v):
+                continue
+            unit = f" {s.unit}" if s.unit else ""
+            groups.setdefault(s.group_name, []).append(
+                f'<tr><td title="{html.escape(s.info)}">{html.escape(s.name)}</td><td align=right>{v:.{s.digits}f}{unit}</td></tr>')
+        return "".join(f"<h4>{g}</h4><table cellpadding=2>{''.join(rows)}</table>" for g, rows in groups.items())
 
     def _fill_contacts(self) -> None:
         a = self.analysis
@@ -120,6 +265,7 @@ class DetailView(PairView):
 
     def on_params(self) -> None:
         self._notes()
+        self._fill_checks()
 
     def _notes(self) -> None:
         errors = self.analysis.param_errors if self.analysis else {}

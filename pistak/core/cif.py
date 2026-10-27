@@ -63,6 +63,8 @@ class Cif:
     disorder: str = "first"
     #: s.u. dei parametri di cella (a, b, c in Å; α, β, γ in gradi), 0 se mancano.
     cell_su: tuple[float, ...] = (0.0,) * 6
+    #: Gli atomi delle componenti disordinate scartate dalla regola `disorder` (servono al contenuto della cella).
+    omitted: list[CifAtom] = field(default_factory=list)
 
 
 @dataclass
@@ -362,12 +364,12 @@ def _cif_from_block(b: _Block, known: Callable[[str], bool], disorder: str) -> C
     assemblies = [r[i_asm] if i_asm >= 0 else "." for r in rows]
     keep = _disorder_keep(groups, assemblies, occs, disorder)
     atoms: list[CifAtom] = []
+    omitted: list[CifAtom] = []
     skipped = 0
     for row, ok, occ in zip(rows, keep, occs):
         label = row[i_label] if i_label >= 0 else f"X{len(atoms) + 1}"
         if not ok:
             skipped += 1
-            continue
         frac = np.array([cif_number(row[i_x]), cif_number(row[i_y]), cif_number(row[i_z])])
         su = np.array([cif_su(row[i_x]), cif_su(row[i_y]), cif_su(row[i_z])])
         if not np.all(np.isfinite(frac)):
@@ -375,10 +377,10 @@ def _cif_from_block(b: _Block, known: Callable[[str], bool], disorder: str) -> C
         el = element_of(row[i_type] if i_type >= 0 else None, label, known)
         if not el:
             continue
-        atoms.append(CifAtom(label, el, frac, occ, su))
+        (atoms if ok else omitted).append(CifAtom(label, el, frac, occ, su))
     if not atoms:
         raise CifError("noAtoms")
-    return Cif(b.name, space_group, cell, symops, atoms, skipped, dict(b.items), source, disorder, cell_su)
+    return Cif(b.name, space_group, cell, symops, atoms, skipped, dict(b.items), source, disorder, cell_su, omitted)
 
 
 def parse_cif(text: str, known: Callable[[str], bool] = is_known, block: str | int | None = None,

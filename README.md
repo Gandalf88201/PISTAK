@@ -20,6 +20,9 @@ nella finestra: *Aiuto ▸ Manuale* (F1). Questo README è la guida per chi svil
 ./start.py compare a.cif b.cif c.cif --ref 1 --csv confronto.csv   # confronto del motivo di stack
 ./start.py stats cartella/ --kind stack --corr --csv coppie.csv --summary descrizione.csv
 ./start.py qc a.cif --program psi4 --method sapt -o input/  # dimeri degli stack per ORCA / Psi4 / Gaussian
+./start.py check a.cif                                       # controlli rapidi (formula, densità, H, simmetria mancata)
+./start.py geom a.cif --csv geom.csv                         # legami, angoli, torsioni con le s.u.
+./start.py periodic a.cif --program qe -o calcoli/           # la cella per VASP / Quantum ESPRESSO / CP2K / CRYSTAL
 ./start.py sessione.pistak                                   # riapre una sessione salvata
 ./start.py params                # parametri disponibili (con quelli dei plugin)
 ./start.py config                # dove stanno impostazioni personali, ultima sessione e plugin
@@ -47,9 +50,14 @@ pistak/
     stages.py       stadi dell'analisi e soglie da cui dipende ciascuno (rianalisi parziale con cache)
     analysis.py     la catena completa, `reanalyse`, il PairContext e il riepilogo per molecola (MoleculeContact)
     uncertainty.py  incertezze dei parametri con un Monte Carlo sulle s.u. del CIF
-  params/    registro dei parametri misurabili (Registry; builtin = sito, extra = fase 2, plugins)
+    crystal.py      contenuto della cella (con tutte le componenti disordinate), densità, Z′, valori dell'affinamento
+    validation.py   controlli rapidi (pre-checkCIF): avvisi A/B/C/G con codici stabili; ADDSYM con spglib facoltativo
+    intramolecular.py  legami, angoli e torsioni delle molecole indipendenti, s.u. propagate dalle coordinate
+    elements.py     numeri atomici, masse, raggi, colori
+  params/    registro dei parametri misurabili (Registry; builtin = sito, extra = fase 2, plugins) e registro delle
+             grandezze dell'intera struttura (structure.py: StructureRegistry, `@structure_parameter`)
   io/        export CSV/JSON/XYZ con chiavi fisse; batch (parallelo), stats (statistiche), compare (confronto);
-             qc = input del dimero per ORCA, Psi4, Gaussian
+             qc = input del dimero per ORCA, Psi4, Gaussian; periodic = cella per VASP, Quantum ESPRESSO, CP2K, CRYSTAL
   gui/       finestra (PySide6): session.py = stato condiviso e sincronizzazione; views/ = le viste;
              limits_panel.py = cursori delle soglie in tempo reale;
              collection_window.py = confronto e statistiche; session_file.py = formato .pistak
@@ -134,6 +142,11 @@ file della finestra di confronto. Si riapre da *File ▸ Apri una sessione…*, 
   ovunque (tabella, assi, export). Contesto disponibile: vedi la docstring del file e `core/analysis.py::PairContext`.
   Da codice si può anche calcolare un insieme diverso di parametri con un registro proprio: `reg = Registry()`,
   `@reg.parameter(...)`, `compute_all(analisi, reg)`; gli errori dei parametri finiscono in `analisi.param_errors`.
+* **Una grandezza dell'intera struttura**: `@structure_parameter("chiave", "Etichetta", unit=…, group=…)` su una
+  funzione che riceve l'`Analysis` (anche nei plugin). Compare nel Dettaglio ▸ Struttura, in `analyze`, nel JSON
+  (`summary.structure`) e, se la aggiungi a `STRUCTURE_KEYS` in `io/batch.py`, nel riepilogo di `batch`.
+* **Un controllo rapido nuovo**: `@check("nome")` in `core/validation.py` restituisce una lista di `Alert(codice,
+  livello, valori)`; il testo per l'utente va in `ALERT_TEXT` di `labels.py` (e la traduzione in `i18n_en.py`).
 * **Una vista nuova**: eredita da `gui/views/base.py::PairView` (la sincronizzazione è già fatta) e aggiungila a
   `VIEW_TYPES` in `gui/views/__init__.py`.
 * **Soglie**: *Analisi ▸ Soglie…* o `user.toml` nella cartella delle impostazioni personali (`[limits]`).

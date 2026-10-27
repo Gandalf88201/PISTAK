@@ -12,3 +12,12 @@ from pistak.params.registry import (  # noqa: F401
     sources,
     specs,
 )
+from pistak.params.structure import (  # noqa: F401
+    STRUCTURE_REGISTRY,
+    StructureRegistry,
+    StructureSpec,
+    compute_structure,
+    get_structure_spec,
+    structure_parameter,
+    structure_specs,
+)

@@ -12,10 +12,10 @@ from pathlib import Path
 
 from pistak.core.analysis import Analysis
 from pistak.core.pairs import Pair
-from pistak.params import get_spec
+from pistak.params import get_spec, get_structure_spec
 
 #: Formato del JSON scritto da `write_json`: cambia `JSON_VERSION` se cambia la struttura.
-JSON_FORMAT, JSON_VERSION = "pistak-analysis", 2
+JSON_FORMAT, JSON_VERSION = "pistak-analysis", 3
 
 
 def table(analysis: Analysis, keys: list[str] | None = None) -> tuple[list[str], list[list]]:
@@ -69,7 +69,39 @@ def summary_dict(analysis: Analysis) -> dict:
         "uncertainty": None if analysis.uncertainty is None else {
             "method": "monte_carlo", "samples": analysis.uncertainty.samples, "seed": analysis.uncertainty.seed,
             "include_cell": analysis.uncertainty.include_cell, "has_su": analysis.uncertainty.has_su},
+        "structure": {k: _clean(v) for k, v in analysis.structure_values.items()},
+        "alerts": alerts_list(analysis),
     }
+
+
+def alerts_list(analysis: Analysis) -> list[dict]:
+    """Gli avvisi dei controlli rapidi: codice, livello e valori (chiavi fisse; il testo lo fa l'interfaccia)."""
+    return [{"code": a.code, "level": a.level, "values": {k: _clean(v) for k, v in a.values.items()}}
+            for a in analysis.alerts or []]
+
+
+def write_alerts_csv(analysis: Analysis, path: str | Path) -> Path:
+    path = Path(path)
+    with path.open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["level", "code", "values"])
+        for a in analysis.alerts or []:
+            w.writerow([a.level, a.code, "; ".join(f"{k}={v}" for k, v in a.values.items())])
+    return path
+
+
+def write_geometry_csv(analysis: Analysis, path: str | Path, include_h: bool = True) -> Path:
+    """Legami, angoli e torsioni delle molecole indipendenti (`pistak.core.intramolecular`), con le s.u."""
+    from pistak.core.intramolecular import molecule_geometry
+
+    path = Path(path)
+    with path.open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["kind", "molecule", "atom_1", "atom_2", "atom_3", "atom_4", "value", "su"])
+        for g in molecule_geometry(analysis.structure, analysis.cif, include_h=include_h):
+            atoms = list(g.atoms) + [""] * (4 - len(g.atoms))
+            w.writerow([g.kind, g.molecule + 1, *atoms, f"{g.value:.5g}", "" if not math.isfinite(g.su) else f"{g.su:.2g}"])
+    return path
 
 
 def pair_dict(p: Pair, keys: list[str], uncertainty=None) -> dict:
@@ -106,10 +138,11 @@ def write_json(analysis: Analysis, path: str | Path, keys: list[str] | None = No
     path = Path(path)
     keys = keys if keys is not None else list(analysis.param_keys)
     units = {k: (get_spec(k).unit if get_spec(k) else "") for k in keys}
+    structure_units = {k: (s.unit if (s := get_structure_spec(k)) else "") for k in analysis.structure_values}
     from pistak import __version__
 
     data = {"format": JSON_FORMAT, "version": JSON_VERSION, "pistak": __version__, "summary": summary_dict(analysis),
-            "units": units, "fragments": fragments_list(analysis), "pairs": [pair_dict(p, keys, analysis.uncertainty) for p in analysis.pairs],
+            "units": units, "structure_units": structure_units, "fragments": fragments_list(analysis), "pairs": [pair_dict(p, keys, analysis.uncertainty) for p in analysis.pairs],
             "molecule_contacts": contacts_list(analysis)}
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     return path

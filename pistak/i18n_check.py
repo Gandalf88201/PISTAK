@@ -50,10 +50,14 @@ def constant_texts() -> set[str]:
     out |= set(FIXED) | set(STYLES) | {label for label, _ in collection_window.KIND_FILTER}
     out |= {f.metadata["label"] for f in fields(Limits)} | {cls.TITLE for cls in VIEW_TYPES.values()}
     out |= {text for f in fields(Limits) for text in f.metadata.get("choices", {}).values()}
-    from pistak.gui import qc_dialog
+    from pistak.gui import periodic_dialog, qc_dialog
+    from pistak.gui.views.detail_view import GEOMETRY_KINDS
+    from pistak.labels import ALERT_LEVELS, ALERT_TEXT
 
     out |= set(qc_dialog.METHOD_TEXT.values()) | set(qc_dialog.DISP_TEXT.values())
-    for s in params.specs():
+    out |= set(periodic_dialog.TASK_TEXT.values()) | set(periodic_dialog.DISP_TEXT.values())
+    out |= set(ALERT_TEXT.values()) | set(ALERT_LEVELS.values()) | {title for title, _u, _d in GEOMETRY_KINDS.values()}
+    for s in [*params.specs(), *params.structure_specs()]:
         out |= {t for t in (s.label, s.description, s.group) if t}
     return out
 

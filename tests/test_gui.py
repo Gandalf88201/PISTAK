@@ -195,6 +195,34 @@ def test_finestra_calcoli_quantistici(app):
     d.options().check()
 
 
+def test_dettaglio_geometria_e_controlli(world):
+    s, a, v = world
+    d = v["detailA"]
+    assert d.geometry.rowCount() == 0  # la geometria si calcola solo quando la scheda è aperta
+    d.tabs.setCurrentIndex(6)
+    n_bonds = d.geometry.rowCount()
+    assert n_bonds > 0 and d.geometry.columnCount() == 5
+    d.geom_kind.setCurrentIndex(d.geom_kind.findData("torsion"))
+    assert d.geometry.columnCount() == 7 and d.geometry.rowCount() > 0
+    d.geom_kind.setCurrentIndex(d.geom_kind.findData("bond"))
+    d.geom_h.setChecked(False)
+    assert 0 < d.geometry.rowCount() < n_bonds
+    assert d.checks.rowCount() == len(a.alerts) and d.checks.item(0, 1).text()
+    assert "Volume della cella" in d.summary.toPlainText()
+
+
+def test_finestra_calcoli_periodici(app):
+    from pistak.gui.periodic_dialog import PeriodicDialog
+    from pistak.io.periodic import PeriodicOptions
+
+    d = PeriodicDialog(PeriodicOptions("cp2k", "vc-relax", dispersion="d4", kpoint_length=25))
+    o = d.options()
+    assert (o.program, o.task, o.dispersion, o.kpoint_length) == ("cp2k", "vc-relax", "d4", 25)
+    d.program.setCurrentIndex(d.program.findData("qe"))  # Quantum ESPRESSO non ha D4
+    assert d.options().dispersion == "d3bj"
+    d.options().check()
+
+
 @pytest.fixture()
 def view3d(world):
     pytest.importorskip("pyvistaqt")

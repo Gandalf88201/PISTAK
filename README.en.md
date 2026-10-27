@@ -14,6 +14,9 @@ comparison and statistics across structures, synchronised 3D / projection / para
 ./start.py compare a.cif b.cif --csv comparison.csv
 ./start.py stats folder/ --kind stack --corr
 ./start.py qc a.cif --program psi4 --method sapt -o inputs/   # stacked dimers for ORCA / Psi4 / Gaussian
+./start.py check a.cif           # quick structure checks (formula, density, hydrogens, missed symmetry)
+./start.py geom a.cif --csv geom.csv   # bonds, angles, torsions with s.u.
+./start.py periodic a.cif --program qe -o calc/   # whole cell for VASP / Quantum ESPRESSO / CP2K / CRYSTAL
 ./start.py session.pistak        # reopen a saved session
 ./start.py config                # where personal settings, last session and plugins live
 ```
@@ -30,6 +33,13 @@ Any intermolecular pair can be exported as a dimer input for quantum-chemistry c
 quantum chemistry*, `pistak qc`): ORCA, Psi4 and Gaussian, DFT-D with counterpoise correction (default
 B3LYP-D3(BJ)/def2-TZVP) or SAPT (Psi4 only, default SAPT0/jun-cc-pVDZ). The monomers are the two whole molecules in
 the crystal geometry, with X–H bonds extended to neutron-diffraction lengths (C–H 1.083 Å; `--raw-h` keeps the CIF ones).
+Whole-crystal quantities (volume, Z′, density from the model, R1/wR2/GoF from the CIF…) come from a second registry
+(`pistak/params/structure.py`, `@structure_parameter`), and quick checks (`pistak/core/validation.py`) raise A/B/C/G
+alerts in the style of checkCIF without replacing it: formula and density against the model, missing hydrogens,
+overlapping atoms, odd bonds, short contacts, refinement indices, disorder, and missed symmetry through the optional
+`spglib` package (ADDSYM-like). *Detail ▸ Geometry* and `pistak geom` list bonds, angles and torsions of the
+independent molecules with s.u. propagated from the CIF; *Export ▸ Cell for periodic calculations* and `pistak periodic`
+write the whole cell (P1, normalised X–H) for VASP, Quantum ESPRESSO, CP2K or CRYSTAL.
 The analysis is staged (`pistak/core/stages.py`): changing thresholds re-runs only from the first stage they affect
 (`pistak.api.reanalyse`). *Analysis ▸ Live thresholds* (Ctrl+Shift+L) opens sliders for the stack criterion: pairs
 already measured are reclassified in a few milliseconds, without recomputing any geometry, and all views follow.

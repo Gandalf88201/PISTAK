@@ -23,6 +23,9 @@ gui = [
     "pyvistaqt>=0.11",
     "pyqtgraph>=0.13.3",
 ]
+symmetry = [
+    "spglib>=2.0",  # controlli rapidi: ricerca della simmetria mancata (ADDSYM)
+]
 dev = [
     "pytest>=8",
     "ruff>=0.6",

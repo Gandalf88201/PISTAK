@@ -19,6 +19,7 @@ from pathlib import Path
 
 from pistak.core.config import ROOT, user_config_dir
 from pistak.params.registry import REGISTRY, Registry
+from pistak.params.structure import STRUCTURE_REGISTRY
 
 #: Problemi incontrati caricando i plugin nel registro predefinito: nome file → messaggio.
 load_errors: dict[str, str] = REGISTRY.load_errors
@@ -49,7 +50,9 @@ def load_plugins(registry: Registry = REGISTRY) -> list[str]:
     for path in plugin_files():
         name = path.name
         REGISTRY.remove_source(name)  # ricaricando, i parametri vecchi del file spariscono
+        STRUCTURE_REGISTRY.remove_source(name)
         prev = REGISTRY.set_source(name)
+        prev_structure = STRUCTURE_REGISTRY.set_source(name)
         try:
             spec = importlib.util.spec_from_file_location(f"pistak_plugin_{path.stem}", path)
             assert spec and spec.loader
@@ -59,8 +62,10 @@ def load_plugins(registry: Registry = REGISTRY) -> list[str]:
             ok.append(name)
         except Exception:
             REGISTRY.remove_source(name)
+            STRUCTURE_REGISTRY.remove_source(name)
             registry.load_errors[name] = traceback.format_exc(limit=4)
         finally:
             REGISTRY.set_source(prev)
+            STRUCTURE_REGISTRY.set_source(prev_structure)
     registry.plugins_loaded = True
     return ok

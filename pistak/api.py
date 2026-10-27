@@ -6,7 +6,7 @@ from pathlib import Path
 from pistak.core import analysis as _core
 from pistak.core.analysis import Analysis
 from pistak.core.config import Limits, load_limits
-from pistak.params import REGISTRY, compute_all, load_plugins
+from pistak.params import REGISTRY, compute_all, compute_structure, load_plugins
 
 
 def ensure_plugins(force: bool = False) -> list[str]:
@@ -17,9 +17,10 @@ def ensure_plugins(force: bool = False) -> list[str]:
 
 
 def finish(analysis: Analysis) -> Analysis:
-    """Calcola i parametri del registro per tutte le coppie di un'analisi già fatta."""
+    """Calcola i parametri del registro per tutte le coppie di un'analisi già fatta, i controlli rapidi e le grandezze
+    dell'intera struttura."""
     ensure_plugins()
-    return compute_all(analysis)
+    return compute_structure(compute_all(analysis))
 
 
 def analyse_text(text: str, name: str = "", limits: Limits | None = None, block: str | int | None = None) -> Analysis:
@@ -34,7 +35,11 @@ def reanalyse(analysis: Analysis, limits: Limits) -> Analysis:
     """L'analisi con altre soglie, rifacendo solo gli stadi che le soglie cambiate toccano (`pistak.core.stages`) e
     riusando i parametri geometrici già calcolati. Se le soglie sono le stesse ritorna `analysis`."""
     new = _core.reanalyse(analysis, limits)
-    return new if new is analysis else finish(new)
+    if new is analysis:
+        return new
+    if new.structure is analysis.structure:  # stessa cella e stesse molecole: i controlli rapidi non cambiano
+        new.alerts = analysis.alerts
+    return finish(new)
 
 
 def uncertainty(analysis: Analysis, samples: int = 100, seed: int = 0, keys=None, include_cell: bool = True, progress=None):

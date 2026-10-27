@@ -195,16 +195,18 @@ area di sovrapposizione (verde), baricentri, slittamento scomposto in L e W. Sot
 
 ### Dettaglio
 
-Sei schede:
+Otto schede:
 
 | scheda | contenuto |
 |---|---|
-| Struttura | file, blocco, gruppo spaziale, cella, atomi in cella, molecole (formula, quante con nucleo π, frammenti), atomi disordinati scartati, parti estese escluse, soglie usate |
+| Struttura | file, blocco, gruppo spaziale, cella, atomi in cella, molecole (formula, quante con nucleo π, frammenti), atomi disordinati scartati, parti estese escluse, le [grandezze della struttura](#grandezze-della-struttura-e-controlli-rapidi) (volume, Z′, densità, R1, wR2, GoF…), soglie usate |
 | Coppia | tutti i parametri della coppia selezionata per gruppo; con le incertezze, «valore ± σ» |
 | Anelli | coppie di anelli planari, uno per molecola (stile Janiak): Cg···Cg, α (angolo tra i piani), β e γ (Cg→normale di A e di B), distanze perpendicolari ⟂A e ⟂B, slittamento, contatto minimo; fino a `ring_pair_max_distance` |
 | Colonne | colonne di stack: tipo (aggregato, colonna, strato, rete 3D), molecole, passo, asse, geometria media |
 | Avvisi | plugin che non si caricano e parametri che hanno dato errore, con il messaggio |
 | Contatti | riepilogo per contatto tra molecole: coppie di frammenti, quante π-stack, contatto più corto, coppia migliore (doppio clic la seleziona) |
+| Geometria | legami, angoli e torsioni delle molecole indipendenti, con le s.u.; *Idrogeni* li toglie (vedi [Geometria delle molecole](#geometria-delle-molecole)) |
+| Controlli | gli avvisi A, B, C, G dei [controlli rapidi](#grandezze-della-struttura-e-controlli-rapidi), colorati per gravità |
 
 ![Dettaglio: la struttura](img/it/detail_structure.png)
 
@@ -251,6 +253,54 @@ negli export, con una chiave fissa (in inglese, uguale in ogni lingua). `pistak 
 versioni con segno sì, ma il segno ha senso fisico solo se l'asse è definito da due atomi (vedi
 [Asse lungo](#9-convenzioni-dellanalisi)) e la molecola non sta su un centro di inversione, che rovescia l'asse.
 Scambiando A e B il segno cambia.
+
+### Grandezze della struttura e controlli rapidi
+
+Oltre ai parametri delle coppie, PISTAK calcola alcune grandezze dell'intero cristallo. Compaiono nella scheda
+*Struttura* del Dettaglio, nella riga in più di `analyze`, nel JSON (`summary.structure`), nel CSV di `batch` e nelle
+colonne Z′, R1 e Avvisi della finestra di confronto.
+
+| chiave | significato |
+|---|---|
+| `volume` | volume della cella (Å³) |
+| `z`, `z_prime` | Z del CIF; Z′ = Z / numero di posizioni generali (unità formula indipendenti) |
+| `density_calc` | densità dal modello: tutte le componenti disordinate, pesate con l'occupanza, per la molteplicità del sito |
+| `density_cif`, `temperature` | densità e temperatura dichiarate nel CIF |
+| `r1`, `wr2`, `goof`, `rho_max`, `rho_min` | indici dell'affinamento e densità residua, letti dal CIF |
+| `alerts_a`, `alerts_b`, `alerts_c` | quanti avvisi di ciascun livello hanno dato i controlli rapidi |
+
+I **controlli rapidi** sono una parte di ciò che controllano checkCIF e PLATON: quella che si può fare con il solo CIF,
+senza il file dei fattori di struttura (.fcf). **Non sostituiscono checkCIF**: servono a trovare in fretta i problemi
+che falsano l'analisi delle coppie. Livelli: **A** problema serio, **B** possibile problema, **C** da controllare,
+**G** informazione. Le soglie sono indicative.
+
+| controllo | che cosa guarda |
+|---|---|
+| formula | formula del modello per unità formula contro `_chemical_formula_sum` (B per gli atomi pesanti, C per gli idrogeni) |
+| densità | densità calcolata contro quella dichiarata (C oltre 0,02 g/cm³, B oltre 0,1) |
+| idrogeni | nessun idrogeno nel modello (B); carboni terminali senza idrogeni (C) |
+| sovrapposizioni | atomi distinti a meno di 0,7 Å (A): disordine non risolto o atomi doppi |
+| legami | C–C, C–N, C–O fuori dagli intervalli plausibili (B); C–H, N–H, O–H (C) |
+| contatti | C···C intermolecolari sotto 3,0 Å e H···H sotto 1,8 Å (C) |
+| affinamento | R1 > 0,075 (C) o > 0,10 (B), wR2 > 0,20 (C) o > 0,25 (B), GoF fuori da 0,8–2,0, densità residua > 1 e/Å³ per gli atomi leggeri |
+| disordine | atomi esclusi dalla regola di disordine (G), occupanze parziali nel modello analizzato (C), operazioni di simmetria ricavate dal simbolo (G) |
+| simmetria mancata | come ADDSYM di PLATON: il pacchetto `spglib` cerca il gruppo del modello; più operazioni di quelle dichiarate entro 0,1 Å → A, solo entro 0,3 Å → C (pseudosimmetria) |
+
+Da terminale: `./start.py check file.cif` (esce con codice 2 se ci sono avvisi A, comodo negli script; `--csv` li
+scrive). Senza `spglib` installato la ricerca della simmetria mancata si salta con un avviso G.
+
+### Geometria delle molecole
+
+Legami, angoli di legame e torsioni (con segno, −180…180°) delle sole molecole indipendenti per simmetria: per ogni
+insieme di molecole equivalenti si prende quella con più atomi dell'unità asimmetrica come sono nel CIF. Gli atomi
+generati da un'altra operazione, quando la molecola sta su un elemento di simmetria, hanno l'apice (C1′), e le misure
+uguali per la simmetria interna compaiono una volta. Le **s.u.** si propagano dalle s.u. delle coordinate del CIF
+(tenendo conto che C1 e C1′ si muovono insieme); mancano per gli atomi senza s.u., di solito gli idrogeni in
+posizione calcolata. Rispetto alle tabelle `_geom_` scritte dal programma di affinamento le s.u. possono essere un
+po' più piccole, perché qui la cella è considerata esatta.
+
+Dove: Dettaglio ▸ *Geometria*, *File ▸ Esporta ▸ Geometria delle molecole (CSV)* e `./start.py geom file.cif`
+(`--kind bond,angle`, `--no-h`, `--csv`).
 
 ## 7. Classificazione e soglie
 
@@ -401,7 +451,7 @@ equivalenti* valgono per tutte le schede.
 
 | scheda | contenuto |
 |---|---|
-| Strutture | per ogni struttura la coppia π-stack più vicina, le differenze Δ dal riferimento (tasto destro ▸ *Imposta come riferimento*) e la *distanza del motivo*: la distanza (Å) nello spazio (interplanare, slittamento L, slittamento W) tra i due motivi di stack più simili. Doppio clic: apre il file nella finestra principale |
+| Strutture | per ogni struttura la coppia π-stack più vicina, le differenze Δ dal riferimento (tasto destro ▸ *Imposta come riferimento*) e la *distanza del motivo*: la distanza (Å) nello spazio (interplanare, slittamento L, slittamento W) tra i due motivi di stack più simili; poi Z′, R1 e il numero di avvisi A/B/C dei controlli rapidi. Doppio clic: apre il file nella finestra principale |
 | Distribuzioni | istogramma di qualunque parametro, impilato per tipo o per file |
 | Dispersione | due parametri, colore per tipo, file o un terzo parametro; *Apri nella finestra principale* porta alla coppia scelta |
 | Correlazioni | matrice di Pearson tra i parametri spuntati |
@@ -420,10 +470,14 @@ Tutto si esporta in CSV dal menu *Esporta ▾*. Da terminale: `compare` e `stats
 * **Tabella delle coppie (CSV)**: una riga per coppia, colonne `n, kind, molecule_a, molecule_b, shift` e poi un
   parametro per colonna (le chiavi del registro), più `<chiave>_su` e `kind_agreement` se ci sono le incertezze.
 * **Risultati completi (JSON)**: `format`, `version`, `summary` (file, gruppo, cella, molecole, soglie, disordine,
-  incertezze), `units`, `fragments` (frammenti π con le etichette degli atomi), `pairs` (con tutti i parametri) e
+  incertezze, grandezze della struttura in `structure`, avvisi dei controlli in `alerts`), `units`,
+  `structure_units`, `fragments` (frammenti π con le etichette degli atomi), `pairs` (con tutti i parametri) e
   `molecule_contacts`.
 * **Coppia selezionata (XYZ)**: le due molecole, B già nella cella giusta, da aprire in qualunque visualizzatore.
 * **Coppia selezionata per calcoli quantistici**: vedi la sezione seguente.
+* **Cella per calcoli periodici**: vedi [Cella intera per calcoli periodici](#cella-intera-per-calcoli-periodici).
+* **Geometria delle molecole (CSV)**: `kind` (bond, angle, torsion), `molecule`, `atom_1`…`atom_4`, `value`, `su`.
+* **Avvisi dei controlli rapidi (CSV)**: `level`, `code`, `values`.
 * **Vista 3D (PNG)**.
 
 Intestazioni e chiavi sono fisse e in inglese, uguali in ogni lingua dell'interfaccia: uno script che legge i file
@@ -481,6 +535,30 @@ Da terminale, per esempio tutti gli stack di un file come input SAPT per Psi4:
 Le coppie intramolecolari non si esportano (non sono un dimero). Le parole chiave seguono le versioni correnti
 (ORCA 5–6, Psi4 1.7+, Gaussian 16): controllale con la versione che usi.
 
+### Cella intera per calcoli periodici
+
+*File ▸ Esporta ▸ Cella per calcoli periodici…* scrive tutta la cella per un codice periodico: struttura a bande,
+DOS, energia di reticolo, ottimizzazione con la cella. Si sceglie il programma, il calcolo (energia, ottimizzazione
+degli atomi, di atomi e cella), il funzionale, la dispersione e la lunghezza L per la griglia di punti k
+(n = ⌈L / a⌉ lungo ogni asse; 20 Å va bene per gli isolanti molecolari).
+
+| programma | file | note |
+|---|---|---|
+| VASP | `POSCAR`, `INCAR`, `KPOINTS` in una cartella | `GGA` (PBE, PBEsol…), `IVDW` 11/12/13 per D3, D3(BJ), D4; il `POTCAR` va composto nell'ordine della riga 6 del POSCAR |
+| Quantum ESPRESSO | `file.pw.in` | `vdw_corr = 'grimme-d3'`; i nomi degli pseudopotenziali (`C.UPF`…) sono segnaposto da sostituire (per esempio con la libreria SSSP) |
+| CP2K | `file.inp` | solo il punto Γ: con un lato della cella corto conviene una supercella (il file lo segnala); basi MOLOPT e pseudopotenziali GTH |
+| CRYSTAL | `file.d12` e `file.notes.txt` | cella in P1, base pob-TZVP-rev2, `DFTD3`; il formato non ammette commenti, la provenienza sta nel file di note |
+
+Gli atomi sono quelli della cella ricostruita, con la stessa regola di disordine dell'analisi (le occupanze parziali
+non si possono dare a un codice periodico: se ce ne sono, il file lo avverte) e, come per il dimero, gli idrogeni alle
+distanze X–H da neutroni. Da terminale:
+
+```bash
+./start.py periodic a.cif --program qe --task vc-relax --kpoint-length 25 -o calcoli/
+```
+
+Senza `-o` Quantum ESPRESSO e CP2K scrivono sul terminale, VASP e CRYSTAL in una cartella `<file>_<programma>/`.
+
 ## 15. Il terminale
 
 Tutto ciò che fa la finestra si fa anche da terminale (`./start.py COMANDO …` oppure `pistak COMANDO …`).
@@ -492,6 +570,9 @@ Tutto ciò che fa la finestra si fa anche da terminale (`./start.py COMANDO …`
 | `compare a.cif b.cif …` | confronto del motivo di stack; `--ref N` sceglie il riferimento |
 | `stats cartella/` | statistiche sulle coppie; `--kind stack`, `--keys`, `--corr`, `--csv`, `--summary` |
 | `qc file.cif` | input del dimero per ORCA, Psi4, Gaussian (vedi sopra) |
+| `periodic file.cif` | la cella intera per VASP, Quantum ESPRESSO, CP2K, CRYSTAL; `--program`, `--task`, `--kpoint-length`, `-o` |
+| `check file.cif` | controlli rapidi della struttura; `--csv`; codice d'uscita 2 se ci sono avvisi A |
+| `geom file.cif` | legami, angoli e torsioni con le s.u.; `--kind`, `--no-h`, `--csv` |
 | `params` | elenca i parametri disponibili, plugin compresi |
 | `config` | dove stanno impostazioni personali, ultima sessione e plugin |
 | `demo` | scrive il CIF dimostrativo |
@@ -507,6 +588,8 @@ cambia la lingua dei messaggi.
 $ ./start.py analyze examples/herringbone_anthracene.cif
 herringbone_anthracene.cif  gruppo P 21/c  a=8.603 b=5.562 c=12.597  α=90.00 β=111.82 γ=90.00  atomi in cella: 48
   2 × C14H10  (2 con nucleo π)
+  Volume della cella 559.5 Å³ · Densità calcolata 1.058 g/cm³
+  controlli rapidi: 0 avvisi A, 0 B, 2 C (dettagli: pistak check)
   # tipo     interpl.  L-slip  W-slip  diedro   Cg-Cg contatto  relazione
   1 stack        3.91    3.87    0.80     0.0    5.56     3.92  stessa [0 -1 0]
   2 tilted       5.85    2.78    2.33    89.4    6.88     2.45  molecola 2 [0 -1 -1]

@@ -12,6 +12,10 @@
     python -m pistak config                dove stanno impostazioni personali, ultima sessione e plugin
     python -m pistak qc a.cif --pair 1 --program psi4 --method sapt -o dimero.in
                                            il dimero di una coppia come input per ORCA, Psi4 o Gaussian
+    python -m pistak check a.cif [--csv avvisi.csv]       controlli rapidi della struttura (formula, H, simmetria…)
+    python -m pistak geom a.cif [--no-h] [--csv geom.csv] legami, angoli e torsioni delle molecole indipendenti
+    python -m pistak periodic a.cif --program vasp|qe|cp2k|crystal [-o cartella]
+                                           la cella intera come input per calcoli periodici
     python -m pistak --lang en ...         interfaccia in inglese (anche PISTAK_LANG=en)
 """
 from __future__ import annotations
@@ -69,6 +73,7 @@ def cmd_analyze(args) -> int:
         frags = "" if m["pi_fragments"] <= 1 else ", " + tf("{n} frammenti π per molecola", n=m["pi_fragments"])
         print(tf("  {count} × {formula}  ({core} con nucleo π", count=m["count"], formula=m["formula"], core=m["with_pi_core"])
               + frags + ")")
+    _print_structure(a)
     if not a.pairs:
         print(tr("nessuna coppia di molecole vicine con nuclei π"))
     else:
@@ -91,6 +96,98 @@ def cmd_analyze(args) -> int:
             print(tf("errore: la coppia {n} non esiste", n=n), file=sys.stderr)
             return 1
         print(tr("scritto"), export.write_pair_xyz(a, a.pairs[n - 1], out))
+    return 0
+
+
+def _print_structure(a) -> None:
+    """Una riga con le grandezze della struttura che hanno un valore e il conteggio degli avvisi dei controlli."""
+    import math
+
+    from pistak.core.validation import counts
+    from pistak.params import structure_specs
+
+    vals = [f"{s.name} {a.structure_values[s.key]:.{s.digits}f}{(' ' + s.unit) if s.unit else ''}"
+            for s in structure_specs() if s.group != "controlli" and math.isfinite(a.structure_values.get(s.key, math.nan))]
+    if vals:
+        print("  " + " · ".join(vals))
+    n = counts(a.alerts or [])
+    if n["A"] or n["B"] or n["C"]:
+        print("  " + tf("controlli rapidi: {a} avvisi A, {b} B, {c} C (dettagli: pistak check)", a=n["A"], b=n["B"], c=n["C"]))
+
+
+def _analysis_or_error(args):
+    from pistak import analyse_file
+
+    try:
+        return analyse_file(args.file, _limits(args), args.block)
+    except Exception as e:  # noqa: BLE001
+        print(tf("errore: {msg}", msg=describe_error(e)), file=sys.stderr)
+        return None
+
+
+def cmd_check(args) -> int:
+    from pistak.io import export
+    from pistak.labels import ALERT_LEVELS, alert_text
+
+    a = _analysis_or_error(args)
+    if a is None:
+        return 1
+    print(tf("{name}: controlli rapidi (non sostituiscono checkCIF)", name=a.name))
+    _print_structure(a)
+    alerts = a.alerts or []
+    if not [x for x in alerts if x.level != "G"]:
+        print("  " + tr("nessun problema trovato"))
+    for x in alerts:
+        print(f"  [{x.level}] {alert_text(x)}  ({tr(ALERT_LEVELS[x.level])}, {x.code})")
+    if args.csv:
+        print(tr("scritto"), export.write_alerts_csv(a, args.csv))
+    return 2 if any(x.level == "A" for x in alerts) else 0
+
+
+def cmd_geom(args) -> int:
+    from pistak.core.intramolecular import molecule_geometry
+    from pistak.io import export
+
+    a = _analysis_or_error(args)
+    if a is None:
+        return 1
+    items = molecule_geometry(a.structure, a.cif, include_h=not args.no_h)
+    titles = {"bond": tr("Legami (Å)"), "angle": tr("Angoli (°)"), "torsion": tr("Torsioni (°)")}
+    kinds = args.kind.split(",") if args.kind else list(titles)
+    for kind in kinds:
+        rows = [g for g in items if g.kind == kind]
+        if not rows:
+            continue
+        print(f"\n{titles[kind]}")
+        digits = 4 if kind == "bond" else 2
+        for g in rows:
+            su = "" if g.su != g.su else f"({g.su:.{digits}f})"
+            print(f"  {tf('molecola {n}', n=g.molecule + 1):<12} {'–'.join(g.atoms):<28} {g.value:10.{digits}f} {su}")
+    if args.csv:
+        print(tr("scritto"), export.write_geometry_csv(a, args.csv, include_h=not args.no_h))
+    return 0
+
+
+def cmd_periodic(args) -> int:
+    from pistak.io import periodic
+
+    a = _analysis_or_error(args)
+    if a is None:
+        return 1
+    options = periodic.PeriodicOptions(args.program, args.task, args.functional, args.dispersion, args.kpoint_length,
+                                       not args.raw_h, args.cutoff)
+    try:
+        files = periodic.periodic_files(a, options)
+    except Exception as e:  # noqa: BLE001
+        print(tf("errore: {msg}", msg=describe_error(e)), file=sys.stderr)
+        return 1
+    if not args.output:
+        if len(files) == 1:
+            sys.stdout.write(next(iter(files.values())))
+            return 0
+        args.output = f"{periodic.stem(a)}_{args.program}"
+    for p in periodic.write_periodic(a, args.output, options):
+        print(tr("scritto"), p)
     return 0
 
 
@@ -303,7 +400,7 @@ def main(argv: list[str] | None = None) -> int:
     argv, lang = _extract_lang(list(sys.argv[1:] if argv is None else argv))
     if lang:
         i18n.set_language(lang)
-    commands = {"analyze", "batch", "compare", "stats", "params", "demo", "config", "qc", "gui"}
+    commands = {"analyze", "batch", "compare", "stats", "params", "demo", "config", "qc", "check", "geom", "periodic", "gui"}
     if not argv or argv[0] not in commands | {"-h", "--help"}:
         argv = ["gui", *argv]  # `pistak file.cif` apre la GUI
     ap = argparse.ArgumentParser(prog="pistak", description=tr("Analisi dei π-stack da file CIF."),
@@ -376,6 +473,37 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("-o", "--output", help=tr("file (una coppia) o cartella (più coppie); senza: su stdout"))
     _add_limit_args(p)
     p.set_defaults(fn=cmd_qc)
+
+    p = sub.add_parser("check", help=tr("controlli rapidi della struttura: formula, densità, idrogeni, legami, simmetria mancata"))
+    p.add_argument("file")
+    p.add_argument("--block")
+    p.add_argument("--csv", help=tr("scrive gli avvisi"))
+    _add_limit_args(p)
+    p.set_defaults(fn=cmd_check)
+
+    p = sub.add_parser("geom", help=tr("legami, angoli e torsioni delle molecole indipendenti, con le s.u."))
+    p.add_argument("file")
+    p.add_argument("--block")
+    p.add_argument("--kind", help=tr("bond, angle, torsion (separati da virgola; predefinito: tutti)"))
+    p.add_argument("--no-h", action="store_true", help=tr("senza gli idrogeni"))
+    p.add_argument("--csv")
+    _add_limit_args(p)
+    p.set_defaults(fn=cmd_geom)
+
+    p = sub.add_parser("periodic", help=tr("la cella intera come input per calcoli periodici (VASP, Quantum ESPRESSO, CP2K, CRYSTAL)"))
+    p.add_argument("file")
+    p.add_argument("--block")
+    p.add_argument("--program", choices=["vasp", "qe", "cp2k", "crystal"], default="vasp")
+    p.add_argument("--task", choices=["scf", "relax", "vc-relax"], default="scf",
+                   help=tr("scf: energia; relax: atomi; vc-relax: atomi e cella"))
+    p.add_argument("--functional", default="PBE")
+    p.add_argument("--dispersion", choices=["d3bj", "d3zero", "d4", "none"], default="d3bj")
+    p.add_argument("--kpoint-length", type=float, default=20.0, help=tr("griglia di punti k: n = ⌈L / a⌉ (Å, 20)"))
+    p.add_argument("--cutoff", type=float, default=0.0, help=tr("energia di taglio: eV per VASP, Ry per QE (0 = predefinita)"))
+    p.add_argument("--raw-h", action="store_true", help=tr("lascia le distanze X–H del CIF (non normalizzate)"))
+    p.add_argument("-o", "--output", help=tr("cartella; senza: QE e CP2K su stdout, VASP e CRYSTAL in <file>_<programma>/"))
+    _add_limit_args(p)
+    p.set_defaults(fn=cmd_periodic)
 
     p = sub.add_parser("gui", help=tr("apre la finestra grafica"))
     p.add_argument("file", nargs="?")

@@ -241,6 +241,9 @@ class MainWindow(QMainWindow):
         self._act(ex, tr("Risultati completi (JSON)…"), lambda: self._export("json"))
         self._act(ex, tr("Coppia selezionata (XYZ)…"), lambda: self._export("xyz"))
         self._act(ex, tr("Coppia selezionata per calcoli quantistici (ORCA, Psi4, Gaussian)…"), self._export_qc)
+        self._act(ex, tr("Cella per calcoli periodici (VASP, Quantum ESPRESSO, CP2K, CRYSTAL)…"), self._export_periodic)
+        self._act(ex, tr("Geometria delle molecole (CSV)…"), lambda: self._export("geom"))
+        self._act(ex, tr("Avvisi dei controlli rapidi (CSV)…"), lambda: self._export("alerts"))
         self._act(ex, tr("Vista 3D (PNG)…"), lambda: self._export("png"))
         f.addSeparator()
         self._act(f, tr("Esci"), self.close, QKeySequence.StandardKey.Quit)
@@ -347,14 +350,19 @@ class MainWindow(QMainWindow):
                         w.screenshot(path)
                     return
             return
-        suffix = {"csv": "csv", "json": "json", "xyz": "xyz"}[kind]
-        path, _ = QFileDialog.getSaveFileName(self, tr("Esporta"), f"{base}.{suffix}", f"*.{suffix}")
+        suffix = {"csv": "csv", "json": "json", "xyz": "xyz", "geom": "csv", "alerts": "csv"}[kind]
+        name = {"geom": f"{base}_geometry", "alerts": f"{base}_alerts"}.get(kind, base)
+        path, _ = QFileDialog.getSaveFileName(self, tr("Esporta"), f"{name}.{suffix}", f"*.{suffix}")
         if not path:
             return
         if kind == "csv":
             export.write_csv(a, path)
         elif kind == "json":
             export.write_json(a, path)
+        elif kind == "geom":
+            export.write_geometry_csv(a, path)
+        elif kind == "alerts":
+            export.write_alerts_csv(a, path)
         else:
             idx = self.session.selection("A")
             if not 0 <= idx < len(a.pairs):
@@ -388,6 +396,33 @@ class MainWindow(QMainWindow):
         if path:
             Path(path).write_text(text, encoding="utf-8")
             self.status_label.setText(tf("Scritto {path}", path=path))
+
+    def _export_periodic(self) -> None:
+        from pistak.errors import describe_error
+        from pistak.gui.periodic_dialog import PeriodicDialog
+        from pistak.io import periodic
+
+        a = self.session.analysis
+        if not a:
+            return
+        dlg = PeriodicDialog(getattr(self, "_periodic_options", None), self)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return
+        options = self._periodic_options = dlg.options()
+        try:
+            files = periodic.periodic_files(a, options)
+        except Exception as e:  # noqa: BLE001
+            QMessageBox.warning(self, APP_NAME, describe_error(e))
+            return
+        start = str(self.settings.value("last_dir", str(ROOT)))
+        folder = QFileDialog.getExistingDirectory(self, tr("Cartella in cui scrivere i file"), start)
+        if not folder:
+            return
+        target = Path(folder) / f"{periodic.stem(a)}_{options.program}" if len(files) > 1 else Path(folder)
+        target.mkdir(parents=True, exist_ok=True)
+        for name, text in files.items():
+            (target / name).write_text(text, encoding="utf-8")
+        self.status_label.setText(tf("Scritto {path}", path=target if len(files) > 1 else target / next(iter(files))))
 
     # ---- analisi -------------------------------------------------------------------
     def edit_limits(self) -> None:

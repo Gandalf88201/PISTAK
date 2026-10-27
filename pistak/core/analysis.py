@@ -33,6 +33,7 @@ from pistak.core.structure import Molecule, Structure, build_structure
 
 if TYPE_CHECKING:
     from pistak.core.uncertainty import Uncertainty
+    from pistak.core.validation import Alert
 
 MAX_BYTES = 50 * 1024 * 1024
 
@@ -93,6 +94,10 @@ class Analysis:
     uncertainty: Uncertainty | None = None
     #: Risultati intermedi per rifare l'analisi solo dagli stadi toccati da nuove soglie (`reanalyse`).
     cache: StageCache | None = field(default=None, repr=False, compare=False)
+    #: Grandezze dell'intera struttura (registro `pistak.params.structure`): chiave → valore.
+    structure_values: dict[str, float] = field(default_factory=dict)
+    #: Avvisi dei controlli rapidi (`pistak.core.validation`); None finché non calcolati.
+    alerts: list[Alert] | None = None
 
     def fragment(self, molecule: int, index: int = 0) -> Core | None:
         if self.fragments:

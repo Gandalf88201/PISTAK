@@ -18,6 +18,8 @@ from pistak.core.config import Limits
 
 #: Parametri riportati per la coppia di π-stack migliore (la prima: la più vicina tra gli stack).
 SUMMARY_KEYS = ["interplanar", "long_slip", "lat_slip", "dihedral", "centroid_distance", "contact", "overlap_area", "beta_a"]
+#: Grandezze dell'intera struttura riportate nel riepilogo (chiavi del registro `pistak.params.structure`).
+STRUCTURE_KEYS = ["z_prime", "density_calc", "r1", "wr2", "goof", "temperature", "alerts_a", "alerts_b", "alerts_c"]
 
 
 @dataclass
@@ -45,6 +47,10 @@ class StructureEntry:
     error_code: str | None = None
     #: Blocco data_ analizzato, se il file ne ha più d'uno con atomi (allora `name` è «file.cif [blocco]»).
     block: str | None = None
+    #: Grandezze dell'intera struttura (registro `pistak.params.structure`).
+    structure: dict[str, float] = field(default_factory=dict)
+    #: Avvisi dei controlli rapidi: (livello, codice), in ordine di gravità.
+    alerts: list[tuple[str, str]] = field(default_factory=list)
 
     @property
     def best(self) -> dict[str, float]:
@@ -93,6 +99,7 @@ def analyse_one(path: str, limits: Limits, block: str | None = None) -> Structur
     return StructureEntry(
         path, name, None, a.cif.space_group, (c.a, c.b, c.c, c.alpha, c.beta, c.gamma),
         "; ".join(f"{g.count}×{g.text}" for g in a.molecule_groups()), len(a.pairs), counts, rows, cols, block=block,
+        structure=dict(a.structure_values), alerts=[(al.level, al.code) for al in a.alerts or []],
     )
 
 
@@ -142,15 +149,18 @@ def find_cifs(folder: str | Path) -> list[Path]:
 def write_summary_csv(results: list[StructureEntry], path: str | Path) -> Path:
     path = Path(path)
     head = ["file", "error", "space_group", "a", "b", "c", "alpha", "beta", "gamma", "molecules", "pairs",
-            "n_stack", "n_parallel", "n_tilted", "columns"] + [f"stack1_{k}" for k in SUMMARY_KEYS]
+            "n_stack", "n_parallel", "n_tilted", "columns"] + [f"stack1_{k}" for k in SUMMARY_KEYS] + STRUCTURE_KEYS + ["alerts"]
+    fmt = lambda v: "" if not math.isfinite(v) else f"{v:.4g}"  # noqa: E731
     with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(head)
         for r in results:
             cell = [f"{x:.4f}" for x in r.cell] if r.cell else [""] * 6
             best = r.best
-            vals = [("" if not math.isfinite(best.get(k, math.nan)) else f"{best[k]:.4g}") for k in SUMMARY_KEYS]
+            vals = [fmt(best.get(k, math.nan)) for k in SUMMARY_KEYS]
+            struct = [fmt(r.structure.get(k, math.nan)) for k in STRUCTURE_KEYS]
             w.writerow([r.name, r.error or "", r.space_group, *cell, r.formulas, r.n_pairs,
                         r.counts.get("stack", ""), r.counts.get("parallel", ""), r.counts.get("tilted", ""),
-                        "; ".join(c["kind_key"] for c in r.columns), *vals])
+                        "; ".join(c["kind_key"] for c in r.columns), *vals, *struct,
+                        " ".join(f"{lev}:{code}" for lev, code in r.alerts if lev != "G")])
     return path

@@ -2,6 +2,8 @@
 # Il nucleo di calcolo (pistak/core) usa solo numpy e scipy; il resto serve alla finestra grafica.
 numpy>=1.26
 scipy>=1.11
+# facoltativo per il nucleo: la ricerca della simmetria mancata (Controlli rapidi, ADDSYM)
+spglib>=2.0
 PySide6-Essentials>=6.6
 pyvista>=0.43
 pyvistaqt>=0.11
