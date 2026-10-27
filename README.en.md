@@ -1,6 +1,8 @@
 # PISTAK — π-stack analysis from CIF files
 
 Stand-alone Python application based on the algorithm of the "π-stack analyser" on moleculesfriends.eu.
+**User manual**: [pistak/manual/en.md](pistak/manual/en.md) (Italian: [pistak/manual/it.md](pistak/manual/it.md)),
+also inside the application under *Help ▸ Manual* (F1).
 Same analyses as the website plus extra parameters, stack columns, ring-pair tables, folder processing,
 comparison and statistics across structures, synchronised 3D / projection / parameter views, sessions and plugins.
 

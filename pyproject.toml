@@ -38,7 +38,7 @@ version = { attr = "pistak.__version__" }
 include = ["pistak*"]
 
 [tool.setuptools.package-data]
-pistak = ["default.toml"]
+pistak = ["default.toml", "manual/*.md", "manual/img/*/*.png"]
 
 # ---------------------------------------------------------------------------------------------------------
 [tool.pytest.ini_options]

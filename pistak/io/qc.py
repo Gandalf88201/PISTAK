@@ -12,6 +12,9 @@ nessuna ottimizzazione).
 
 Le parole chiave seguono le versioni correnti dei programmi (ORCA 5–6, Psi4 1.7–1.9, Gaussian 16): conviene
 controllarle con quella installata.
+
+Come gli altri export (`pistak.io.export`), i file hanno commenti e nomi fissi in inglese, uguali in ogni lingua
+dell'interfaccia.
 """
 from __future__ import annotations
 
@@ -129,22 +132,22 @@ def dimer(analysis: Analysis, pair: Pair, options: QCOptions | None = None) -> D
     A, B = s.molecules[pair.a], s.molecules[pair.b]
     pos_a, pos_b = A.pos.copy(), B.pos + s.shift_vector(pair.shift)
     notes = [
-        f"PISTAK: {analysis.name} [{analysis.cif.name}] coppia {pair.index + 1} ({pair.kind})",
-        f"molecola {pair.a + 1} + molecola {pair.b + 1} traslata di [{' '.join(map(str, pair.shift))}]"
-        + (f", frammenti π{pair.fa + 1}/π{pair.fb + 1}" if pair.fragmented else ""),
-        f"interplanare {pair.interplanar:.3f} Å, slittamento L {pair.long_slip:.3f} Å, W {pair.lat_slip:.3f} Å, "
-        f"angolo {pair.dihedral:.1f}°, contatto {pair.contact:.3f} Å",
+        f"PISTAK: {analysis.name} [{analysis.cif.name}] pair {pair.index + 1} ({pair.kind})",
+        f"molecule {pair.a + 1} + molecule {pair.b + 1} translated by [{' '.join(map(str, pair.shift))}]"
+        + (f", fragments π{pair.fa + 1}/π{pair.fb + 1}" if pair.fragmented else ""),
+        f"interplanar {pair.interplanar:.3f} Å, slip L {pair.long_slip:.3f} Å, W {pair.lat_slip:.3f} Å, "
+        f"angle {pair.dihedral:.1f}°, contact {pair.contact:.3f} Å",
     ]
     if options.normalize_h:
         pos_a, na = normalize_hydrogens(A.el, pos_a, A.bonds)
         pos_b, nb = normalize_hydrogens(B.el, pos_b, B.bonds)
-        notes.append(f"distanze X-H portate ai valori da neutroni ({na + nb} idrogeni spostati)")
+        notes.append(f"X-H distances set to neutron values ({na + nb} hydrogens moved)")
     else:
-        notes.append("distanze X-H come nel CIF (raggi X: in genere troppo corte)")
+        notes.append("X-H distances as in the CIF (X-ray: usually too short)")
     for name, m in (("A", A), ("B", B)):
         if "H" not in m.el:
-            notes.append(f"ATTENZIONE: la molecola {name} non ha idrogeni nel CIF: vanno aggiunti prima del calcolo")
-    notes.append("geometria sperimentale dal cristallo, nessuna ottimizzazione")
+            notes.append(f"WARNING: molecule {name} has no hydrogens in the CIF: add them before the calculation")
+    notes.append("experimental crystal geometry, not optimised")
     qa, qb = options.charges
     ma, mb = options.multiplicities
     return Dimer(Monomer(list(A.el), pos_a, list(A.labels), qa, ma), Monomer(list(B.el), pos_b, list(B.labels), qb, mb), notes)
@@ -163,8 +166,8 @@ def _total(d: Dimer) -> tuple[int, int]:
 def _orca(d: Dimer, o: QCOptions) -> str:
     disp = _DISP["orca"][o.dispersion]
     keys = " ".join(x for x in (o.functional, disp, o.resolved_basis(), "TightSCF", "DefGrid2") if x)
-    cp = "# DFT-D con correzione counterpoise (Boys-Bernardi): E_int = E(AB) - E(A in base AB) - E(B in base AB)"
-    head = [f"# {n}" for n in d.notes] + [cp if o.counterpoise else "# DFT-D senza correzione counterpoise"]
+    cp = "# DFT-D with counterpoise correction (Boys-Bernardi): E_int = E(AB) - E(A in AB basis) - E(B in AB basis)"
+    head = [f"# {n}" for n in d.notes] + [cp if o.counterpoise else "# DFT-D without counterpoise correction"]
     block = [f"%pal nprocs {o.nprocs} end", f"%maxcore {o.memory_gb * 1000 // max(1, o.nprocs)}"]
 
     def job(title: str, charge: int, mult: int, real_a: bool, real_b: bool, ghosts: bool) -> list[str]:
@@ -179,10 +182,10 @@ def _orca(d: Dimer, o: QCOptions) -> str:
         return lines
 
     q, mult = _total(d)
-    out = head + job("dimero AB", q, mult, True, True, False)
+    out = head + job("dimer AB", q, mult, True, True, False)
     if o.counterpoise:
-        out += ["", "$new_job"] + job("monomero A nella base del dimero (B fantasma)", d.a.charge, d.a.multiplicity, True, False, True)
-        out += ["", "$new_job"] + job("monomero B nella base del dimero (A fantasma)", d.b.charge, d.b.multiplicity, False, True, True)
+        out += ["", "$new_job"] + job("monomer A in the dimer basis (B ghost)", d.a.charge, d.a.multiplicity, True, False, True)
+        out += ["", "$new_job"] + job("monomer B in the dimer basis (A ghost)", d.b.charge, d.b.multiplicity, False, True, True)
     return "\n".join(out) + "\n"
 
 
@@ -197,13 +200,13 @@ def _psi4(d: Dimer, o: QCOptions) -> str:
     lines += ["units angstrom", "no_reorient", "no_com", "symmetry c1", "}", "", "set {"]
     lines += [f"  basis {o.resolved_basis().lower()}", "  scf_type df"]
     if o.method == "sapt":
-        lines += ["  freeze_core true", "}", "", "# SAPT: componenti elettrostatica, scambio, induzione, dispersione",
+        lines += ["  freeze_core true", "}", "", "# SAPT: electrostatics, exchange, induction, dispersion",
                   f"energy('{o.sapt_level.lower()}')"]
     else:
         name = f"{o.functional.lower()}{_DISP['psi4'][o.dispersion]}"
         lines += ["  dft_radial_points 99", "  dft_spherical_points 590", "}", ""]
         lines.append(f"energy('{name}', bsse_type='cp')" if o.counterpoise else f"energy('{name}')")
-        lines.append("# con bsse_type='cp' Psi4 calcola dimero e monomeri nella base del dimero e stampa E_int (CP)")
+        lines.append("# with bsse_type='cp' Psi4 computes dimer and monomers in the dimer basis and prints E_int (CP)")
     return "\n".join(lines) + "\n"
 
 
@@ -258,7 +261,7 @@ def dimer_input(analysis: Analysis, pair: Pair, options: QCOptions | None = None
 def suggested_name(analysis: Analysis, pair: Pair, options: QCOptions) -> str:
     stem = re.sub(r"[^\w.-]+", "_", Path(analysis.name).stem or "pistak")
     method = options.sapt_level if options.method == "sapt" else "dftd"
-    return f"{stem}_coppia{pair.index + 1}_{method}.{SUFFIX[options.program]}"
+    return f"{stem}_pair{pair.index + 1}_{method}.{SUFFIX[options.program]}"
 
 
 def write_dimer_input(analysis: Analysis, pair: Pair, path: str | Path, options: QCOptions | None = None) -> Path:

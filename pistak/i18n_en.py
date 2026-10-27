@@ -73,6 +73,10 @@ TEXT: dict[str, str] = {
         "Changing a threshold re-runs only the part of the analysis that depends on it. “Save” writes them to {path}.",
     # ---- soglie in tempo reale ---------------------------------------------------------
     "Soglie in tempo reale": "Live thresholds",
+    # ---- manuale ------------------------------------------------------------------------
+    "Manuale": "Manual",
+    "Manuale di PISTAK": "PISTAK manual",
+    "Cerca nel manuale (Invio: successivo)": "Search the manual (Enter: next)",
     "Rimisura le coppie: si applica quando lasci il cursore.": "Re-measures the pairs: applied when you release the slider.",
     "<b>{stack}</b> stack · {parallel} parallele · {tilted} inclinate · {cols} colonne":
         "<b>{stack}</b> stacked · {parallel} parallel · {tilted} tilted · {cols} columns",

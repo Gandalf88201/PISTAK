@@ -215,3 +215,30 @@ def test_soglie_da_altrove_aggiornano_il_pannello(app):
     panel._site()
     assert s.limits.max_dihedral == Limits.site().max_dihedral and s.limits.pair_mode == "site"
     win.close()
+
+
+def test_manuale_dal_menu_aiuto(app):
+    win = new_window(app)
+    win.show()
+    m = win.show_manual("8-soglie-in-tempo-reale")
+    app.processEvents()
+    assert m.lang == "it" and m.toc.topLevelItemCount() == 21  # indice + 20 capitoli
+    assert m.text.verticalScrollBar().value() > 0
+    for i in range(m.toc.topLevelItemCount()):  # ogni voce dell'indice porta al suo titolo
+        assert m.go_to(m.toc.topLevelItem(i).data(0, Qt.ItemDataRole.UserRole))
+    widths = []  # le figure larghe si adattano al testo (i blocchi di codice lunghi invece scorrono)
+    block = m.text.document().begin()
+    while block.isValid():
+        it = block.begin()
+        while not it.atEnd():
+            fmt = it.fragment().charFormat()
+            if fmt.isImageFormat():
+                widths.append(fmt.toImageFormat().width())
+            it += 1
+        block = block.next()
+    assert len(widths) >= 12 and 0 < max(widths) <= m.text.viewport().width()
+    m.lang_combo.setCurrentIndex(m.lang_combo.findData("en"))
+    assert m.lang == "en" and m.toc.topLevelItem(1).text(0) == "1. Basic concepts"
+    assert win.show_manual() is not m or m.lang == "it"  # con l'interfaccia in italiano si riapre in italiano
+    m.close()
+    win.close()

@@ -6,6 +6,10 @@ angolo tra i piani, contatti, sovrapposizione) e aggiunge: parametri in più, co
 anelli (stile Janiak), elaborazione di cartelle intere, viste 3D e di proiezione dei parametri sincronizzabili,
 e un sistema di plugin.
 
+**Manuale d'uso**: [pistak/manual/it.md](pistak/manual/it.md) (in inglese [pistak/manual/en.md](pistak/manual/en.md)),
+con un esempio guidato, la spiegazione di ogni vista e di ogni grandezza, le soglie, il terminale e la libreria. È anche
+nella finestra: *Aiuto ▸ Manuale* (F1). Questo README è la guida per chi sviluppa.
+
 ## Avvio
 
 ```bash
@@ -54,7 +58,9 @@ pistak/
   i18n.py    traduzioni (i18n_en.py: il dizionario inglese)
   cli.py     comandi da terminale
   default.toml  soglie e preferenze predefinite
+  manual/    il manuale (it.md, en.md) e le sue figure (img/<lingua>/), mostrato anche in Aiuto ▸ Manuale
 plugins/     i tuoi parametri (caricati all'avvio)
+tools/       manual_figures.py: rigenera le figure del manuale dalla finestra vera (senza schermo)
 examples/    CIF sintetici di prova (non sperimentali)
 tests/       pytest, compresa la parità con l'algoritmo originale del sito
 ```
@@ -229,7 +235,12 @@ Differenze volute anche in modalità `site`: il limite di atomi in cella è 6000
 .venv/bin/python -m pytest -m "not gui"     # solo il calcolo, pochi secondi
 .venv/bin/python -m pytest                  # tutto, comprese le finestre (offscreen)
 .venv/bin/ruff check .                      # controllo statico (regole in pyproject.toml)
+.venv/bin/python tools/manual_figures.py    # rigenera le figure del manuale (dopo cambiamenti dell'interfaccia)
 ```
+
+**Manuale.** `pistak/manual/it.md` ed `en.md` vanno tenuti allineati: `tests/test_manual.py` controlla che abbiano gli
+stessi capitoli e le stesse figure, che i link interni portino a un titolo e che l'esempio della libreria giri davvero.
+Le figure si rigenerano con lo script sopra (solo i CIF di `examples/`, PNG a 256 colori).
 
 Marcatori: `gui` (finestre), `parity` (confronto con il sito), `snapshot` (istantanee). **Istantanee**:
 `tests/snapshots/site/*.json` e `tests/snapshots/canonical/*.json` contengono tutti i risultati sugli esempi nei due modi

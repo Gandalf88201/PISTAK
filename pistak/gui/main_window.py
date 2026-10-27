@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import QByteArray, QSettings, Qt, QTimer
-from PySide6.QtGui import QAction, QActionGroup, QDragEnterEvent, QDropEvent, QKeySequence
+from PySide6.QtGui import QAction, QActionGroup, QDragEnterEvent, QDropEvent, QKeySequence, QResizeEvent, QShowEvent
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QProgressBar,
+    QTabBar,
     QTextBrowser,
     QVBoxLayout,
 )
@@ -79,10 +80,14 @@ class MainWindow(QMainWindow):
         session.error.connect(self._show_error)
         session.busyChanged.connect(self._busy)
         session.analysisChanged.connect(self._analysis_changed)
+        self._tabbar_timer = QTimer(self)
+        self._tabbar_timer.setSingleShot(True)
+        self._tabbar_timer.timeout.connect(self._hide_stray_tab_bars)
 
-        self.limits_dock = self._limits_dock()
         self._build_menus()
         self.default_layout()
+        # dopo la disposizione: aggiunto prima, Qt lasciava visibile una barra di schede vuota sopra lo scatter
+        self.limits_dock = self._limits_dock()
         self.fit_to_screen()  # dopo aver creato i pannelli: aggiungerli può far crescere la finestra oltre lo schermo
 
     # ---- viste e disposizione ------------------------------------------------------
@@ -97,6 +102,8 @@ class MainWindow(QMainWindow):
         dock.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         dock.setAllowedAreas(Qt.DockWidgetArea.AllDockWidgetAreas)
         dock.destroyed.connect(lambda _=None, d=dock: self.docks.remove(d) if d in self.docks else None)
+        dock.dockLocationChanged.connect(self._check_tab_bars)
+        dock.topLevelChanged.connect(self._check_tab_bars)
         self.docks.append(dock)
         return dock
 
@@ -121,6 +128,34 @@ class MainWindow(QMainWindow):
             clamp_into_screen(d)
         d.show()
         d.raise_()
+
+    # ---- barre di schede orfane (difetto di Qt 6) ---------------------------------------
+    def _check_tab_bars(self, *_) -> None:
+        self._tabbar_timer.start(0)
+
+    def _hide_stray_tab_bars(self) -> None:
+        """Con due gruppi di pannelli a schede Qt 6 crea a volte una barra di schede doppia che, dopo un
+        ridimensionamento, resta ferma dove stava, sopra un altro pannello. Si nasconde ogni barra che non è attaccata
+        (sopra o sotto, allineata a sinistra) a uno dei pannelli che elenca: quelle vere lo sono sempre."""
+        docks = [d for d in self.findChildren(QDockWidget) if d.isVisible() and not d.isFloating()]
+        for bar in self.findChildren(QTabBar, options=Qt.FindChildOption.FindDirectChildrenOnly):
+            if not bar.isVisible() or bar.count() == 0:
+                continue
+            titles = {bar.tabText(i) for i in range(bar.count())}
+            g = bar.geometry()
+            attached = any(abs(g.left() - d.geometry().left()) <= 6
+                           and (abs(g.top() - d.geometry().bottom()) <= 6 or abs(g.bottom() - d.geometry().top()) <= 6)
+                           for d in docks if d.windowTitle() in titles)
+            if not attached:
+                bar.hide()
+
+    def showEvent(self, e: QShowEvent) -> None:  # noqa: N802
+        super().showEvent(e)
+        self._check_tab_bars()
+
+    def resizeEvent(self, e: QResizeEvent) -> None:  # noqa: N802
+        super().resizeEvent(e)
+        self._check_tab_bars()
 
     def clear_docks(self) -> None:
         for d in list(self.docks):
@@ -152,6 +187,7 @@ class MainWindow(QMainWindow):
         proj.raise_()
         self._layout_docks = (table, scatter, view3d, proj)
         self._proportional_docks()
+        self._check_tab_bars()
 
     def _proportional_docks(self) -> None:
         """Dimensioni dei pannelli in proporzione alla finestra, non in pixel assoluti: vale per qualunque schermo."""
@@ -240,6 +276,7 @@ class MainWindow(QMainWindow):
             lang_menu.addAction(act)
 
         h = mb.addMenu(tr("&Aiuto"))
+        self._act(h, tr("Manuale"), self.show_manual, QKeySequence.StandardKey.HelpContents)
         self._act(h, tr("Informazioni"), self._about)
 
     # ---- file ----------------------------------------------------------------------
@@ -482,6 +519,7 @@ class MainWindow(QMainWindow):
             self.restoreGeometry(QByteArray(session_file.unb64(win["geometry"])))
         if win.get("dock_state"):
             self.restoreState(QByteArray(session_file.unb64(win["dock_state"])))
+            self._check_tab_bars()
         clamp_into_screen(self)  # la sessione può venire da uno schermo più grande
         for v in st.get("views", []):
             dock = next((d for d in self.docks if d.objectName() == v.get("object")), None)
@@ -576,6 +614,20 @@ class MainWindow(QMainWindow):
         if self.collection is not None:
             self.collection.close()
         super().closeEvent(event)
+
+    def show_manual(self, anchor: str | None = None):
+        """Il manuale nella lingua dell'interfaccia (una finestra sola, riusata)."""
+        from pistak.gui.manual_window import ManualWindow
+
+        win = getattr(self, "_manual", None)
+        if win is None or win.lang != i18n.get_language():
+            win = self._manual = ManualWindow(self)
+        win.show()
+        win.raise_()
+        win.activateWindow()
+        if anchor:
+            win.go_to(anchor)
+        return win
 
     def _about(self) -> None:
         QMessageBox.about(self, APP_NAME, tf(

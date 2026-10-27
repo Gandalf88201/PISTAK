@@ -44,7 +44,7 @@ def test_dimero(herring):
     assert len(d.a.el) == len(A) and len(d.b.el) == len(B)
     heavy_b = [k for k, e in enumerate(B.el) if e != "H"]
     assert np.allclose(d.b.pos[heavy_b], (B.pos + a.structure.shift_vector(p.shift))[heavy_b])
-    assert any("coppia 1" in n for n in d.notes) and any("neutroni" in n for n in d.notes)
+    assert any("pair 1" in n for n in d.notes) and any("neutron" in n for n in d.notes)
 
 
 def test_orca_con_counterpoise(herring):
@@ -128,7 +128,20 @@ def test_terminale(tmp_path, capsys):
     assert main(["qc", str(EX / "herringbone_anthracene.cif"), "--kind", "all", "--program", "psi4", "--method", "sapt",
                  "-o", str(out)]) == 0
     files = sorted(p.name for p in out.iterdir())
-    assert files == ["herringbone_anthracene_coppia1_sapt0.in", "herringbone_anthracene_coppia2_sapt0.in"]
+    assert files == ["herringbone_anthracene_pair1_sapt0.in", "herringbone_anthracene_pair2_sapt0.in"]
     assert main(["qc", str(EX / "demo_naphthalene.cif"), "--pair", "1", "--program", "gaussian"]) == 0
     assert "Counterpoise=2" in capsys.readouterr().out
     assert main(["qc", str(EX / "demo_naphthalene.cif"), "--program", "orca", "--method", "sapt"]) == 1
+
+
+def test_commenti_in_inglese_in_ogni_lingua(herring):
+    """Come gli altri export, l'input ha commenti fissi in inglese, qualunque sia la lingua dell'interfaccia."""
+    from pistak import i18n
+
+    a, p = herring
+    texts = []
+    for lang in ("it", "en"):
+        i18n.set_language(lang)
+        texts.append(qc.dimer_input(a, p, qc.QCOptions("orca")))
+    i18n.set_language("it")
+    assert texts[0] == texts[1] and "# PISTAK: herringbone_anthracene.cif [herringbone] pair 1 (stack)" in texts[0]
