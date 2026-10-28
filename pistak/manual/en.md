@@ -177,7 +177,9 @@ The selected pair: molecule A with element colours and an orange mean plane, mol
 *Core* enlarges the atoms of the π cores, *H* shows hydrogens; with *Column* the other molecules of the stack column
 appear in light grey. *Planes* draws the mean planes, *Vectors* the slip decomposition (L red, W green, interplanar
 distance blue), *Measures* the L, W, n axes through Cg A with the value of each component (the same as in the
-table), *Cell* the cell edges. Styles: ball and stick, sticks, space-filling (vdW). Preset views: *From above*
+table), *Contact* the shortest contact between heavy atoms of the two molecules (the "Contact" column of the Detail:
+the two atoms circled, the distance dashed and their names in the toolbar, for example `C1···C10 (B) 3.66 Å`),
+*Cell* the cell edges. Styles: ball and stick, sticks, space-filling (vdW). Preset views: *From above*
 (perpendicular to the planes), *Oblique*, *Side view*, *Along L*. The 3D view starts *From above* with an
 *Orthographic* projection (no perspective): L to the right, W up, same centre as the **Projection**, so the two views
 match; until you move the camera the framing follows the panel size. Untick *Orthographic* to get perspective back.
@@ -217,7 +219,7 @@ Eight tabs:
 | Rings | planar ring pairs, one ring per molecule (Janiak style): Cg···Cg, α (angle between planes), β and γ (Cg→normal of A and of B), perpendicular distances ⟂A and ⟂B, slippage, closest contact; up to `ring_pair_max_distance` |
 | Columns | stack columns: type (aggregate, column, layer, 3D network), molecules, step, axis, mean geometry |
 | Warnings | plugins that failed to load and parameters that raised errors, with the message |
-| Contacts | summary per molecule contact: fragment pairs, how many π-stacks, shortest contact, best pair (double click selects it) |
+| Contacts | summary per molecule contact: fragment pairs, how many π-stacks, shortest heavy-atom contact, best pair (double click selects it: the 3D view shows between which atoms the shortest contact lies) |
 | Geometry | bonds, angles, torsions and van der Waals contacts of the independent molecules, with s.u. and symmetry codes; *Hydrogens* hides them; double-click: the measurement in 3D (see [Molecular geometry](#molecular-geometry)) |
 | Checks | the A, B, C, G alerts of the [quick checks](#structure-quantities-and-quick-checks), coloured by severity |
 

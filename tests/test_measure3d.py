@@ -119,3 +119,31 @@ def test_la_misura_resta_se_la_vista_si_aggiorna(gui, hydrate):
     assert v.measure is c and v.scene.highlight
     s._apply(api.analyse_file(EX / "herringbone_anthracene.cif"))  # un'altra analisi: si torna alla coppia
     assert v.measure is None and v.ctx is not None
+
+
+def test_contatto_piu_corto_nella_scena_della_coppia():
+    # la colonna «Contatto» del Dettaglio (Pair.contact): nella 3D si vede tra quali atomi sta
+    from pistak.gui.scene import contact_measure
+
+    a = api.analyse_file(COD / "2012157.cif")
+    for p in a.pairs:
+        sc = build_scene(a.pair_context(p))
+        i, j, d = sc.contact
+        assert d == pytest.approx(p.contact) and np.linalg.norm(sc.pos[i] - sc.pos[j]) == pytest.approx(d)
+        assert sc.molecule[i] == 0 and sc.molecule[j] == 1 and sc.el[i] != "H" and sc.el[j] != "H"
+        atoms, paths, labels, text = contact_measure(sc)
+        assert atoms == [i, j] and paths[0].dashed and labels[0].text == f"{d:.2f} Å" and "(B)" in text
+
+
+def test_contatto_nella_barra_della_3d(gui):
+    from pistak.gui.session import Session
+    from pistak.gui.views.view3d import View3D
+
+    s = Session()
+    v = View3D(s, "A")
+    s._apply(api.analyse_file(COD / "2012157.cif"))
+    s.select("A", 1)
+    assert v.pick_info.text().endswith(f"{s.analysis.pairs[1].contact:.2f} Å")
+    v.boxes["show_contact"].setChecked(False)
+    v._draw(keep_camera=True)
+    assert v.pick_info.text() == ""

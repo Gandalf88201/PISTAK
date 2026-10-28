@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import numpy as np
+from scipy.spatial.distance import cdist
 
 from pistak.core.analysis import PairContext
 from pistak.core.elements import CYAN_CARBON, color, covalent_radius, vdw_radius
@@ -111,6 +112,8 @@ class Scene:
     measure_labels: list[Label] = field(default_factory=list)
     #: Assi per l'inquadratura quando la scena non è di una coppia.
     frame: SceneFrame | None = None
+    #: Il contatto più corto tra atomi pesanti delle due molecole (la colonna «Contatto»): (atomo A, atomo B, Å).
+    contact: tuple[int, int, float] | None = None
 
 
 def _plane_polygon(points: np.ndarray, centroid: np.ndarray, normal: np.ndarray, long: np.ndarray, margin: float = 0.5) -> np.ndarray:
@@ -203,6 +206,12 @@ def build_scene(ctx: PairContext, show_h: bool = True, show_cell: bool = False, 
                                   ((p2 + p3) / 2 + f.W * sw * 0.7, dn, COLOR_N, "n")):
         scene.labels.append(Label(pos, f"{name} {abs(value):.2f} Å", col))
     scene.markers += [Marker(ca.centroid, COLOR_PLANE_A, 0.16, "Cg A"), Marker(cb.centroid, COLOR_PLANE_B, 0.16, "Cg B")]
+    # dove sta il contatto più corto tra le due molecole (gli atomi pesanti, come `Pair.contact`)
+    ha, hb = np.flatnonzero(A.heavy), np.flatnonzero(B.heavy)
+    if not ctx.pair.intramolecular and len(ha) and len(hb):
+        dist = cdist(ctx.pos_a[ha], ctx.pos_b[hb])
+        i, j = np.unravel_index(int(np.argmin(dist)), dist.shape)
+        scene.contact = (int(ia[ha[i]]), int(ib[hb[j]]), float(dist[i, j]))
 
     if show_column:
         col = ctx.analysis.column_for(ctx.pair)
@@ -271,6 +280,16 @@ def build_measure_scene(structure: Structure, item: GeometryItem, show_h: bool =
     scene.size = float(np.linalg.norm(pos.max(axis=0) - pos.min(axis=0))) if len(pos) else 10.0
     scene.frame = SceneFrame.of(pos, pts[-1] - pts[0] if len(pts) >= 2 else None) if len(pos) else None
     return scene
+
+
+def contact_measure(scene: Scene) -> tuple[list[int], list[Path], list[Label], str]:
+    """Il contatto più corto della scena di una coppia come misura: atomi, linea tratteggiata, valore e testo."""
+    if scene.contact is None:
+        return [], [], [], ""
+    i, j, d = scene.contact
+    pts = scene.pos[[i, j]]
+    text = f"{scene.names[i]}···{scene.names[j]} {d:.2f} Å" if scene.names else f"{d:.2f} Å"
+    return [i, j], [Path(pts, COLOR_MEASURE, 0.03, dashed=True)], [Label(pts.mean(axis=0), f"{d:.2f} Å", COLOR_MEASURE, 15)], text
 
 
 def scene_frame(scene: Scene) -> SceneFrame:

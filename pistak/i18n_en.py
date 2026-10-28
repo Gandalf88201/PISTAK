@@ -432,6 +432,9 @@ TEXT: dict[str, str] = {
     "Distanza tra i centroidi": "Distance between centroids",
     "|d|: distanza tra i baricentri dei due nuclei π.": "|d|: distance between the centroids of the two π cores.",
     "Contatto più corto": "Shortest contact",
+    "Contatto": "Contact",
+    "Il contatto più corto tra atomi pesanti delle due molecole (la colonna «Contatto»): i due atomi cerchiati e la distanza":
+        "The shortest contact between heavy atoms of the two molecules (the \"Contact\" column): the two atoms circled and the distance",
     "Distanza minima tra atomi pesanti delle due molecole.": "Minimum distance between heavy atoms of the two molecules.",
     "Frazione degli atomi di un nucleo che cade, in proiezione, dentro il contorno dell'altro.":
         "Fraction of the atoms of one core that fall, in projection, inside the outline of the other.",

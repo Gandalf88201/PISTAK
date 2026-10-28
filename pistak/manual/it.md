@@ -177,7 +177,9 @@ La coppia selezionata: la molecola A con i colori degli elementi e il piano medi
 piano azzurri; *Nucleo* ingrandisce gli atomi dei nuclei π, *H* mostra gli idrogeni; con *Colonna* le altre molecole
 della colonna di stack in grigio chiaro. *Piani* disegna i piani medi, *Vettori* la scomposizione dello slittamento (L rosso,
 W verde, distanza interplanare blu), *Misure* gli assi L, W, n che passano per Cg A con il valore di ogni componente
-(gli stessi della tabella), *Cella* gli spigoli della cella. Stili: sfere e bastoncini, bastoncini, spazio
+(gli stessi della tabella), *Contatto* il contatto più corto tra atomi pesanti delle due molecole (la colonna «Contatto» del
+Dettaglio: i due atomi cerchiati, la distanza tratteggiata e i loro nomi nella barra, per esempio `C1···C10 (B) 3.66 Å`),
+*Cella* gli spigoli della cella. Stili: sfere e bastoncini, bastoncini, spazio
 occupato (vdW). Le viste predefinite: *Dall'alto* (perpendicolare ai piani), *Obliqua*, *Di lato*, *Lungo L*.
 La 3D parte *Dall'alto* e in proiezione *Ortogonale* (senza prospettiva): L a destra, W in alto, stesso centro
 della **Proiezione**, così le due viste coincidono; finché non si muove la camera l'inquadratura segue le dimensioni
@@ -218,7 +220,7 @@ Otto schede:
 | Anelli | coppie di anelli planari, uno per molecola (stile Janiak): Cg···Cg, α (angolo tra i piani), β e γ (Cg→normale di A e di B), distanze perpendicolari ⟂A e ⟂B, slittamento, contatto minimo; fino a `ring_pair_max_distance` |
 | Colonne | colonne di stack: tipo (aggregato, colonna, strato, rete 3D), molecole, passo, asse, geometria media |
 | Avvisi | plugin che non si caricano e parametri che hanno dato errore, con il messaggio |
-| Contatti | riepilogo per contatto tra molecole: coppie di frammenti, quante π-stack, contatto più corto, coppia migliore (doppio clic la seleziona) |
+| Contatti | riepilogo per contatto tra molecole: coppie di frammenti, quante π-stack, contatto più corto tra atomi pesanti, coppia migliore (doppio clic la seleziona: la 3D mostra tra quali atomi sta il contatto più corto) |
 | Geometria | legami, angoli, torsioni e contatti di van der Waals delle molecole indipendenti, con le s.u. e i codici di simmetria; *Idrogeni* li toglie; doppio clic: la misura nella 3D (vedi [Geometria delle molecole](#geometria-delle-molecole)) |
 | Controlli | gli avvisi A, B, C, G dei [controlli rapidi](#grandezze-della-struttura-e-controlli-rapidi), colorati per gravità |
 

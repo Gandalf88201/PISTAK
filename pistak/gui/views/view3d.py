@@ -21,7 +21,7 @@ from PySide6.QtWidgets import QCheckBox, QComboBox, QFileDialog, QLabel, QPushBu
 from pistak.core.config import load_section
 from pistak.core.elements import vdw_radius
 from pistak.gui import theme
-from pistak.gui.scene import Scene, build_measure_scene, build_scene, nearest_atom, pick_measure, scene_frame
+from pistak.gui.scene import Scene, build_measure_scene, build_scene, contact_measure, nearest_atom, pick_measure, scene_frame
 from pistak.gui.session import Session
 from pistak.gui.views.base import PairView
 from pistak.i18n import tf, tr
@@ -41,6 +41,7 @@ class Options:
     highlight_core: bool = True
     labels: bool = True
     ortho: bool = True  # proiezione ortogonale: dall'alto la vista coincide con la Proiezione
+    show_contact: bool = True  # il contatto più corto tra atomi pesanti delle due molecole
 
 
 def _sticks(scene: Scene, colors: np.ndarray, radius: float, sides: int = 14) -> pv.PolyData | None:
@@ -127,6 +128,9 @@ def populate(plotter: pv.Plotter, scene: Scene, opts: Options, sphere_scale: flo
         for a, b in scene.box:
             plotter.add_mesh(pv.Line(a, b), color="gray", line_width=px, opacity=0.6, pickable=False)
     draw_measure(plotter, scene, scene.highlight, scene.measure_paths, scene.measure_labels, opts, sphere_scale, px)
+    if opts.show_contact:
+        atoms_, paths, labels, _text = contact_measure(scene)
+        draw_measure(plotter, scene, atoms_, paths, labels, opts, sphere_scale, px)
 
 
 def draw_measure(plotter: pv.Plotter, scene: Scene, atoms, paths, labels, opts: Options, sphere_scale: float = 0.28,
@@ -246,6 +250,8 @@ class View3D(PairView):
                                 ("show_measures", tr("Misure"), tr("Assi L, W, n della coppia con i valori misurati lungo ciascuno")),
                                 ("highlight_core", tr("Nucleo"), tr("Ingrandisce gli atomi del nucleo π")),
                                 ("show_column", tr("Colonna"), tr("Mostra le altre molecole della colonna di stack (grigio)")),
+                                ("show_contact", tr("Contatto"), tr("Il contatto più corto tra atomi pesanti delle due molecole (la colonna "
+                                                                     "«Contatto»): i due atomi cerchiati e la distanza")),
                                 ("show_cell", tr("Cella"), tr("Spigoli della cella elementare")),
                                 ("ortho", tr("Ortogonale"), tr("Proiezione ortogonale, senza prospettiva: vista dall'alto coincide con la Proiezione"))):
             cb = QCheckBox(text)
@@ -582,6 +588,8 @@ class View3D(PairView):
         text = pick_measure(self.scene, self.picks)[2] if self.scene is not None else ""
         if not text and self.measure is not None:
             text = tr("Misura dalla scheda Geometria: scegli una coppia per tornare alla coppia")
+        if not text and self.scene is not None and self.opts.show_contact and self.scene.contact is not None:
+            text = f"{tr('Contatto più corto')}: {contact_measure(self.scene)[3]}"
         self.pick_info.setText(text)
 
     def extra_state(self) -> dict:
