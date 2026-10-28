@@ -2,6 +2,9 @@
 
 `populate()` traduce una `Scene` (array numpy) in mesh PyVista su un qualunque `pv.Plotter`: è separata dal
 widget Qt perché si possa provare anche fuori schermo (vedi tests/test_scene.py) e riusare per esportare immagini.
+
+Oltre alla coppia selezionata la vista mostra, a richiesta, una misura della scheda Geometria (`Session.show_measure`)
+con le molecole che la contengono; con *Misura* attivo un clic su due atomi ne dà la distanza, su tre anche l'angolo.
 """
 from __future__ import annotations
 
@@ -12,12 +15,13 @@ os.environ.setdefault("QT_API", "pyside6")  # pyvistaqt/QtPy: usare PySide6
 
 import numpy as np
 import pyvista as pv
-from PySide6.QtWidgets import QCheckBox, QComboBox, QFileDialog, QPushButton
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QCheckBox, QComboBox, QFileDialog, QLabel, QPushButton
 
 from pistak.core.config import load_section
 from pistak.core.elements import vdw_radius
 from pistak.gui import theme
-from pistak.gui.scene import Scene, build_scene
+from pistak.gui.scene import Scene, build_measure_scene, build_scene, nearest_atom, pick_measure, scene_frame
 from pistak.gui.session import Session
 from pistak.gui.views.base import PairView
 from pistak.i18n import tf, tr
@@ -81,22 +85,23 @@ def populate(plotter: pv.Plotter, scene: Scene, opts: Options, sphere_scale: flo
     atoms["rgb"] = colors
     atoms["radius"] = radii
     glyphs = atoms.glyph(scale="radius", factor=1.0, orient=False, geom=pv.Sphere(radius=1.0, theta_resolution=res, phi_resolution=res))
-    plotter.add_mesh(glyphs, scalars="rgb", rgb=True, smooth_shading=True, specular=0.4)
+    plotter.add_mesh(glyphs, scalars="rgb", rgb=True, smooth_shading=True, specular=0.4)  # solo gli atomi si scelgono col mouse
     if opts.style != 2:
         sticks = _sticks(scene, colors, stick_radius, res // 2 + 2)
         if sticks is not None:
-            plotter.add_mesh(sticks, scalars="rgb", rgb=True, smooth_shading=True)
+            plotter.add_mesh(sticks, scalars="rgb", rgb=True, smooth_shading=True, pickable=False)
     if opts.show_planes:
         for poly in scene.polygons:
             n = len(poly.points)
             face = pv.PolyData(poly.points, faces=np.r_[n, np.arange(n)])
             plotter.add_mesh(face, color=tuple(c / 255 for c in poly.color), opacity=poly.opacity, show_edges=True,
-                             edge_color=tuple(c / 255 for c in poly.color), line_width=1.5 * px)
+                             edge_color=tuple(c / 255 for c in poly.color), line_width=1.5 * px, pickable=False)
     if opts.show_vectors:
         for p in scene.paths:
             _add_path(plotter, p, sides=res // 2)
         for m in scene.markers:
-            plotter.add_mesh(pv.Sphere(radius=m.radius, center=m.pos, theta_resolution=res, phi_resolution=res), color=tuple(c / 255 for c in m.color))
+            plotter.add_mesh(pv.Sphere(radius=m.radius, center=m.pos, theta_resolution=res, phi_resolution=res), color=tuple(c / 255 for c in m.color),
+                         pickable=False)
         if opts.labels and scene.markers:
             plotter.add_point_labels(np.array([m.pos for m in scene.markers]), [m.label for m in scene.markers],
                                      font_size=round(14 * px), shape=None, show_points=False, always_visible=True,
@@ -112,26 +117,65 @@ def populate(plotter: pv.Plotter, scene: Scene, opts: Options, sphere_scale: flo
     if len(scene.ghost_pos):
         ghost = pv.PolyData(scene.ghost_pos)
         plotter.add_mesh(ghost.glyph(scale=False, factor=0.2, orient=False, geom=pv.Sphere(radius=1.0, theta_resolution=12, phi_resolution=12)),
-                         color=(0.62, 0.62, 0.66), opacity=0.35)
+                         color=(0.62, 0.62, 0.66), opacity=0.35, pickable=False)
         if len(scene.ghost_bonds):
             n = len(scene.ghost_bonds)
             lines = np.column_stack([np.full(n, 2), scene.ghost_bonds]).ravel()
-            plotter.add_mesh(pv.PolyData(scene.ghost_pos, lines=lines).tube(radius=0.05, n_sides=8), color=(0.62, 0.62, 0.66), opacity=0.35)
+            plotter.add_mesh(pv.PolyData(scene.ghost_pos, lines=lines).tube(radius=0.05, n_sides=8), color=(0.62, 0.62, 0.66),
+                             opacity=0.35, pickable=False)
     if len(scene.box):
         for a, b in scene.box:
-            plotter.add_mesh(pv.Line(a, b), color="gray", line_width=px, opacity=0.6)
+            plotter.add_mesh(pv.Line(a, b), color="gray", line_width=px, opacity=0.6, pickable=False)
+    draw_measure(plotter, scene, scene.highlight, scene.measure_paths, scene.measure_labels, opts, sphere_scale, px)
+
+
+def draw_measure(plotter: pv.Plotter, scene: Scene, atoms, paths, labels, opts: Options, sphere_scale: float = 0.28,
+                 px: float = 1.0) -> None:
+    """Una misura sopra la scena: gli atomi coinvolti cerchiati da un guscio trasparente, le linee tratteggiate e i
+    valori. Serve sia alle misure della scheda Geometria sia agli atomi scelti con il mouse."""
+    res = 24 if px <= 1 else 48
+    for i in atoms:
+        r = vdw_radius(scene.el[i]) if opts.style == 2 else max(scene.radii[i] * sphere_scale * 1.9, 0.38)
+        plotter.add_mesh(pv.Sphere(radius=r * 1.12, center=scene.pos[i], theta_resolution=res, phi_resolution=res),
+                         color=(0.88, 0.59, 0.0), opacity=0.35, pickable=False)
+    for p in paths:
+        _add_path(plotter, p, sides=res // 2)
+    for size, group in _by_color(labels).get((225, 150, 0), {}).items():
+        plotter.add_point_labels(np.array([lb.pos for lb in group]), [lb.text for lb in group], font_size=round(size * px), bold=True,
+                                 shape="rounded_rect", shape_color=tuple(c / 255 for c in theme.background()), shape_opacity=0.75,
+                                 margin=round(2 * px), show_points=False, always_visible=True, text_color=(0.88, 0.59, 0.0))
+
+
+def _dashes(points: np.ndarray, dash: float = 0.16, gap: float = 0.11) -> pv.PolyData:
+    """Una spezzata tratteggiata: segmenti lunghi `dash` separati da `gap` (Å)."""
+    pts, lines = [], []
+    for a, b in zip(points[:-1], points[1:]):
+        length = float(np.linalg.norm(b - a))
+        u = (b - a) / max(length, 1e-9)
+        s = 0.0
+        while s < length:
+            e = min(s + dash, length)
+            lines += [2, len(pts), len(pts) + 1]
+            pts += [a + u * s, a + u * e]
+            s = e + gap
+    return pv.PolyData(np.array(pts), lines=np.array(lines))
 
 
 def _add_path(plotter: pv.Plotter, p, opacity: float = 1.0, sides: int = 12) -> None:
     color_ = tuple(c / 255 for c in p.color)
+    if getattr(p, "dashed", False):
+        plotter.add_mesh(_dashes(np.asarray(p.points)).tube(radius=p.radius, n_sides=sides), color=color_, smooth_shading=True,
+                         opacity=opacity, pickable=False)
+        return
     a, b = p.points[0], p.points[-1]
     if p.arrow:  # la punta occupa l'ultimo tratto del segmento
         axis = (b - a) / np.linalg.norm(b - a)
         head = min(0.45, 0.3 * float(np.linalg.norm(b - a)))
         plotter.add_mesh(pv.Cone(center=b - axis * head / 2, direction=axis, height=head, radius=max(4 * p.radius, 0.09), resolution=2 * sides),
-                         color=color_, opacity=opacity)
+                         color=color_, opacity=opacity, pickable=False)
         b = b - axis * head
-    plotter.add_mesh(pv.Line(a, b).tube(radius=p.radius, n_sides=sides), color=color_, smooth_shading=True, opacity=opacity)
+    plotter.add_mesh(pv.Line(a, b).tube(radius=p.radius, n_sides=sides), color=color_, smooth_shading=True, opacity=opacity,
+                     pickable=False)
 
 
 def _by_color(labels) -> dict:
@@ -182,6 +226,12 @@ class View3D(PairView):
         self.opts = Options(show_h=bool(cfg.get("show_hydrogens", True)))
         self.scene: Scene | None = None
         self.ctx = None
+        #: La misura della scheda Geometria mostrata al posto della coppia (None = si mostra la coppia).
+        self.measure = None
+        #: Atomi della scena scelti con il mouse (indici in `scene.pos`), al più tre.
+        self.picks: list[int] = []
+        self._pick_observers: tuple | None = None
+        self._press_at: tuple[int, int] | None = None
         #: Da che cosa è stata costruita la scena corrente (vedi `on_pair`).
         self._scene_structure = None
         self._scene_key: tuple | None = None
@@ -217,6 +267,15 @@ class View3D(PairView):
         shot = QPushButton(tr("PNG…"))
         shot.clicked.connect(self._save_png)
         self.toolbar.addWidget(shot)
+        self.pick_box = QCheckBox(tr("Misura"))
+        self.pick_box.setToolTip(tr("Clic su due atomi: la loro distanza; su un terzo: anche l'angolo nel secondo. Un quarto clic "
+                                    "ricomincia. Trascinando la vista ruota come sempre."))
+        self.pick_box.toggled.connect(self._set_picking)
+        self.toolbar.addWidget(self.pick_box)
+        self.pick_info = QLabel()
+        self.pick_info.setTextInteractionFlags(self.pick_info.textInteractionFlags() | Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.toolbar.addWidget(self.pick_info)
+        session.measureRequested.connect(self._measure_requested)
 
         self._pending_camera = None
         self._pending_scale: float | None = None
@@ -245,10 +304,40 @@ class View3D(PairView):
             self._draw(keep_camera=True)
 
     # ---- disegno -------------------------------------------------------------------
+    def _analysis_changed(self) -> None:
+        self.measure = None  # le misure della scheda Geometria valgono per l'analisi in cui sono state scelte
+        super()._analysis_changed()
+
     def on_analysis(self) -> None:
+        if self.measure is not None:
+            return
         if not self.analysis or not self.analysis.pairs:
             self.scene = self.ctx = None
             self._draw(False)
+
+    def _selection_changed(self, group: str, index: int) -> None:
+        if group == self.group and self.measure is not None:  # scegliendo una coppia si torna alla coppia
+            self.measure = None
+            self._update_empty_notice()
+            self._scene_key = None
+        super()._selection_changed(group, index)
+
+    def _measure_requested(self, group, item) -> None:
+        if group != self.group or self.analysis is None:
+            return
+        self.measure = item
+        self._update_empty_notice()
+        self._rebuild(keep_camera=False)
+
+    def _update_empty_notice(self) -> None:
+        if self.measure is not None:  # una misura si mostra anche in una struttura senza coppie
+            self.empty_notice.hide()
+            for i in range(self.body.count()):
+                w = self.body.itemAt(i).widget()
+                if w is not None:
+                    w.show()
+            return
+        super()._update_empty_notice()
 
     def _shown_as(self) -> tuple | None:
         """Ciò da cui dipende la scena: la coppia (contatto e tipo) e la sua colonna, sulla stessa struttura."""
@@ -259,6 +348,8 @@ class View3D(PairView):
         return (p.key, p.kind, tuple(col.molecules) if col else None)
 
     def on_pair(self, index: int) -> None:
+        if self.measure is not None:
+            return  # si mostra una misura: la coppia torna quando la si sceglie
         # con le soglie in tempo reale la stessa coppia torna a ogni scatto del cursore: se la scena non cambia
         # (stessa struttura, stesso contatto, stesso tipo e colonna) non si ricostruisce
         if self.scene is not None and self.analysis is not None and self._scene_structure is self.analysis.structure \
@@ -276,7 +367,12 @@ class View3D(PairView):
         pair = self.pair
         self._scene_structure = self.analysis.structure if self.analysis else None
         self._scene_key = self._shown_as()
-        if not (self.analysis and pair):
+        self.picks = []
+        if self.measure is not None and self.analysis is not None:
+            self.ctx = None
+            self.scene = build_measure_scene(self.analysis.structure, self.measure, self.opts.show_h, self.opts.show_cell)
+            relative, auto = None, None
+        elif not (self.analysis and pair):
             self.scene = self.ctx = None
         else:
             self.ctx = self.analysis.pair_context(pair)
@@ -289,8 +385,10 @@ class View3D(PairView):
         scale = self._parallel_scale() if keep_camera else None
         pl.clear()
         pl.set_background(theme.background())
+        self._update_pick_info()
         if self.scene is not None:
             populate(pl, self.scene, self.opts, self.sphere_scale, self.stick_radius)
+            self._draw_picks(pl)
             self._apply_projection()
             if self._pending_camera is not None:  # camera ripristinata da una sessione
                 pl.camera_position, self._pending_camera = self._pending_camera, None
@@ -328,7 +426,7 @@ class View3D(PairView):
         atomi nel piano (L, W) della coppia, centrati come lì."""
         if key != "top":
             return self.scene.center, max(self.scene.size, 4.0) * 0.51
-        f = self.ctx.frame
+        f = self._frame()
         q = f.project(self.scene.pos)
         lo, hi = q[:, :2].min(axis=0), q[:, :2].max(axis=0)
         mid = (lo + hi) / 2
@@ -338,10 +436,14 @@ class View3D(PairView):
         half = max((hi[1] - lo[1]) / 2, (hi[0] - lo[0]) / 2 * h / w)
         return center, max(half, 2.0) * 1.08
 
+    def _frame(self):
+        """Gli assi dell'inquadratura: quelli della coppia, o quelli della scena di una misura."""
+        return self.ctx.frame if self.ctx is not None else scene_frame(self.scene)
+
     def look(self, key: str, render: bool = True) -> None:
-        if self.scene is None or self.ctx is None:
+        if self.scene is None:
             return
-        direction, up = view_directions(self.ctx.frame)[key]
+        direction, up = view_directions(self._frame())[key]
         direction = direction / np.linalg.norm(direction)
         center, half = self._framing(key)
         # in prospettiva, la distanza a cui `half` riempie metà dell'angolo di vista (30°)
@@ -364,6 +466,9 @@ class View3D(PairView):
         return {"pos": (pos - f.origin) @ axes, "focal": (focal - f.origin) @ axes, "up": up @ axes, "scale": self._parallel_scale()}
 
     def _apply_relative_camera(self, rel: dict) -> None:
+        if self.ctx is None:
+            self.look("top", render=False)
+            return
         f = self.ctx.frame
         axes = np.column_stack([f.L, f.W, f.n])
         self.plotter.camera_position = [tuple(f.origin + axes @ rel["pos"]), tuple(f.origin + axes @ rel["focal"]), tuple(axes @ rel["up"])]
@@ -403,6 +508,7 @@ class View3D(PairView):
         try:
             pl.set_background(theme.background())
             populate(pl, self.scene, self.opts, self.sphere_scale, self.stick_radius, px=scale)
+            self._draw_picks(pl, px=scale)
             pl.camera_position = self.plotter.camera_position
             pl.camera.SetParallelProjection(cam.GetParallelProjection())
             pl.camera.SetParallelScale(cam.GetParallelScale())
@@ -412,6 +518,71 @@ class View3D(PairView):
             pl.screenshot(path)
         finally:
             pl.close()
+
+    # ---- misure con il mouse -------------------------------------------------------
+    def _set_picking(self, on: bool) -> None:
+        if not on:
+            self.clear_picks()
+        if isinstance(self.plotter, _NullPlotter):
+            return
+        # la pressione si osserva sull'interattore VTK, il rilascio sullo stile della camera: l'interattore lo
+        # «inghiotte» (https://github.com/pyvista/pyvista/issues/4976). La posizione si legge sempre dall'interattore.
+        iren, style = self.plotter.iren.interactor, self.plotter.iren.style
+        if on and self._pick_observers is None:
+            # un clic è pressione e rilascio senza spostarsi: trascinando la vista ruota come sempre
+            self._pick_observers = ((iren, iren.AddObserver("LeftButtonPressEvent", self._mouse_press)),
+                                    (style, style.AddObserver("LeftButtonReleaseEvent", self._mouse_release)))
+        elif not on and self._pick_observers is not None:
+            for target, obs in self._pick_observers:
+                target.RemoveObserver(obs)
+            self._pick_observers = None
+
+    def _mouse_press(self, _obj=None, _event=None) -> None:
+        self._press_at = tuple(self.plotter.iren.interactor.GetEventPosition())
+
+    def _mouse_release(self, _obj=None, _event=None) -> None:
+        x, y = self.plotter.iren.interactor.GetEventPosition()
+        start, self._press_at = self._press_at, None
+        if start is None or max(abs(x - start[0]), abs(y - start[1])) > 3:
+            return
+        from vtkmodules.vtkRenderingCore import vtkCellPicker
+
+        picker = vtkCellPicker()
+        picker.SetTolerance(0.002)
+        if picker.Pick(x, y, 0, self.plotter.renderer) and picker.GetDataSet() is not None:  # solo gli atomi sono sceglibili
+            self.pick_point(np.array(picker.GetPickPosition()))
+
+    def pick_point(self, point) -> None:
+        """Un clic nella scena (punto sulla superficie di un atomo): l'atomo si aggiunge alla misura."""
+        if self.scene is None or point is None:
+            return
+        i = nearest_atom(self.scene, point)
+        if i is None:
+            return
+        self.pick_atom(i)
+
+    def pick_atom(self, i: int) -> None:
+        if self.picks and self.picks[-1] == i:
+            return
+        self.picks = [i] if len(self.picks) >= 3 or i in self.picks else self.picks + [i]
+        self._draw(keep_camera=True)
+
+    def clear_picks(self) -> None:
+        if self.picks:
+            self.picks = []
+            self._draw(keep_camera=True)
+
+    def _draw_picks(self, plotter, px: float = 1.0) -> None:
+        if self.scene is None or not self.picks:
+            return
+        paths, labels, _text = pick_measure(self.scene, self.picks)
+        draw_measure(plotter, self.scene, self.picks, paths, labels, self.opts, self.sphere_scale, px)
+
+    def _update_pick_info(self) -> None:
+        text = pick_measure(self.scene, self.picks)[2] if self.scene is not None else ""
+        if not text and self.measure is not None:
+            text = tr("Misura dalla scheda Geometria: scegli una coppia per tornare alla coppia")
+        self.pick_info.setText(text)
 
     def extra_state(self) -> dict:
         cam = self.plotter.camera_position

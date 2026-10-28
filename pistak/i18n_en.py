@@ -579,6 +579,19 @@ TEXT: dict[str, str] = {
         "{n} terminal carbon atoms without hydrogens (missing hydrogens?): {atoms}.",
     "{n} legami di lunghezza insolita: {bonds}.": "{n} bonds of unusual length: {bonds}.",
     "{n} contatti intermolecolari {pair} più corti di {limit} Å: {contacts}.": "{n} intermolecular {pair} contacts shorter than {limit} Å: {contacts}.",
+    "{n} contatti intermolecolari {pair} più corti della somma dei raggi di van der Waals di oltre {margin} Å: {contacts}.":
+        "{n} intermolecular {pair} contacts more than {margin} Å shorter than the sum of the van der Waals radii: {contacts}.",
+    "Controllo dei contatti corti": "Short-contact check",
+    "Misura": "Measure",
+    "Clic su due atomi: la loro distanza; su un terzo: anche l'angolo nel secondo. Un quarto clic ricomincia. Trascinando la vista ruota come sempre.":
+        "Click two atoms: their distance; a third: also the angle at the second. A fourth click starts over. Dragging rotates the view as usual.",
+    "Doppio clic su una riga: la misura nella vista 3D, con le molecole che la contengono":
+        "Double-click a row: the measurement in the 3D view, with the molecules that contain it",
+    "Misura dalla scheda Geometria: scegli una coppia per tornare alla coppia":
+        "Measurement from the Geometry tab: choose a pair to go back to the pair",
+    "Margine sotto la somma dei raggi di van der Waals (Å)": "Margin below the sum of the van der Waals radii (Å)",
+    "soglie fisse (C···C sotto 3,0 Å, H···H sotto 1,8 Å)": "fixed thresholds (C···C below 3.0 Å, H···H below 1.8 Å)",
+    "somma dei raggi di van der Waals meno un margine, per tutti gli elementi": "sum of the van der Waals radii minus a margin, for all elements",
     "R1 alto: {value}.": "High R1: {value}.",
     "wR2 alto: {value}.": "High wR2: {value}.",
     "GoF lontano da 1: {value}.": "GoF far from 1: {value}.",

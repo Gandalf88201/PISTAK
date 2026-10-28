@@ -187,6 +187,20 @@ origine in Cg A), invece di tornare alla vista dall'alto: serve a confrontare co
 *PNG…* salva l'immagine ridisegnata tre volte più grande del pannello, con testi e linee in proporzione (`export_scale`
 nella sezione `[gui]` di `user.toml`).
 
+**Misure nella 3D.** Con *Misura* attivo un clic su un atomo lo sceglie (guscio arancione): con due atomi compare la
+distanza, tratteggiata e scritta sulla linea e nella barra della vista (per esempio `C8···H4 (B) 2.843 Å`; «(B)» è
+un atomo della seconda molecola), con un terzo anche l'angolo nel secondo atomo; un quarto clic ricomincia.
+Trascinando, la vista ruota come sempre: conta solo il clic senza spostamento. Le misure finiscono anche nel *PNG…*;
+togliendo *Misura* spariscono.
+
+Un **doppio clic su una riga della scheda Geometria** del Dettaglio (un contatto, un legame, un angolo, una torsione)
+mostra quella misura nella 3D: le molecole intere che contengono i suoi atomi, nella loro posizione nel cristallo
+(la seconda con il carbonio ciano), gli atomi evidenziati con il codice di simmetria e il valore. Serve per esempio a
+vedere un legame a idrogeno con una molecola d'acqua, che non ha un nucleo π e quindi non compare in nessuna coppia;
+funziona anche nelle strutture senza coppie. Scegliendo una coppia la 3D torna alla coppia.
+
+![Un legame a idrogeno con una molecola d'acqua, dalla scheda Geometria](img/it/view3d_measure.png)
+
 ### Proiezione
 
 La coppia proiettata sul piano medio, nel sistema (L, W): atomi pesanti e legami, contorni dei frammenti (tratteggiati),
@@ -205,7 +219,7 @@ Otto schede:
 | Colonne | colonne di stack: tipo (aggregato, colonna, strato, rete 3D), molecole, passo, asse, geometria media |
 | Avvisi | plugin che non si caricano e parametri che hanno dato errore, con il messaggio |
 | Contatti | riepilogo per contatto tra molecole: coppie di frammenti, quante π-stack, contatto più corto, coppia migliore (doppio clic la seleziona) |
-| Geometria | legami, angoli, torsioni e contatti di van der Waals delle molecole indipendenti, con le s.u. e i codici di simmetria; *Idrogeni* li toglie (vedi [Geometria delle molecole](#geometria-delle-molecole)) |
+| Geometria | legami, angoli, torsioni e contatti di van der Waals delle molecole indipendenti, con le s.u. e i codici di simmetria; *Idrogeni* li toglie; doppio clic: la misura nella 3D (vedi [Geometria delle molecole](#geometria-delle-molecole)) |
 | Controlli | gli avvisi A, B, C, G dei [controlli rapidi](#grandezze-della-struttura-e-controlli-rapidi), colorati per gravità |
 
 ![Dettaglio: la struttura](img/it/detail_structure.png)
@@ -281,10 +295,14 @@ che falsano l'analisi delle coppie. Livelli: **A** problema serio, **B** possibi
 | idrogeni | nessun idrogeno nel modello (B); carboni terminali senza idrogeni (C) |
 | sovrapposizioni | atomi distinti a meno di 0,7 Å (A): disordine non risolto o atomi doppi |
 | legami | C–C, C–N, C–O fuori dagli intervalli plausibili (B); C–H, N–H, O–H (C) |
-| contatti | C···C intermolecolari sotto 3,0 Å e H···H sotto 1,8 Å (C) |
+| contatti | con `contact_check = "fixed"` (predefinito): C···C intermolecolari sotto 3,0 Å e H···H sotto 1,8 Å (C); con `"vdw"`: per ogni coppia di elementi, i contatti più corti della somma dei raggi di van der Waals di oltre `contact_check_margin` (0,5 Å), esclusi i legami a idrogeno plausibili (H legato a N o O verso N, O, F) (C, `vdwContact`) |
 | affinamento | R1 > 0,075 (C) o > 0,10 (B), wR2 > 0,20 (C) o > 0,25 (B), GoF fuori da 0,8–2,0, densità residua > 1 e/Å³ per gli atomi leggeri |
 | disordine | atomi esclusi dalla regola di disordine (G), occupanze parziali nel modello analizzato (C), operazioni di simmetria ricavate dal simbolo (G) |
 | simmetria mancata | come ADDSYM di PLATON: il pacchetto `spglib` cerca il gruppo del modello; più operazioni di quelle dichiarate entro 0,1 Å → A, solo entro 0,3 Å → C (pseudosimmetria) |
+
+Il controllo dei contatti si sceglie in **Analisi ▸ Soglie…** (*Controllo dei contatti corti* e *Margine*) o in
+`user.toml`: le soglie fisse vedono solo carboni e idrogeni; la somma dei raggi vale per tutti gli elementi ed è la
+stessa misura della scheda *Geometria*, dove ogni contatto ha la colonna *d − Σ r vdW*.
 
 Da terminale: `./start.py check file.cif` (esce con codice 2 se ci sono avvisi A, comodo negli script; `--csv` li
 scrive). Senza `spglib` installato la ricerca della simmetria mancata si salta con un avviso G.
@@ -356,6 +374,8 @@ criterio), da `user.toml` o dal terminale.
 | `fragments` | all | tutti i frammenti π o solo il più grande |
 | `min_fragment_atoms` | 5 | atomi minimi di un frammento secondario |
 | `long_axis_atoms` | (vuoto) | asse lungo da due etichette, es. `C1,C9` |
+| `contact_check` | fixed | controllo rapido dei contatti corti: soglie fisse (fixed) o somma dei raggi di van der Waals (vdw) |
+| `contact_check_margin` | 0,5 Å | con `vdw`: quanto sotto la somma dei raggi deve stare un contatto per l'avviso |
 
 **Valori del sito** (nella finestra delle soglie) riporta tutto alle convenzioni dell'analizzatore originale:
 `pair_mode = site`, `disorder = first`, `fragments = largest`.
@@ -377,7 +397,7 @@ Perché è veloce: l'analisi è divisa in **stadi** e ogni soglia appartiene a u
 | struttura | `bond_tolerance`, `same_site`, `max_cell_atoms` | cella, legami, molecole |
 | frammenti | `ring_rms`, `molecule_rms`, `max_ring_size`, `fragments`, `min_fragment_atoms`, `long_axis_atoms` | anelli, frammenti, assi |
 | contatti | `contact_cutoff`, `neighbour_shells`, `pair_mode` | misura di tutte le coppie (la parte costosa) |
-| coppie | `max_dihedral`, `max_interplanar`, `min_overlap`, `max_slip`, `overlap_measure`, `ring_pair_max_distance` | classificazione, raccolta, colonne |
+| coppie | `max_dihedral`, `max_interplanar`, `min_overlap`, `max_slip`, `overlap_measure`, `ring_pair_max_distance`, `contact_check`, `contact_check_margin` | classificazione, raccolta, colonne (le ultime due rifanno solo i controlli rapidi) |
 
 Cambiando una soglia si riparte dal suo stadio e si riusa il resto. Con le soglie del criterio di stack nessuna
 geometria si rimisura (pochi millisecondi). Il *contatto massimo* invece decide quali coppie misurare: si applica
@@ -484,10 +504,14 @@ Tutto si esporta in CSV dal menu *Esporta ▾*. Da terminale: `compare` e `stats
 
 * **Tabella delle coppie (CSV)**: una riga per coppia, colonne `n, kind, molecule_a, molecule_b, shift` e poi un
   parametro per colonna (le chiavi del registro), più `<chiave>_su` e `kind_agreement` se ci sono le incertezze.
-* **Risultati completi (JSON)**: `format`, `version`, `summary` (file, gruppo, cella, molecole, soglie, disordine,
-  incertezze, grandezze della struttura in `structure`, avvisi dei controlli in `alerts`), `units`,
-  `structure_units`, `fragments` (frammenti π con le etichette degli atomi), `pairs` (con tutti i parametri) e
-  `molecule_contacts`.
+* **Risultati completi (JSON)**, versione 4: `format`, `version`, `summary` (file, gruppo, cella, molecole, soglie,
+  disordine, incertezze, grandezze della struttura in `structure`, avvisi dei controlli in `alerts`), `units`,
+  `structure_units`, `symops` (le operazioni di simmetria), `molecule_list` (ogni molecola numerata come nelle
+  coppie: formula, atomi, etichette, baricentro, se è estesa e se è indipendente per simmetria), `fragments` (frammenti π
+  con le etichette degli atomi), `pairs` (con tutti i parametri), `molecule_contacts`, `stacks` (colonne di stack: tipo,
+  molecole, traslazioni, passo, coppie), `ring_pairs` (coppie di anelli di ogni coppia, con il numero `pair`) e
+  `geometry` (`bonds`, `angles`, `torsions`, `contacts` delle molecole indipendenti: atomi, `symops`, valore, s.u.; per i
+  contatti `molecule_b`, `vdw_sum` e `delta`).
 * **Coppia selezionata (XYZ)**: le due molecole, B già nella cella giusta, da aprire in qualunque visualizzatore.
 * **Coppia selezionata per calcoli quantistici**: vedi la sezione seguente.
 * **Cella per calcoli periodici**: vedi [Cella intera per calcoli periodici](#cella-intera-per-calcoli-periodici).

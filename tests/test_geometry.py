@@ -151,3 +151,23 @@ def test_contatti_senza_idrogeni_e_nessun_contatto_nella_stessa_molecola():
     assert no_h and len(no_h) < len(all_c) and all("H" not in x[0] for c in no_h for x in c.atoms)
     bonded = {tuple(sorted((m.labels[i], m.labels[j]))) for m in a.structure.molecules for i, j in m.bonds}
     assert all(c.value > 1.0 for c in all_c) and not any(tuple(sorted(c.atoms)) in bonded and c.value < 1.7 for c in all_c)
+
+
+def test_json_completo(tmp_path):
+    import json
+
+    from pistak import api
+    from pistak.io import export
+
+    a = api.analyse_file(COD / "4500022.cif")
+    data = json.loads(export.write_json(a, tmp_path / "a.json").read_text(encoding="utf-8"))
+    assert data["version"] == export.JSON_VERSION == 4
+    assert {"symops", "molecule_list", "stacks", "ring_pairs", "geometry"} <= set(data)
+    g = data["geometry"]
+    items = molecule_geometry(a.structure, a.cif)
+    assert [len(g[k]) for k in ("bonds", "angles", "torsions", "contacts")] == \
+        [sum(x.kind == k for x in items) for k in ("bond", "angle", "torsion", "contact")]
+    hb = g["contacts"][0]
+    assert hb["delta"] == pytest.approx(hb["value"] - hb["vdw_sum"]) and len(hb["symops"]) == 2 and hb["molecule_b"]
+    assert sum(m["independent"] for m in data["molecule_list"]) == len(unique_molecules(a.structure))
+    assert data["ring_pairs"] and all(r["pair"] >= 1 for r in data["ring_pairs"]) and len(data["symops"]) == 4

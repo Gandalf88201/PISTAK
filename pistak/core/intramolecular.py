@@ -20,7 +20,7 @@ from __future__ import annotations
 import math
 from collections import Counter
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from fractions import Fraction
 
 import numpy as np
@@ -47,6 +47,9 @@ class GeometryItem:
     codes: tuple[str, ...] = ()
     #: Solo per i contatti: somma dei raggi di van der Waals (Å).
     vdw: float = math.nan
+    #: Dove sta ogni atomo: (molecola, traslazione di reticolo della molecola, indice dell'atomo nella molecola). La
+    #: posizione è `molecules[m].pos[i] + shift_vector(t)`: serve a mostrare la misura nella vista 3D.
+    places: tuple[tuple[int, tuple[int, int, int], int], ...] = field(default=(), compare=False)
 
     @property
     def delta(self) -> float:
@@ -248,7 +251,8 @@ def molecule_geometry(s: Structure, cif: Cif, molecules: list[int] | None = None
             fn = MEASURES[kind]
             p = m.pos[list(idx)]
             out.append(GeometryItem(kind, mi, tuple(m.labels[i] for i in idx), fn(p),
-                                    prop(fn, p, m.cell_index[list(idx)]), tuple(codes[i] for i in idx)))
+                                    prop(fn, p, m.cell_index[list(idx)]), tuple(codes[i] for i in idx),
+                                    places=tuple((mi, (0, 0, 0), int(i)) for i in idx)))
     if "contact" in kinds:
         out += vdw_contacts(s, cif, mols, include_h, prop, sym)
     return out
@@ -268,6 +272,10 @@ def vdw_contacts(s: Structure, cif: Cif, molecules: list[int] | None = None, inc
     lengths = np.linalg.norm(s.vectors, axis=1)
     out: list[GeometryItem] = []
     seen: set[tuple] = set()
+    owner: dict[int, tuple[int, np.ndarray, int]] = {}  # atomo della cella → (molecola, cella in cui sta, indice)
+    for k, mol in enumerate(s.molecules):
+        for i, (ci, sh) in enumerate(zip(mol.cell_index, mol.cell_shift)):
+            owner[int(ci)] = (k, np.asarray(sh, dtype=int), i)
     for mi in unique_molecules(s) if molecules is None else molecules:
         m = s.molecules[mi]
         if m.extended or not len(m):
@@ -305,7 +313,9 @@ def vdw_contacts(s: Structure, cif: Cif, molecules: list[int] | None = None, inc
                 if sym is not None:
                     ops = sym.ops(cells, p)
                     codes = (sym.text(ops[0], ref), sym.text(ops[1], ref))
+                mj, cs, ij = owner.get(int(j), (-1, sh, -1))
+                places = ((mi, (0, 0, 0), a), (mj, tuple(int(x) for x in sh - cs), ij))
                 out.append(GeometryItem("contact", mi, (m.labels[a], s.cell_labels[j]), d, prop(distance, p, cells),
-                                        codes, lim))
+                                        codes, lim, places))
     out.sort(key=lambda g: (g.delta, g.atoms))
     return out

@@ -83,7 +83,7 @@ def test_export_identici_in_italiano_e_in_inglese(tmp_path):
     assert heads["table"][:4] == ["file", "n", "kind", "count"]
     assert heads["describe"] == ["parameter", "n", "pairs", "mean", "std", "min", "q25", "median", "q75", "max"]
     data = json.loads(it["json"])
-    assert data["format"] == "pistak-analysis" and data["version"] == 3 and data["pairs"][0]["kind"] == "stack"
+    assert data["format"] == "pistak-analysis" and data["version"] == 4 and data["pairs"][0]["kind"] == "stack"
     assert "interplanar=" in it["xyz"].splitlines()[1]
 
 

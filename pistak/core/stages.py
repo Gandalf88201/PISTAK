@@ -10,7 +10,9 @@ La catena di `pistak.core.analysis` è divisa in stadi, ognuno dipendente solo d
 
 `first_stage(old, new)` dice il primo stadio che una modifica delle soglie rende da rifare; `analysis.reanalyse`
 riparte da lì e riusa il resto (`StageCache`). Muovere le soglie del criterio di stack (angolo, distanza
-interplanare, sovrapposizione, slittamento) tocca solo `pairs`: nessuna geometria si rimisura.
+interplanare, sovrapposizione, slittamento) tocca solo `pairs`: nessuna geometria si rimisura. Le soglie dei
+controlli rapidi (`CHECK_FIELDS`) stanno nello stadio `pairs` perché non toccano la geometria; cambiandole si rifanno
+i controlli (`pistak.api.reanalyse`).
 """
 from __future__ import annotations
 
@@ -27,8 +29,10 @@ STAGE_FIELDS: dict[str, frozenset[str]] = {
     "fragments": frozenset({"ring_rms", "molecule_rms", "max_ring_size", "fragments", "min_fragment_atoms", "long_axis_atoms"}),
     "contacts": frozenset({"contact_cutoff", "neighbour_shells", "pair_mode"}),
     "pairs": frozenset({"max_dihedral", "max_interplanar", "min_overlap", "max_slip", "overlap_measure",
-                        "ring_pair_max_distance"}),
+                        "ring_pair_max_distance", "contact_check", "contact_check_margin"}),
 }
+#: Le soglie lette dai controlli rapidi (`pistak.core.validation`).
+CHECK_FIELDS = frozenset({"contact_check", "contact_check_margin"})
 
 
 def stage_of(name: str) -> str:

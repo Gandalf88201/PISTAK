@@ -101,6 +101,11 @@ class Limits:
         "largest": "solo il più grande (come il sito)"}})
     min_fragment_atoms: int = field(default=5, metadata={"label": "Atomi minimi in un frammento π secondario", "min": 3, "max": 60, "step": 1})
     long_axis_atoms: str = field(default="", metadata={"label": "Asse lungo da due atomi (etichette, es. C1,C9; vuoto = automatico)", "free": True})
+    # ---- controlli rapidi --------------------------------------------------------------------------------
+    contact_check: str = field(default="fixed", metadata={"label": "Controllo dei contatti corti", "choices": {
+        "fixed": "soglie fisse (C···C sotto 3,0 Å, H···H sotto 1,8 Å)",
+        "vdw": "somma dei raggi di van der Waals meno un margine, per tutti gli elementi"}})
+    contact_check_margin: float = field(default=0.5, metadata={"label": "Margine sotto la somma dei raggi di van der Waals (Å)", "min": 0, "max": 1.5, "step": 0.05})
 
     def with_values(self, **kw) -> Limits:
         return replace(self, **kw)

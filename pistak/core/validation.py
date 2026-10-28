@@ -35,8 +35,12 @@ BOND_RANGES: dict[tuple[str, str], tuple[float, float, str]] = {
     ("C", "C"): (1.15, 1.65, "B"), ("C", "N"): (1.10, 1.56, "B"), ("C", "O"): (1.15, 1.50, "B"),
     ("C", "H"): (0.75, 1.15, "C"), ("H", "N"): (0.70, 1.10, "C"), ("H", "O"): (0.65, 1.10, "C"),
 }
-#: Contatti intermolecolari corti (Å): coppia di elementi → (soglia, livello).
+#: Contatti intermolecolari corti (Å), con `Limits.contact_check = "fixed"`: coppia di elementi → (soglia, livello).
 SHORT_CONTACTS: dict[tuple[str, str], tuple[float, str]] = {("C", "C"): (3.0, "C"), ("H", "H"): (1.8, "C")}
+#: Con `contact_check = "vdw"` non si segnalano i legami a idrogeno plausibili: H legato a uno di questi donatori…
+HBOND_DONORS = frozenset({"N", "O"})
+#: …verso uno di questi accettori.
+HBOND_ACCEPTORS = frozenset({"N", "O", "F"})
 #: Due atomi distinti più vicini di così sono quasi sovrapposti (Å).
 OVERLAP = 0.7
 #: Tolleranze di ADDSYM (Å): simmetria trovata alla prima → A, solo alla seconda → C (pseudosimmetria).
@@ -185,6 +189,8 @@ def _bonds(a: Analysis) -> list[Alert]:
 
 @check("contacts")
 def _contacts(a: Analysis) -> list[Alert]:
+    if a.limits.contact_check == "vdw":
+        return _vdw_contacts(a, a.limits.contact_check_margin)
     s = a.structure
     n = s.n_cell_atoms
     mol = np.full(n, -1)
@@ -208,6 +214,26 @@ def _contacts(a: Analysis) -> list[Alert]:
         found.setdefault(pair, []).append(f"{key[0]}···{key[1]} {d:.2f}")  # type: ignore[arg-type]
     return [Alert("shortContact", SHORT_CONTACTS[p][1], {"pair": f"{p[0]}···{p[1]}", "limit": SHORT_CONTACTS[p][0],
                                                          "n": len(v), "contacts": _labels(v, 4)}) for p, v in found.items()]
+
+
+def _vdw_contacts(a: Analysis, margin: float) -> list[Alert]:
+    """Contatti intermolecolari più corti della somma dei raggi di van der Waals di oltre `margin` Å, per coppia di
+    elementi (gli stessi dell'elenco della scheda Geometria), senza i legami a idrogeno plausibili."""
+    from pistak.core.intramolecular import vdw_contacts
+
+    element = {at.label: at.el for at in a.cif.atoms + a.cif.omitted}
+    polar_h = {m.labels[i if m.el[i] == "H" else j] for m in a.structure.molecules for i, j in m.bonds
+               if {m.el[i], m.el[j]} & {"H"} and ({m.el[i], m.el[j]} - {"H"}) & HBOND_DONORS}
+    found: dict[tuple[str, str], list[str]] = {}
+    for c in vdw_contacts(a.structure, a.cif):
+        if c.delta >= -margin:
+            break  # in ordine di differenza crescente
+        els = tuple(element.get(x, "") for x in c.atoms)
+        if any(lab in polar_h and other in HBOND_ACCEPTORS for lab, other in zip(c.atoms, els[::-1])):
+            continue
+        found.setdefault(tuple(sorted(els)), []).append(f"{c.atoms[0]}···{c.atoms[1]} {c.value:.2f} ({c.delta:+.2f})")
+    return [Alert("vdwContact", "C", {"pair": f"{p[0]}···{p[1]}", "margin": f"{margin:.2f}", "n": len(v),
+                                      "contacts": _labels(v, 4)}) for p, v in sorted(found.items())]
 
 
 # ---- affinamento ----------------------------------------------------------------------------------------------

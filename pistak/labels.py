@@ -38,6 +38,8 @@ ALERT_TEXT = {
     "missingH": "{n} atomi di carbonio terminali senza idrogeni (idrogeni mancanti?): {atoms}.",
     "bondLength": "{n} legami di lunghezza insolita: {bonds}.",
     "shortContact": "{n} contatti intermolecolari {pair} più corti di {limit} Å: {contacts}.",
+    "vdwContact": "{n} contatti intermolecolari {pair} più corti della somma dei raggi di van der Waals di oltre "
+                  "{margin} Å: {contacts}.",
     "highR1": "R1 alto: {value}.",
     "highWR2": "wR2 alto: {value}.",
     "goof": "GoF lontano da 1: {value}.",

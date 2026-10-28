@@ -280,3 +280,49 @@ def test_mantieni_la_vista_rispetto_alla_coppia(view3d):
     v.lock_cam.setChecked(False)
     s.select("A", 0)
     assert v._still_auto() and v._auto_view[0] == "top"  # senza: si torna alla vista dall'alto
+
+
+def test_misura_con_il_mouse_nella_3d(view3d):
+    # clic veri (pressione e rilascio) nel widget VTK: il rilascio arriva allo stile, non all'interattore
+    import time
+
+    from PySide6.QtCore import QPoint, Qt
+    from PySide6.QtTest import QTest
+    from PySide6.QtWidgets import QApplication
+
+    _, _, v = view3d
+    app = QApplication.instance()
+    if app.platformName() == "offscreen":
+        pytest.skip("servono una finestra e OpenGL (QT_QPA_PLATFORM=cocoa, xcb…)")
+    v.show()
+
+    def spin(n=10):
+        for _ in range(n):
+            app.processEvents()
+            time.sleep(0.02)
+
+    spin(20)
+    v.pick_box.setChecked(True)
+    w, ren = v.plotter.interactor, v.plotter.renderer
+    dpr = w.devicePixelRatioF()
+
+    def at(i):
+        ren.SetWorldPoint(*v.scene.pos[i], 1.0)
+        ren.WorldToDisplay()
+        x, y, _z = ren.GetDisplayPoint()
+        return QPoint(int(x / dpr), int(w.height() - y / dpr))
+
+    for i in (0, 5):
+        QTest.mouseClick(w, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, at(i))
+        spin(5)
+    assert v.picks == [0, 5] and "Å" in v.pick_info.text()
+    p0 = at(3)  # trascinando si ruota, non si sceglie
+    QTest.mousePress(w, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, p0)
+    for k in range(1, 6):
+        QTest.mouseMove(w, p0 + QPoint(12 * k, 5 * k))
+        spin(1)
+    QTest.mouseRelease(w, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, p0 + QPoint(60, 25))
+    spin(5)
+    assert v.picks == [0, 5]
+    v.pick_box.setChecked(False)
+    assert v.picks == [] and v._pick_observers is None

@@ -165,6 +165,13 @@ def figures(app: QApplication, lang: str) -> None:
     det.geom_kind.setCurrentIndex(det.geom_kind.findData("contact"))
     wait(app, lambda: det.geometry.rowCount() > 0)
     save(det, out / "detail_geometry.png")
+    # lo stesso legame a idrogeno nella 3D (doppio clic sulla riga), con la molecola d'acqua
+    det._geometry_chosen(0, 0)
+    v3.picks = []
+    alone(v3, 720, 540)
+    v3.look("top")
+    wait(app, lambda: True)
+    save(v3, out / "view3d_measure.png")
     det.tabs.setCurrentIndex(0)
 
     # tabella, scatter e istogramma: i dimeri del naftalene hanno uno stack e tre coppie parallele

@@ -112,6 +112,9 @@ class DetailView(PairView):
         self.geometry = QTableWidget()
         self.geometry.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.geometry.setSortingEnabled(True)
+        self.geometry.setToolTip(tr("Doppio clic su una riga: la misura nella vista 3D, con le molecole che la contengono"))
+        self.geometry.cellDoubleClicked.connect(self._geometry_chosen)
+        self._geometry_rows: list = []
         lay.addWidget(self.geometry)
         self.geom_legend = QLabel()
         self.geom_legend.setWordWrap(True)
@@ -146,6 +149,7 @@ class DetailView(PairView):
         self.geometry.setColumnCount(len(heads))
         self.geometry.setHorizontalHeaderLabels(heads)
         self.geometry.setRowCount(len(rows))
+        self._geometry_rows = rows
         for r, (g, labs) in enumerate(zip(rows, labels)):
             cells: list[tuple[str, float | None]] = [(str(g.molecule + 1), g.molecule + 1)]
             cells += [(lab, None) for lab in labs]
@@ -156,6 +160,7 @@ class DetailView(PairView):
                 it = _NumItem(text, num) if num is not None else QTableWidgetItem(text)
                 if num is not None:
                     it.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                it.setData(Qt.ItemDataRole.UserRole, r)  # la riga resta legata alla misura anche riordinando
                 self.geometry.setItem(r, c, it)
         self.geometry.setSortingEnabled(True)
         self.geometry.resizeColumnsToContents()
@@ -164,6 +169,12 @@ class DetailView(PairView):
         self.geom_legend.setText(tr("Operazioni di simmetria") + ": " + " · ".join(f"{n} = {op}" for n, op in legend)
                                  if legend else "")
         self.geom_legend.setVisible(bool(legend))
+
+    def _geometry_chosen(self, row: int, _col: int) -> None:
+        it = self.geometry.item(row, 0)
+        r = it.data(Qt.ItemDataRole.UserRole) if it is not None else None
+        if r is not None and 0 <= r < len(self._geometry_rows):
+            self.session.show_measure(self.group, self._geometry_rows[r])
 
     def _fill_checks(self) -> None:
         a = self.analysis

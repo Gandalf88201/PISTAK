@@ -37,7 +37,10 @@ def reanalyse(analysis: Analysis, limits: Limits) -> Analysis:
     new = _core.reanalyse(analysis, limits)
     if new is analysis:
         return new
-    if new.structure is analysis.structure:  # stessa cella e stesse molecole: i controlli rapidi non cambiano
+    from pistak.core.stages import CHECK_FIELDS, changed_fields
+
+    # stessa cella, stesse molecole e stesse soglie dei controlli: gli avvisi non cambiano
+    if new.structure is analysis.structure and not CHECK_FIELDS & set(changed_fields(analysis.limits, limits)):
         new.alerts = analysis.alerts
     return finish(new)
 

@@ -116,7 +116,7 @@ def test_json_con_frammenti_e_contatti(crystal, tmp_path):
 
     a = compute_all(analyse_text(crystal, "fn", Limits()))
     data = json.loads(export.write_json(a, tmp_path / "a.json").read_text())
-    assert data["version"] == 3
+    assert data["version"] == 4
     assert [(f["molecule"], f["fragment"], f["atoms"]) for f in data["fragments"]] == [(1, 1, 10), (1, 2, 6), (2, 1, 10), (2, 2, 6)]
     assert {p["fragment_a"] for p in data["pairs"]} == {1, 2}
     assert sum(len(c["pairs"]) for c in data["molecule_contacts"]) == len(data["pairs"])

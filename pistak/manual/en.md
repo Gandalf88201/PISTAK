@@ -186,6 +186,20 @@ at Cg A) instead of going back to the view from above, to compare different pair
 saves the image redrawn three times larger than the panel, with text and lines to scale (`export_scale` in the `[gui]`
 section of `user.toml`).
 
+**Measuring in 3D.** With *Measure* on, a click on an atom selects it (orange shell): with two atoms the distance
+appears, dashed and written on the line and in the view's toolbar (for example `C8···H4 (B) 2.843 Å`; "(B)" marks an
+atom of the second molecule), with a third also the angle at the second atom; a fourth click starts over. Dragging
+rotates the view as usual: only a click without movement counts. The measurements also go into the *PNG…*; unticking
+*Measure* removes them.
+
+A **double-click on a row of the Geometry tab** of the Detail (a contact, a bond, an angle, a torsion) shows that
+measurement in 3D: the whole molecules containing its atoms, in their place in the crystal (the second one with cyan
+carbons), the atoms highlighted with their symmetry code and the value. It is useful, for example, to see a hydrogen
+bond to a water molecule, which has no π core and so appears in no pair; it also works for structures without pairs.
+Choosing a pair takes the 3D view back to the pair.
+
+![A hydrogen bond to a water molecule, from the Geometry tab](img/en/view3d_measure.png)
+
 ### Projection
 
 The pair projected onto its mean plane, in the (L, W) frame: heavy atoms and bonds, fragment outlines (dashed), overlap
@@ -204,7 +218,7 @@ Eight tabs:
 | Columns | stack columns: type (aggregate, column, layer, 3D network), molecules, step, axis, mean geometry |
 | Warnings | plugins that failed to load and parameters that raised errors, with the message |
 | Contacts | summary per molecule contact: fragment pairs, how many π-stacks, shortest contact, best pair (double click selects it) |
-| Geometry | bonds, angles, torsions and van der Waals contacts of the independent molecules, with s.u. and symmetry codes; *Hydrogens* hides them (see [Molecular geometry](#molecular-geometry)) |
+| Geometry | bonds, angles, torsions and van der Waals contacts of the independent molecules, with s.u. and symmetry codes; *Hydrogens* hides them; double-click: the measurement in 3D (see [Molecular geometry](#molecular-geometry)) |
 | Checks | the A, B, C, G alerts of the [quick checks](#structure-quantities-and-quick-checks), coloured by severity |
 
 ![Detail: the structure](img/en/detail_structure.png)
@@ -280,10 +294,14 @@ thresholds are indicative.
 | hydrogens | no hydrogens in the model (B); terminal carbons without hydrogens (C) |
 | overlaps | distinct atoms closer than 0.7 Å (A): unresolved disorder or duplicated atoms |
 | bonds | C–C, C–N, C–O outside the plausible ranges (B); C–H, N–H, O–H (C) |
-| contacts | intermolecular C···C below 3.0 Å and H···H below 1.8 Å (C) |
+| contacts | with `contact_check = "fixed"` (default): intermolecular C···C below 3.0 Å and H···H below 1.8 Å (C); with `"vdw"`: for each pair of elements, contacts more than `contact_check_margin` (0.5 Å) shorter than the sum of the van der Waals radii, plausible hydrogen bonds excluded (H bonded to N or O towards N, O, F) (C, `vdwContact`) |
 | refinement | R1 > 0.075 (C) or > 0.10 (B), wR2 > 0.20 (C) or > 0.25 (B), GoF outside 0.8–2.0, residual density > 1 e/Å³ for light atoms |
 | disorder | atoms left out by the disorder policy (G), partial occupancies in the analysed model (C), symmetry operations derived from the symbol (G) |
 | missed symmetry | like PLATON's ADDSYM: the `spglib` package looks for the space group of the model; more operations than declared within 0.1 Å → A, only within 0.3 Å → C (pseudosymmetry) |
+
+The contact check is chosen in **Analysis ▸ Thresholds…** (*Short-contact check* and *Margin*) or in `user.toml`:
+the fixed thresholds only see carbons and hydrogens; the sum of radii works for every element and is the same measure as
+in the *Geometry* tab, where each contact has the *d − Σ r vdW* column.
 
 On the command line: `./start.py check file.cif` (exits with code 2 when there are A alerts, handy in scripts;
 `--csv` writes them). Without `spglib` installed the missed-symmetry search is skipped with a G alert.
@@ -355,6 +373,8 @@ criterion), from `user.toml` or on the command line.
 | `fragments` | all | all π fragments or only the largest |
 | `min_fragment_atoms` | 5 | minimum atoms of a secondary fragment |
 | `long_axis_atoms` | (empty) | long axis from two labels, e.g. `C1,C9` |
+| `contact_check` | fixed | quick check of short contacts: fixed thresholds (fixed) or sum of the van der Waals radii (vdw) |
+| `contact_check_margin` | 0.5 Å | with `vdw`: how far below the sum of the radii a contact must be for an alert |
 
 **Website values** (in the thresholds dialog) restores the conventions of the original analyser:
 `pair_mode = site`, `disorder = first`, `fragments = largest`.
@@ -376,7 +396,7 @@ Why it is fast: the analysis is split into **stages**, and every threshold belon
 | structure | `bond_tolerance`, `same_site`, `max_cell_atoms` | cell, bonds, molecules |
 | fragments | `ring_rms`, `molecule_rms`, `max_ring_size`, `fragments`, `min_fragment_atoms`, `long_axis_atoms` | rings, fragments, axes |
 | contacts | `contact_cutoff`, `neighbour_shells`, `pair_mode` | measuring all pairs (the expensive part) |
-| pairs | `max_dihedral`, `max_interplanar`, `min_overlap`, `max_slip`, `overlap_measure`, `ring_pair_max_distance` | classification, grouping, columns |
+| pairs | `max_dihedral`, `max_interplanar`, `min_overlap`, `max_slip`, `overlap_measure`, `ring_pair_max_distance`, `contact_check`, `contact_check_margin` | classification, grouping, columns (the last two only redo the quick checks) |
 
 Changing a threshold restarts from its stage and reuses the rest. With the thresholds of the stack criterion no
 geometry is measured again (a few milliseconds). The *maximum contact* instead decides which pairs to measure: it is
@@ -484,9 +504,14 @@ Everything can be exported to CSV from the *Export ▾* menu. On the command lin
 
 * **Pairs table (CSV)**: one row per pair, columns `n, kind, molecule_a, molecule_b, shift` and then one parameter per
   column (the registry keys), plus `<key>_su` and `kind_agreement` when uncertainties are available.
-* **Full results (JSON)**: `format`, `version`, `summary` (file, group, cell, molecules, thresholds, disorder,
-  uncertainties, structure quantities in `structure`, quick-check alerts in `alerts`), `units`, `structure_units`,
-  `fragments` (π fragments with the atom labels), `pairs` (with all parameters) and `molecule_contacts`.
+* **Full results (JSON)**, version 4: `format`, `version`, `summary` (file, group, cell, molecules, thresholds,
+  disorder, uncertainties, structure quantities in `structure`, quick-check alerts in `alerts`), `units`,
+  `structure_units`, `symops` (the symmetry operations), `molecule_list` (each molecule numbered as in the pairs:
+  formula, atoms, labels, centroid, whether it is extended and whether it is symmetry-independent), `fragments` (π
+  fragments with the atom labels), `pairs` (with all parameters), `molecule_contacts`, `stacks` (stack columns: kind,
+  molecules, translations, repeat, pairs), `ring_pairs` (ring pairs of every pair, with the `pair` number) and
+  `geometry` (`bonds`, `angles`, `torsions`, `contacts` of the independent molecules: atoms, `symops`, value, s.u.;
+  for contacts also `molecule_b`, `vdw_sum` and `delta`).
 * **Selected pair (XYZ)**: the two molecules, B already in the right cell, for any molecular viewer.
 * **Selected pair for quantum chemistry**: see the next section.
 * **Cell for periodic calculations**: see [Whole cell for periodic calculations](#whole-cell-for-periodic-calculations).

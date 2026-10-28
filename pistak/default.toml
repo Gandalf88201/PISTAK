@@ -25,6 +25,9 @@ disorder = "major"         # major: componente con occupanza maggiore | first: g
 fragments = "all"          # all: tutti i sistemi di anelli planari di ogni molecola | largest: solo il più grande (sito)
 min_fragment_atoms = 5     # atomi minimi di un frammento π secondario (il principale si tiene sempre)
 long_axis_atoms = ""       # asse lungo da due atomi, per etichetta ("C1,C9"); vuoto = direzione di massima estensione
+# controlli rapidi
+contact_check = "fixed"    # fixed: C···C < 3,0 Å e H···H < 1,8 Å | vdw: somma dei raggi di van der Waals − contact_check_margin
+contact_check_margin = 0.5 # Å sotto la somma dei raggi (solo con contact_check = "vdw"); legami a idrogeno esclusi
 
 [gui]
 language = "it"            # it | en | auto (auto = lingua del sistema) — si cambia anche dal menu Lingua

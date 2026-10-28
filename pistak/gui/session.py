@@ -55,6 +55,7 @@ class Session(QObject):
     paramsChanged = Signal()  # i parametri del registro sono cambiati (plugin ricaricati)
     uncertaintyChanged = Signal()  # sono state calcolate le incertezze dell'analisi corrente
     limitsChanged = Signal()  # le soglie della sessione sono cambiate (l'analisi le segue subito o poco dopo)
+    measureRequested = Signal(object, object)  # gruppo, misura della scheda Geometria da mostrare nella vista 3D
     busyChanged = Signal(bool, str)
     message = Signal(str)
     error = Signal(str)
@@ -85,6 +86,10 @@ class Session(QObject):
         if group in self._selection:
             self._selection[group] = index
             self.selectionChanged.emit(group, index)
+
+    def show_measure(self, group: str | None, item) -> None:
+        """Chiede alle viste 3D del gruppo di mostrare una misura (`pistak.core.intramolecular.GeometryItem`)."""
+        self.measureRequested.emit(group, item)
 
     def subset(self, group: str) -> set[int] | None:
         return self._subset.get(group)

@@ -240,3 +240,30 @@ def test_cif_reale_con_disordine():
     a = api.analyse_file(real("UNITCELL.cif"))
     assert {"highR1", "highWR2", "partialOccupancy", "disorderSkipped"} <= codes(a)
     assert not {"formulaHeavy", "density", "overlap"} & codes(a)  # contenuto con tutte le componenti disordinate
+
+
+# ---- contatti corti: soglie fisse o somma dei raggi di van der Waals --------------------------------------------
+def test_contatti_con_i_raggi_di_van_der_waals():
+    fixed = api.analyse_file(EX / "herringbone_anthracene.cif")
+    vdw = api.reanalyse(fixed, fixed.limits.with_values(contact_check="vdw"))
+    assert "shortContact" in codes(fixed) and "vdwContact" not in codes(fixed)
+    pairs = {al.values["pair"] for al in vdw.alerts if al.code == "vdwContact"}
+    assert "shortContact" not in codes(vdw) and {"C···C", "C···H", "H···H"} <= pairs  # anche C···H, che le soglie fisse non vedono
+    strict = api.reanalyse(fixed, fixed.limits.with_values(contact_check="vdw", contact_check_margin=1.0))
+    assert sum(al.values["n"] for al in strict.alerts if al.code == "vdwContact") < \
+        sum(al.values["n"] for al in vdw.alerts if al.code == "vdwContact")
+    assert api.reanalyse(vdw, vdw.limits.with_values(max_dihedral=25)).alerts is vdw.alerts  # stessi controlli: riusati
+
+
+def test_contatti_vdw_senza_legami_a_idrogeno():
+    # 4500022: gli H···N e H···O dei legami a idrogeno sono ben sotto la somma dei raggi, ma non sono avvisi
+    a = api.analyse_file(COD / "4500022.cif", Limits(contact_check="vdw"))
+    assert "vdwContact" not in codes(a)
+    a = api.analyse_file(COD / "4500022.cif", Limits(contact_check="vdw", contact_check_margin=0.0))
+    assert all("H" not in al.values["pair"] or "O" not in al.values["pair"] for al in a.alerts if al.code == "vdwContact")
+
+
+def test_soglie_del_controllo_da_toml():
+    lim = Limits.from_dict({"contact_check": "VDW", "contact_check_margin": "0.3"})
+    assert (lim.contact_check, lim.contact_check_margin) == ("vdw", 0.3)
+    assert Limits.from_dict({"contact_check": "boh"}).contact_check == "fixed"
