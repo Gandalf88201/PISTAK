@@ -49,6 +49,20 @@ class TestCif:
         assert cif.skipped_disorder == 1
         assert len(cif.symops) == 1
 
+    def test_fcf_incollato_in_un_campo_di_testo(self):
+        # COD 2300778: Olex2 mette l'FCF in _iucr_refine_fcf_details; il suo 'data_I' non apre un altro blocco
+        cif = parse_cif("\n".join([
+            "data_x", "_cell_length_a 5", "_cell_length_b 6", "_cell_length_c 7",
+            "_cell_angle_alpha 90", "_cell_angle_beta 90", "_cell_angle_gamma 90",
+            "_iucr_refine_fcf_details", ";", "data_I", "loop_", "_refln_index_h", "1", ";",
+            "_publ_contact_author_name '_not_a_tag'",
+            "loop_", "_space_group_symop_operation_xyz", "x,y,z",
+            "loop_", "_atom_site_label", "_atom_site_fract_x", "_atom_site_fract_y", "_atom_site_fract_z", "C1 0.1 0.2 0.3",
+        ]))
+        assert cif.name == "x" and cif.cell.c == 7 and [a.label for a in cif.atoms] == ["C1"]
+        assert cif.items["_iucr_refine_fcf_details"].startswith("data_I")
+        assert cif.items["_publ_contact_author_name"] == "_not_a_tag"
+
     def test_senza_operazioni_si_usano_quelle_del_gruppo(self):
         text = ("data_x\n_cell_length_a 5\n_cell_length_b 5\n_cell_length_c 5\n_cell_angle_alpha 90\n_cell_angle_beta 90\n"
                 "_cell_angle_gamma 90\n_symmetry_space_group_name_H-M 'P 21/c'\nloop_\n_atom_site_label\n_atom_site_fract_x\n"

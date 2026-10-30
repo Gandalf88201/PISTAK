@@ -80,6 +80,11 @@ class _Block:
     loops: list[_Loop] = field(default_factory=list)
 
 
+class _Quoted(str):
+    """Valore scritto tra apici o in un campo di testo ';': è sempre un valore, mai un tag o una parola chiave
+    (un FCF incollato in `_iucr_refine_fcf_details` comincia con 'data_I' e non deve aprire un blocco)."""
+
+
 def tokenize(text: str) -> list[str]:
     """Divide il testo in valori CIF: parole, stringhe tra apici e campi di testo tra righe che iniziano con ';'."""
     out: list[str] = []
@@ -93,7 +98,7 @@ def tokenize(text: str) -> list[str]:
             while i < len(lines) and not lines[i].startswith(";"):
                 body.append(lines[i])
                 i += 1
-            out.append("\n".join(body).strip())
+            out.append(_Quoted("\n".join(body).strip()))
             i += 1
             continue
         j, n = 0, len(line)
@@ -109,7 +114,7 @@ def tokenize(text: str) -> list[str]:
                 k = j + 1
                 while k < n and not (line[k] == ch and (k + 1 == n or line[k + 1].isspace())):
                     k += 1
-                out.append(line[j + 1:k])
+                out.append(_Quoted(line[j + 1:k]))
                 j = k + 1
                 continue
             k = j
@@ -125,11 +130,15 @@ _KEYWORD = re.compile(r"^(loop_|data_|save_|global_|stop_)", re.I)
 
 
 def _is_tag(t: str) -> bool:
-    return t.startswith("_")
+    return not isinstance(t, _Quoted) and t.startswith("_")
 
 
 def _is_keyword(t: str) -> bool:
-    return bool(_KEYWORD.match(t))
+    return not isinstance(t, _Quoted) and bool(_KEYWORD.match(t))
+
+
+def _is_data(t: str) -> bool:
+    return not isinstance(t, _Quoted) and bool(re.match(r"^data_", t, re.I))
 
 
 def _norm_tag(t: str) -> str:
@@ -141,12 +150,12 @@ def _blocks(tokens: list[str]) -> list[_Block]:
     """Tutti i blocchi `data_` del file, nell'ordine (i valori prima del primo `data_` sono ignorati)."""
     blocks: list[_Block] = []
     i, n = 0, len(tokens)
-    while i < n and not re.match(r"^data_", tokens[i], re.I):
+    while i < n and not _is_data(tokens[i]):
         i += 1
     block: _Block | None = None
     while i < n:
         t = tokens[i]
-        if re.match(r"^data_", t, re.I):
+        if _is_data(t):
             block = _Block(t[5:])
             blocks.append(block)
             i += 1
