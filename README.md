@@ -1,5 +1,7 @@
 # PISTAK — analisi dei π-stack da file CIF
 
+*Italiano · [English](README.en.md)*
+
 Applicazione indipendente, in Python, nata dall'algoritmo dello strumento «Analizzatore di π-stack da file CIF» di
 moleculesfriends.eu. Fa le stesse analisi del sito (distanza interplanare, slittamento longitudinale e laterale,
 angolo tra i piani, contatti, sovrapposizione) e aggiunge: parametri in più, colonne di stack, tabella di
