@@ -25,25 +25,57 @@ def install_qt_message_filter() -> None:
     qInstallMessageHandler(handler)
 
 
+def _splash():
+    """Finestrella «Caricamento…» mostrata subito, mentre si importano PyVista/VTK e scipy (secondi, molti di più al
+    primo avvio da un disco esterno)."""
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import QLabel
+
+    from pistak.i18n import tr
+
+    w = QLabel(tr("PISTAK — caricamento…"))
+    w.setWindowFlags(Qt.WindowType.SplashScreen | Qt.WindowType.FramelessWindowHint)
+    w.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    w.setMargin(28)
+    w.setStyleSheet("font-size: 16px;")
+    w.show()
+    return w
+
+
 def run(file: str | None = None, screenshot: str | None = None) -> int:
-    import pyqtgraph as pg
     from PySide6.QtCore import QTimer
     from PySide6.QtWidgets import QApplication
+
+    install_qt_message_filter()
+    app = QApplication.instance() or QApplication(sys.argv)
+    app.setApplicationName("PISTAK")
+    splash = _splash()
+    # Il resto parte a ciclo degli eventi avviato: su macOS è app.exec() che completa l'avvio dell'applicazione
+    # (primo piano e barra dei menu). Costruendo prima la finestra, i menu restavano quelli del Terminale per
+    # tutto il tempo degli import e della prima analisi.
+    QTimer.singleShot(0, lambda: _start(app, splash, file, screenshot))
+    return app.exec()
+
+
+def _start(app, splash, file: str | None, screenshot: str | None) -> None:
+    import pyqtgraph as pg
+    from PySide6.QtCore import QTimer
 
     from pistak.api import ensure_plugins
     from pistak.gui import theme
     from pistak.gui.main_window import MainWindow
     from pistak.gui.session import Session
 
-    install_qt_message_filter()
-    app = QApplication.instance() or QApplication(sys.argv)
-    app.setApplicationName("PISTAK")
     pg.setConfigOptions(antialias=True)
     theme.apply()
     ensure_plugins()
     session = Session()
     win = MainWindow(session)
+    app._pistak_window = win  # un riferimento, altrimenti la finestra sparisce all'uscita da questa funzione
     win.show()
+    win.raise_()
+    win.activateWindow()
+    splash.close()
     if file and file.endswith(".pistak"):
         if not win.load_session(file):
             session.load_demo()
@@ -63,4 +95,3 @@ def run(file: str | None = None, screenshot: str | None = None) -> int:
             app.quit()
 
         session.analysisChanged.connect(lambda: QTimer.singleShot(2500, snap))
-    return app.exec()

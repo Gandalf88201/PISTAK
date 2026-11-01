@@ -28,7 +28,6 @@ from pistak import i18n
 from pistak.core.config import Limits, load_limits
 from pistak.errors import ERROR_TEXT, describe_error  # noqa: F401  (ERROR_TEXT: per chi lo importava da qui)
 from pistak.i18n import tf, tr
-from pistak.labels import relation
 
 
 def _limits(args) -> Limits:
@@ -54,6 +53,7 @@ def cmd_analyze(args) -> int:
     from pistak.core.analysis import read_cif_file
     from pistak.core.cif import block_names
     from pistak.io import export
+    from pistak.labels import relation
 
     try:
         names = block_names(read_cif_file(args.file))

@@ -6,6 +6,7 @@ I segnaposto ({n}, {name}…) devono restare identici nelle due lingue.
 TEXT: dict[str, str] = {
     # ---- menu e comandi ---------------------------------------------------------------
     "#": "#",
+    "PISTAK — caricamento…": "PISTAK — loading…",
     "&File": "&File",
     "&Vista": "&View",
     "&Analisi": "&Analysis",
