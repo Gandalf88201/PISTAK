@@ -1,6 +1,7 @@
 """Fase 2: coppie uniche ed equivalenza per simmetria, celle adattive, più blocchi data_, disordine, operazioni dal
 simbolo del gruppo, criterio di stack configurabile."""
 import math
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -190,7 +191,8 @@ def test_operazioni_note(hall, ops):
     assert {triplet(o) for o in hall_operations(hall)} == ops
 
 
-def test_simboli_hm_in_varie_forme():
+def test_simboli_hm_in_varie_forme(monkeypatch):
+    monkeypatch.setitem(sys.modules, "gemmi", None)  # senza gemmi: solo simbolo di Hall e tabella
     ref = set(operations(hm="P 21/n")[0])
     for name in ("P21/n", "P 1 21/n 1", "p 21/n"):
         assert set(operations(hm=name)[0]) == ref

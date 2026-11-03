@@ -172,3 +172,50 @@ def test_idrogeni_secondo_ibridazione():
     assert length(4, 5) == pytest.approx(1.085, abs=1e-9)
     assert [length(7, h) for h in (8, 9, 10)] == pytest.approx([1.040] * 3, abs=1e-9)
     assert length(11, 12) == pytest.approx(0.95, abs=1e-9) and moved == 7  # P–H senza fonte: resta com'è
+
+
+# ---- simboli H-M con l'impostazione esplicita (:1/:2, :H/:R) -------------------------------------------------------
+def test_suffissi_dell_impostazione():
+    from pistak.core.spacegroups import operations
+
+    rhombo, source = operations(hm="R -3 :R")
+    assert source == "table" and len(rhombo) == 6 and "z,x,y" in rhombo  # assi romboedrici: niente centratura R
+    assert len(operations(hm="R -3")[0]) == len(operations(hm="R -3 :H")[0]) == 18
+    # origine 2 (predefinita): centro di inversione nell'origine; origine 1: no
+    assert "-x,-y,-z" in operations(hm="F d d d")[0] and "-x,-y,-z" in operations(hm="F d d d :2")[0]
+    assert "-x,-y,-z" not in operations(hm="F d d d :1")[0]
+    assert "-x,-y,-z" not in operations(hm="I 41/a :1")[0] and "-x,-y,-z" in operations(hm="I 41/a")[0]
+
+
+# ---- element_of: etichette ambigue e siti fittizi -----------------------------------------------------------------
+@pytest.mark.parametrize("symbol, label, expected", [
+    (None, "Cl1", "Cl"), (None, "CL1", "Cl"), (None, "BR2", "Br"), (None, "CA1", "C"), (None, "CD1", "C"),
+    (None, "Co1", "Co"), (None, "D1", "H"), (None, "Cg1", ""), (None, "Q1", ""), ("Q", "Q1", ""),
+    ("Fe2+", "Fe1", "Fe"), ("C", "Co1", "C"), ("Cl", "CL1", "Cl"),
+])
+def test_elemento_dall_etichetta(symbol, label, expected):
+    from pistak.core.cif import element_of
+
+    assert element_of(symbol, label) == expected
+
+
+def test_siti_fittizi_scartati():
+    from pistak.core.cif import parse_cif
+
+    text = "\n".join([
+        "data_t", "_cell_length_a 10", "_cell_length_b 10", "_cell_length_c 10", "_cell_angle_alpha 90",
+        "_cell_angle_beta 90", "_cell_angle_gamma 90", "loop_", "_symmetry_equiv_pos_as_xyz", "'x, y, z'",
+        "loop_", "_atom_site_label", "_atom_site_fract_x", "_atom_site_fract_y", "_atom_site_fract_z",
+        "_atom_site_calc_flag", "C1 0.1 0.1 0.1 d", "CL1 0.2 0.1 0.1 .", "X1 0.3 0.1 0.1 dum", "Cg1 0.4 0.1 0.1 .",
+        "Q1 0.5 0.1 0.1 .", ""])
+    assert [(a.label, a.el) for a in parse_cif(text).atoms] == [("C1", "C"), ("CL1", "Cl")]
+
+
+# ---- operazioni elencate contro il simbolo del gruppo --------------------------------------------------------------
+def test_operazioni_incoerenti_con_il_simbolo():
+    ok = cifgen.make_cif(cifgen.ring_system(2), Cell(8, 6, 9, 90, 100, 90), cifgen.P21C, "ok", "P 21/c", origin_frac=(0.3, 0.3, 0.3))
+    wrong = cifgen.make_cif(cifgen.ring_system(2), Cell(8, 6, 9, 90, 100, 90), ["x, y, z", "-x, -y, -z"], "no", "P 21/c",
+                            origin_frac=(0.3, 0.3, 0.3))
+    assert not [x for x in finish(analyse_text(ok, "ok", Limits())).alerts if x.code == "symopsMismatch"]
+    (alert,) = [x for x in finish(analyse_text(wrong, "no", Limits())).alerts if x.code == "symopsMismatch"]
+    assert alert.level == "C" and alert.values == {"declared": "P 21/c", "n_cif": 2, "n_symbol": 4}

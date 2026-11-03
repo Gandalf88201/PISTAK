@@ -173,16 +173,22 @@ def triplet(op: Op) -> str:
 
 
 def _hm_key(symbol: str) -> str:
-    """Forma confrontabile di un simbolo H-M: 'P 1 21/c 1' → 'p21/c', 'P21/n' → 'p21/n', 'R -3 :H' → 'r-3'."""
-    s = re.sub(r":\s*[hHrR12]\s*$", "", symbol.strip())
-    s = s.replace("_", "").strip()
-    tokens = s.split()
+    """Forma confrontabile di un simbolo H-M: 'P 1 21/c 1' → 'p21/c', 'P21/n' → 'p21/n', 'R -3 :R' → 'r-3:r'. Il
+    suffisso dell'impostazione (:1/:2 origine, :H/:R assi) si tiene: cambia le operazioni."""
+    s = symbol.strip()
+    m = re.search(r":\s*([hHrR12])\s*$", s)
+    suffix = ":" + m.group(1).lower() if m else ""
+    if m:
+        s = s[:m.start()]
+    tokens = s.replace("_", "").split()
     if len(tokens) == 4 and tokens[0][:1].isalpha() and sum(t == "1" for t in tokens[1:]) == 2:
         tokens = [tokens[0]] + [t for t in tokens[1:] if t != "1"]  # simbolo monoclino completo
-    return "".join(tokens).lower()
+    return "".join(tokens).lower() + suffix
 
 
-#: Simboli Hermann–Mauguin (impostazione standard, o quella indicata) → simbolo di Hall.
+#: Simboli Hermann–Mauguin (impostazione standard, o quella indicata) → simbolo di Hall. Senza suffisso: assi
+#: esagonali per i gruppi R e, per i gruppi con due origini, l'origine 2 (centro di inversione nell'origine, quella di
+#: SHELXL e della CSD); `operations` segue la stessa convenzione anche quando il gruppo lo trova gemmi.
 HM_TO_HALL = {
     "P 1": "P 1", "P -1": "-P 1",
     "P 2": "P 2y", "P 21": "P 2yb", "C 2": "C 2y", "P m": "P -2y", "P c": "P -2yc", "P n": "P -2yac", "P a": "P -2ya",
@@ -205,8 +211,21 @@ HM_TO_HALL = {
     "P 61 2 2": "P 61 2 (0 0 -1)", "P 63/m m c": "-P 6c 2c",
     "P 21 3": "P 2ac 2ab 3", "P a -3": "-P 2ac 2ab 3", "I 21 3": "I 2b 2c 3", "P m -3 m": "-P 4 2 3",
     "F m -3 m": "-F 4 2 3", "F d -3 m": "-F 4vw 2vw 3", "I a -3 d": "-I 4bd 2c 3",
+    # impostazioni esplicite: origine 1 e assi romboedrici
+    "F d d d :1": "F 2 2 -1d", "I 41/a :1": "I 4bw -1bw", "F d -3 m :1": "F 4d 2 3 -1d",
+    "R 3 :R": "P 3*", "R -3 :R": "-P 3*", "R 3 2 :R": "P 3* 2", "R 3 c :R": "P 3* -2n", "R -3 c :R": "-P 3* 2n",
 }
 _HM_INDEX = {_hm_key(k): v for k, v in HM_TO_HALL.items()}
+
+
+def _table_hall(hm: str) -> str | None:
+    """Il simbolo di Hall per un H-M dalla tabella. :H e :2 sono le impostazioni predefinite della tabella."""
+    key = _hm_key(hm)
+    if key in _HM_INDEX:
+        return _HM_INDEX[key]
+    if key.endswith((":h", ":2")):
+        return _HM_INDEX.get(key[:-2])
+    return None
 
 
 def operations(hall: str | None = None, hm: str | None = None) -> tuple[list[str], str] | None:
@@ -218,7 +237,7 @@ def operations(hall: str | None = None, hm: str | None = None) -> tuple[list[str
         except SpaceGroupError:
             pass
     if hm and hm.strip() not in ("?", "."):
-        h = _HM_INDEX.get(_hm_key(hm))
+        h = _table_hall(hm)
         if h:
             return [triplet(o) for o in hall_operations(h)], "table"
     try:  # facoltativo: gemmi conosce tutte le impostazioni
@@ -229,6 +248,8 @@ def operations(hall: str | None = None, hm: str | None = None) -> tuple[list[str
         if hall and hall.strip() not in ("?", "."):
             return [op.triplet() for op in gemmi.symops_from_hall(hall)], "gemmi"
         sg = gemmi.find_spacegroup_by_name(hm or "")
+        if sg is not None and sg.ext == "1" and ":" not in (hm or ""):  # gemmi sceglie l'origine 1, la tabella la 2
+            sg = gemmi.find_spacegroup_by_name(f"{hm}:2") or sg
         if sg is not None:
             return [op.triplet() for op in sg.operations()], "gemmi"
     except Exception:  # noqa: BLE001  (simbolo che gemmi non accetta)

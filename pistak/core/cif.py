@@ -260,19 +260,29 @@ def parse_symop(text: str) -> SymOp:
     return SymOp(np.array([c[0] for c in comps]), np.array([c[1] for c in comps]), re.sub(r"\s+", "", text))
 
 
+#: Senza type_symbol, un'etichetta tutta maiuscola si legge a una lettera ('CA1' è un C-alfa, 'CD1' un C-delta, non
+#: Ca o Cd), tranne questi alogeni, che come etichette di carbonio o boro non si usano.
+_UPPER_TWO_LETTER = frozenset({"Cl", "Br"})
+_CENTROID = re.compile(r"^Cg\d", re.I)
+
+
 def element_of(symbol: str | None, label: str, known: Callable[[str], bool] = is_known) -> str:
-    """Simbolo dell'elemento da type_symbol ('O2-', 'C') o dall'etichetta ('C12A', 'Cl1')."""
-    src = symbol if symbol and symbol not in ("?", ".") else label
+    """Simbolo dell'elemento da type_symbol ('O2-', 'C') o dall'etichetta ('C12A', 'Cl1'). Vuoto per i siti che non
+    sono atomi: centroidi ('Cg1', convenzione di PLATON) ed elementi sconosciuti (picchi 'Q1', 'X')."""
+    has_symbol = bool(symbol and symbol not in ("?", "."))
+    src = symbol if has_symbol else label
+    if not has_symbol and _CENTROID.match(label):
+        return ""
     m = re.match(r"^([A-Za-z])([A-Za-z]?)", src)
     if not m:
         return ""
     one = m.group(1).upper()
     two = one + m.group(2).lower()
-    if m.group(2) and known(two) and (symbol or m.group(2) == m.group(2).lower()):
+    if m.group(2) and known(two) and (has_symbol or m.group(2).islower() or two in _UPPER_TWO_LETTER):
         return two
     if one == "D":
         return "H"
-    return one
+    return one if known(one) else ""
 
 
 _SYM_TAGS = ("_symmetry_equiv_pos_as_xyz", "_space_group_symop_operation_xyz")
@@ -363,10 +373,13 @@ def _cif_from_block(b: _Block, known: Callable[[str], bool], disorder: str) -> C
     def col_of(tag: str) -> int:
         return atom_loop.tags.index(tag) if tag in atom_loop.tags else -1
 
-    i_label, i_type, i_x, i_y, i_z, i_occ, i_dis, i_asm = (col_of(t) for t in (
+    i_label, i_type, i_x, i_y, i_z, i_occ, i_dis, i_asm, i_flag = (col_of(t) for t in (
         "_atom_site_label", "_atom_site_type_symbol", "_atom_site_fract_x", "_atom_site_fract_y",
-        "_atom_site_fract_z", "_atom_site_occupancy", "_atom_site_disorder_group", "_atom_site_disorder_assembly"))
+        "_atom_site_fract_z", "_atom_site_occupancy", "_atom_site_disorder_group", "_atom_site_disorder_assembly",
+        "_atom_site_calc_flag"))
     rows = atom_loop.rows
+    if i_flag >= 0:  # siti fittizi (dummy): non sono atomi
+        rows = [r for r in rows if r[i_flag].lower() != "dum"]
     occs = [cif_number(r[i_occ]) if i_occ >= 0 else 1.0 for r in rows]
     occs = [o if np.isfinite(o) else 1.0 for o in occs]
     groups = [r[i_dis] if i_dis >= 0 else "." for r in rows]

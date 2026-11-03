@@ -14,3 +14,6 @@ tests/snapshots/local/
 *.egg-info/
 build/
 .ruff_cache/
+
+# campione COD scaricato da validation/scarica_cod.py (si rigenera)
+validation/cod_cache/

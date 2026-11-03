@@ -270,6 +270,29 @@ def _disorder(a: Analysis) -> list[Alert]:
     return out
 
 
+def _op_set(ops) -> set:
+    """Operazioni come insieme confrontabile: R intera e t in dodicesimi modulo il reticolo."""
+    return {(tuple(np.rint(o.r).astype(int).ravel()), tuple(int(round(12 * x)) % 12 for x in o.t)) for o in ops}
+
+
+@check("symops")
+def _symops_vs_symbol(a: Analysis) -> list[Alert]:
+    """Le operazioni elencate nel CIF (che PISTAK usa) contro quelle del simbolo del gruppo dichiarato."""
+    from pistak.core.cif import parse_symop
+    from pistak.core.spacegroups import operations
+
+    if a.cif.symops_source != "cif" or not a.cif.space_group:
+        return []
+    hall = next((a.cif.items[t] for t in ("_symmetry_space_group_name_hall", "_space_group_name_hall") if a.cif.items.get(t)), None)
+    found = operations(hall=hall, hm=a.cif.space_group)
+    if found is None:
+        return []
+    from_symbol = _op_set(parse_symop(t) for t in found[0])
+    if _op_set(a.cif.symops) == from_symbol:
+        return []
+    return [Alert("symopsMismatch", "C", {"declared": a.cif.space_group, "n_cif": len(a.cif.symops), "n_symbol": len(from_symbol)})]
+
+
 # ---- ricerca delle coppie -------------------------------------------------------------------------------------
 @check("shells")
 def _shells(a: Analysis) -> list[Alert]:

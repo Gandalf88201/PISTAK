@@ -48,6 +48,8 @@ ALERT_TEXT = {
     "disorderSkipped": "{n} atomi di componenti disordinate esclusi dall'analisi (regola «{policy}»).",
     "partialOccupancy": "{n} atomi con occupanza parziale nel modello analizzato: {atoms}.",
     "symopsDerived": "Operazioni di simmetria ricavate dal simbolo del gruppo ({source}), non elencate nel CIF.",
+    "symopsMismatch": "Le {n_cif} operazioni di simmetria elencate nel CIF non sono quelle del gruppo dichiarato {declared} "
+                      "({n_symbol} operazioni): PISTAK usa quelle elencate.",
     "missedSymmetry": "Simmetria probabilmente mancata: entro {tolerance} Å il modello ha la simmetria di {found}, "
                       "il CIF dichiara {declared}.",
     "pseudoSymmetry": "Pseudosimmetria: entro {tolerance} Å il modello ha la simmetria di {found} (dichiarato {declared}).",

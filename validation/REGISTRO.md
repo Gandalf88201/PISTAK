@@ -4,8 +4,11 @@ Registro della revisione del codice (checklist del 3 novembre 2026, sezione 10).
 verifica chiusa; sotto la tabella, per ogni voce, l'oracolo usato e il risultato. Le verifiche si rieseguono con
 
 ```bash
-.venv/bin/python validation/check_registro.py            # tutte
-.venv/bin/python validation/check_registro.py rings      # una sola: cell rings beta height unit shells cutoff
+.venv/bin/python validation/check_registro.py            # voci del registro: cell rings beta height unit shells cutoff
+.venv/bin/python -m pip install -r validation/requirements.txt   # gemmi, per la sezione 1
+.venv/bin/python validation/check_simmetria.py           # sezione 1: simboli di Hall e H-M contro gemmi
+.venv/bin/python validation/scarica_cod.py               # sezione 1: i 200 CIF COD di cod_sample.txt in cod_cache/
+.venv/bin/python validation/check_cif.py                 # sezione 1: lettura, s.u., elementi, disordine
 ```
 
 Gli oracoli non usano `pistak.core`: geometria ricalcolata con numpy, topologia nota dei policicli, tensore metrico,
@@ -22,6 +25,10 @@ conti a mano.
 | 7 | io/qc.py | Distanze X–H per P e Si senza fonte; C–H unico per sp² e sp³ | P1 | **Corretto** sul testo di Allen & Bruno 2010 | Medie a T ≤ 60 K, C–H secondo l'ibridazione; P–H tolto (nessuna fonte) |
 | 8 | repository | Manca LICENSE; manca `license` in pyproject.toml | P1 | **Corretto** | MIT: `LICENSE`, `license = "MIT"` in pyproject.toml, sezione nei due README |
 | 9 | tests/cifgen.py | Oracolo circolare? usa `cell_vectors` di PISTAK | P1 | Verificato: `cell_vectors` è corretto per un oracolo indipendente, quindi `cifgen` non è circolare | Nessuna; la verifica resta in `check_registro.py` |
+| 11 | core/spacegroups.py | **Nuovo.** Il suffisso dell'impostazione (`:1`, `:2`, `:R`) veniva scartato: `R -3 :R` riceveva le operazioni esagonali, `F d d d :1` e `I 41/a :1` l'origine 2; senza suffisso la tabella sceglieva l'origine 2 e gemmi la 1 | P1 (solo CIF senza operazioni elencate) | **Corretto** | Suffissi rispettati; senza suffisso sempre origine 2 (convenzione dichiarata); test |
+| 12 | core/cif.py | **Nuovo.** `element_of`: `BR2` senza type_symbol diventava boro, `CL1` carbonio; centroidi `Cg1` letti come carbonio, picchi `Q1` tenuti come atomi; `_atom_site_calc_flag dum` ignorato | P2 | **Corretto** | CL, BR a due lettere; Cg, Q e dum scartati; altre etichette maiuscole (CA, CD, HG) a una lettera |
+| 13 | core/validation.py | **Nuovo.** Operazioni elencate e simbolo del gruppo incoerenti: vincevano le operazioni, senza avviso | P2 | **Corretto** | Avviso C `symopsMismatch`; nessun falso positivo sui 200 CIF COD |
+| 14 | core/cif.py | Disordine su un elemento di simmetria (gruppi negativi): le immagini simmetriche del gruppo si sovrappongono alle posizioni originali | P1 | **Aperto** | Oggi lo segnala l'avviso A `overlap` (COD 4113834: C32A···C32B 0,38 Å); serve togliere le immagini che coincidono con l'altra parte |
 | 10 | core/cif.py | **Nuovo.** `tokenize` va in ciclo infinito (memoria che cresce senza limite) su un carattere di spaziatura diverso da spazio e tab: NBSP, form feed, tab verticale, U+2003… | P2 | **Corretto** | `if ch.isspace()` al posto di `if ch in " \t"`; test con 5 caratteri in un processo separato |
 
 ## 1. `beta_b` etichettato γ
@@ -199,3 +206,29 @@ Suite completa: 376 test superati, 3 saltati (servono i CIF di `DATI_REALI/`).
 | 1 | Chiavi `beta`, `gamma` | Cambiano le intestazioni dei CSV; i valori no |
 | 8 | Licenza MIT | Nessuno |
 | 7 | X–H da Allen & Bruno 2010, C per ibridazione | Solo gli input per ORCA, Psi4, Gaussian e i file periodici |
+
+## Sezione 1: lettura CIF e simmetria (3 novembre 2026)
+
+Oracolo: gemmi 0.7.5 (`validation/requirements.txt`). Campione: 200 CIF della COD estratti a caso (seme fisso) dalle
+serie 1, 2, 4, 7 (`validation/cod_sample.txt`; i file in `validation/cod_cache/`, fuori dal repository).
+
+| Verifica | Risultato |
+| --- | --- |
+| `hall_operations` su tutte le impostazioni di gemmi | 564/564 uguali (insiemi di R e t modulo il reticolo) |
+| `HM_TO_HALL` contro gemmi | 97/97 uguali (dopo la correzione 11; prima 3 diverse: F d d d, I 41/a, F d -3 m davano l'origine 2 a chi chiedeva l'1) |
+| `operations(hm=…)` con 43 scritture (complete, compatte, :1/:2/:H/:R) | 43/43 uguali (prima: `R -3 :R`, `F d d d :1`, `I 41/a :1` sbagliati) |
+| `parse_cif` contro gemmi sui 200 CIF | 200/200: cella, numero di siti, coordinate, occupanze, elemento di ogni sito, operazioni |
+| `cif_su` su 12 scritture calcolate a mano (`1.2345(12)`, `123(4)`, `.5(1)`, `1.2e-3(2)`…) | 12/12 |
+| `element_of` su 25 etichette ambigue | tutte come attese dopo la correzione 12 |
+| Tokenizzatore contro gemmi: CRLF, tab, `#` e apici dentro le stringhe, campi `;`, `data_` dentro un testo, blocchi multipli, save frame | uguale; solo l'a capo iniziale dei campi `;` viene tolto (innocuo) |
+| Regola `major` ricalcolata indipendentemente dalle colonne lette da gemmi | 41 CIF con disordine, 0 differenze; esempi stampati da `check_cif.py disorder` per il controllo a mano |
+| `symopsMismatch` sui 200 CIF | 0 avvisi (tutti con operazioni elencate e coerenti) |
+
+Note:
+
+- 5 dei 200 CIF non hanno `_atom_site_type_symbol`: l'elemento viene dall'etichetta.
+- COD 7236705 mette tutti i 65 atomi nel gruppo di disordine 4: con `disorder = "first"` (il modo del sito) non resta
+  nessun atomo e la lettura si ferma con `noAtoms`; con `major` (predefinito) si leggono tutti. Comportamento del modo
+  di compatibilità, lasciato com'è.
+- I gruppi con un solo membro in un assemblaggio (solventi a occupanza parziale, 1513296: occupanze 0,1–0,5) si
+  tengono tutti: non c'è un'alternativa da scegliere.

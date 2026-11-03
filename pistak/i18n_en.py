@@ -609,6 +609,10 @@ TEXT: dict[str, str] = {
     "{n} atomi con occupanza parziale nel modello analizzato: {atoms}.": "{n} atoms with partial occupancy in the analysed model: {atoms}.",
     "Operazioni di simmetria ricavate dal simbolo del gruppo ({source}), non elencate nel CIF.":
         "Symmetry operations derived from the space-group symbol ({source}), not listed in the CIF.",
+    "Le {n_cif} operazioni di simmetria elencate nel CIF non sono quelle del gruppo dichiarato {declared} "
+    "({n_symbol} operazioni): PISTAK usa quelle elencate.":
+        "The {n_cif} symmetry operations listed in the CIF are not those of the declared group {declared} "
+        "({n_symbol} operations): PISTAK uses the listed ones.",
     "Simmetria probabilmente mancata: entro {tolerance} Å il modello ha la simmetria di {found}, il CIF dichiara {declared}.":
         "Probably missed symmetry: within {tolerance} Å the model has the symmetry of {found}, the CIF declares {declared}.",
     "Pseudosimmetria: entro {tolerance} Å il modello ha la simmetria di {found} (dichiarato {declared}).":
