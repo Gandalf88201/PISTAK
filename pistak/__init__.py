@@ -13,7 +13,7 @@ Esempio d'uso come libreria::
     from pistak import analyse_file
     result = analyse_file("struttura.cif")
     for pair in result.pairs:
-        print(pair.kind, pair.interplanar, pair.long_slip, pair.lat_slip, pair.get("beta_a"))
+        print(pair.kind, pair.interplanar, pair.long_slip, pair.lat_slip, pair.get("beta"))
 """
 __version__ = "0.1.0"
 

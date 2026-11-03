@@ -93,8 +93,7 @@
    "params": {
     "axis_aspect_a": 0.6055398109,
     "axis_aspect_b": 0.6055398109,
-    "beta_a": 26.56504909,
-    "beta_b": 26.56504909,
+    "beta": 26.56504909,
     "cc_contact": 3.413608174,
     "centroid_distance": 3.80132,
     "contact": 3.413608174,
@@ -107,6 +106,7 @@
     "dihedral": 0.0,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 26.56504909,
     "height_a_over_b": 3.400004032,
     "height_b_over_a": 3.400004032,
     "interplanar": 3.400004032,

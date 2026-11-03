@@ -1404,8 +1404,7 @@
    "params": {
     "axis_aspect_a": 0.9975456423,
     "axis_aspect_b": 0.9961998283,
-    "beta_a": 86.37079204,
-    "beta_b": 86.8279625,
+    "beta": 86.37079204,
     "cc_contact": 4.446526393,
     "centroid_distance": 6.226350704,
     "contact": 3.001819593,
@@ -1418,6 +1417,7 @@
     "dihedral": 0.4571746586,
     "fragment_a": 3.0,
     "fragment_b": 3.0,
+    "gamma": 86.8279625,
     "height_a_over_b": 0.3445302694,
     "height_b_over_a": 0.3941235194,
     "interplanar": 0.3693298337,
@@ -1487,8 +1487,7 @@
    "params": {
     "axis_aspect_a": 0.997884332,
     "axis_aspect_b": 0.997884332,
-    "beta_a": 85.84179455,
-    "beta_b": 85.28465762,
+    "beta": 85.84179455,
     "cc_contact": 4.468161314,
     "centroid_distance": 6.243627478,
     "contact": 3.057079275,
@@ -1501,6 +1500,7 @@
     "dihedral": 4.22166993,
     "fragment_a": 3.0,
     "fragment_b": 3.0,
+    "gamma": 85.28465762,
     "height_a_over_b": 0.513259771,
     "height_b_over_a": 0.4527296999,
     "interplanar": 0.4833226958,
@@ -1570,8 +1570,7 @@
    "params": {
     "axis_aspect_a": 0.9975456423,
     "axis_aspect_b": 0.9961998283,
-    "beta_a": 85.12644355,
-    "beta_b": 85.56734463,
+    "beta": 85.12644355,
     "cc_contact": 4.490856451,
     "centroid_distance": 6.26057569,
     "contact": 3.059531419,
@@ -1584,6 +1583,7 @@
     "dihedral": 0.4571746586,
     "fragment_a": 3.0,
     "fragment_b": 3.0,
+    "gamma": 85.56734463,
     "height_a_over_b": 0.4838628642,
     "height_b_over_a": 0.531880191,
     "interplanar": 0.5078755695,
@@ -1653,8 +1653,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.95875718,
-    "beta_a": 86.72847015,
-    "beta_b": 87.46678375,
+    "beta": 86.72847015,
     "cc_contact": 4.446526393,
     "centroid_distance": 17.46228245,
     "contact": 3.001819593,
@@ -1667,6 +1666,7 @@
     "dihedral": 0.7546090862,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 87.46678375,
     "height_a_over_b": 0.7718077591,
     "height_b_over_a": 0.9965365919,
     "interplanar": 0.8841913469,
@@ -1736,8 +1736,7 @@
    "params": {
     "axis_aspect_a": 0.95875718,
     "axis_aspect_b": 0.95875718,
-    "beta_a": 79.49741437,
-    "beta_b": 79.93743731,
+    "beta": 79.49741437,
     "cc_contact": 3.86645782,
     "centroid_distance": 6.239649967,
     "contact": 3.86645782,
@@ -1750,6 +1749,7 @@
     "dihedral": 3.416221812,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 79.93743731,
     "height_a_over_b": 1.09021292,
     "height_b_over_a": 1.137362756,
     "interplanar": 1.114282969,
@@ -1819,8 +1819,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 79.46661938,
-    "beta_b": 76.8545051,
+    "beta": 79.46661938,
     "cc_contact": 3.881513149,
     "centroid_distance": 6.107648474,
     "contact": 3.881513149,
@@ -1833,6 +1832,7 @@
     "dihedral": 2.622204246,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 76.8545051,
     "height_a_over_b": 1.389029558,
     "height_b_over_a": 1.116529082,
     "interplanar": 1.253107391,
@@ -1854,6 +1854,89 @@
     0,
     -1,
     0
+   ]
+  },
+  {
+   "a": 0,
+   "b": 9,
+   "count": 4,
+   "kind": "parallel",
+   "members": [
+    [
+     0,
+     9,
+     [
+      -1,
+      -1,
+      -1
+     ]
+    ],
+    [
+     1,
+     8,
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    [
+     2,
+     11,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     3,
+     10,
+     [
+      0,
+      0,
+      0
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.9552717349,
+    "axis_aspect_b": 0.9535655041,
+    "beta": 79.56608074,
+    "cc_contact": 4.053463624,
+    "centroid_distance": 6.296895591,
+    "contact": 4.053463624,
+    "core_contact": 4.053463624,
+    "core_rms_a": 0.001960507838,
+    "core_rms_b": 0.004828464143,
+    "core_size_a": 6.0,
+    "core_size_b": 6.0,
+    "count": 4.0,
+    "dihedral": 2.622204246,
+    "fragment_a": 1.0,
+    "fragment_b": 1.0,
+    "gamma": 76.94645116,
+    "height_a_over_b": 1.422226949,
+    "height_b_over_a": 1.140376548,
+    "interplanar": 1.281637288,
+    "lat_slip": 6.160131743,
+    "lat_slip_signed": -6.160131743,
+    "long_slip": 0.2471373033,
+    "long_slip_signed": -0.2471373033,
+    "mean_atom_height": 1.140376548,
+    "n_vdw_contacts": 0.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "slip": 6.16508718,
+    "slip_angle": 87.70259217,
+    "slip_direction": -92.29740783
+   },
+   "ring_pairs": [],
+   "shift": [
+    -1,
+    -1,
+    -1
    ]
   },
   {
@@ -1902,8 +1985,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.95875718,
-    "beta_a": 85.76952825,
-    "beta_b": 85.11217743,
+    "beta": 85.76952825,
     "cc_contact": 4.490856451,
     "centroid_distance": 17.08544279,
     "contact": 3.059531419,
@@ -1916,6 +1998,7 @@
     "dihedral": 0.7546090862,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 85.11217743,
     "height_a_over_b": 1.455767917,
     "height_b_over_a": 1.260369038,
     "interplanar": 1.358097924,
@@ -1985,8 +2068,7 @@
    "params": {
     "axis_aspect_a": 0.9535655041,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 83.11379517,
-    "beta_b": 87.5577613,
+    "beta": 83.11379517,
     "cc_contact": 4.468161314,
     "centroid_distance": 17.29897462,
     "contact": 3.057079275,
@@ -1999,6 +2081,7 @@
     "dihedral": 4.743398971,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 87.5577613,
     "height_a_over_b": 0.7371473681,
     "height_b_over_a": 2.07410914,
     "interplanar": 1.406833358,
@@ -2068,8 +2151,7 @@
    "params": {
     "axis_aspect_a": 0.95875718,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 78.99142663,
-    "beta_b": 76.84841589,
+    "beta": 78.99142663,
     "cc_contact": 3.906975433,
     "centroid_distance": 10.00030806,
     "contact": 3.381344242,
@@ -2082,6 +2164,7 @@
     "dihedral": 4.928972049,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 76.84841589,
     "height_a_over_b": 2.275351074,
     "height_b_over_a": 1.909617601,
     "interplanar": 2.094421538,
@@ -2168,8 +2251,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 77.33121835,
-    "beta_b": 78.81814719,
+    "beta": 77.33121835,
     "cc_contact": 3.899945354,
     "centroid_distance": 10.13554218,
     "contact": 3.369907864,
@@ -2182,6 +2264,7 @@
     "dihedral": 2.622204246,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 78.81814719,
     "height_a_over_b": 1.965521287,
     "height_b_over_a": 2.222872775,
     "interplanar": 2.094745447,
@@ -2268,8 +2351,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.95875718,
-    "beta_a": 75.29378833,
-    "beta_b": 75.84877773,
+    "beta": 75.29378833,
     "cc_contact": 4.195855196,
     "centroid_distance": 9.711323064,
     "contact": 3.541016941,
@@ -2282,6 +2364,7 @@
     "dihedral": 0.7546090862,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 75.84877773,
     "height_a_over_b": 2.374243465,
     "height_b_over_a": 2.465343747,
     "interplanar": 2.419846074,
@@ -2351,8 +2434,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.95875718,
-    "beta_a": 76.83049677,
-    "beta_b": 76.14681061,
+    "beta": 76.83049677,
     "cc_contact": 3.950969741,
     "centroid_distance": 10.38794448,
     "contact": 3.442673823,
@@ -2365,6 +2447,7 @@
     "dihedral": 0.7546090862,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 76.14681061,
     "height_a_over_b": 2.48723632,
     "height_b_over_a": 2.366712731,
     "interplanar": 2.427027149,
@@ -2451,8 +2534,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 75.61628798,
-    "beta_b": 76.99288893,
+    "beta": 75.61628798,
     "cc_contact": 4.141403748,
     "centroid_distance": 10.50334579,
     "contact": 3.479588657,
@@ -2465,6 +2547,7 @@
     "dihedral": 2.622204246,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 76.99288893,
     "height_a_over_b": 2.364008869,
     "height_b_over_a": 2.609183703,
     "interplanar": 2.487247461,
@@ -2534,8 +2617,7 @@
    "params": {
     "axis_aspect_a": 0.95875718,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 74.04416071,
-    "beta_b": 78.97143525,
+    "beta": 74.04416071,
     "cc_contact": 4.221757301,
     "centroid_distance": 10.73809035,
     "contact": 3.566951701,
@@ -2548,6 +2630,7 @@
     "dihedral": 4.928972049,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 78.97143525,
     "height_a_over_b": 2.054179082,
     "height_b_over_a": 2.951862184,
     "interplanar": 2.505337904,
@@ -2617,8 +2700,7 @@
    "params": {
     "axis_aspect_a": 0.9975456423,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 59.67169625,
-    "beta_b": 68.53444273,
+    "beta": 59.67169625,
     "cc_contact": 3.899945354,
     "centroid_distance": 5.850971528,
     "contact": 3.369907864,
@@ -2631,6 +2713,7 @@
     "dihedral": 8.886921252,
     "fragment_a": 3.0,
     "fragment_b": 1.0,
+    "gamma": 68.53444273,
     "height_a_over_b": 2.141115346,
     "height_b_over_a": 2.95447191,
     "interplanar": 2.555474691,
@@ -2717,8 +2800,7 @@
    "params": {
     "axis_aspect_a": 0.9975456423,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 59.98385294,
-    "beta_b": 68.8298618,
+    "beta": 59.98385294,
     "cc_contact": 4.141403748,
     "centroid_distance": 6.059764237,
     "contact": 3.479588657,
@@ -2731,6 +2813,7 @@
     "dihedral": 8.886921252,
     "fragment_a": 3.0,
     "fragment_b": 1.0,
+    "gamma": 68.8298618,
     "height_a_over_b": 2.18841481,
     "height_b_over_a": 3.031360961,
     "interplanar": 2.617756149,
@@ -2800,8 +2883,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.9961998283,
-    "beta_a": 67.4747892,
-    "beta_b": 60.75038815,
+    "beta": 67.4747892,
     "cc_contact": 4.195855196,
     "centroid_distance": 6.1306291,
     "contact": 3.541016941,
@@ -2814,6 +2896,7 @@
     "dihedral": 6.734057801,
     "fragment_a": 1.0,
     "fragment_b": 3.0,
+    "gamma": 60.75038815,
     "height_a_over_b": 2.995519366,
     "height_b_over_a": 2.348582168,
     "interplanar": 2.676671262,
@@ -2883,8 +2966,7 @@
    "params": {
     "axis_aspect_a": 0.95875718,
     "axis_aspect_b": 0.997884332,
-    "beta_a": 64.54354744,
-    "beta_b": 58.67411726,
+    "beta": 64.54354744,
     "cc_contact": 3.906975433,
     "centroid_distance": 5.647144953,
     "contact": 3.381344242,
@@ -2897,6 +2979,7 @@
     "dihedral": 7.021218338,
     "fragment_a": 1.0,
     "fragment_b": 3.0,
+    "gamma": 58.67411726,
     "height_a_over_b": 2.935979186,
     "height_b_over_a": 2.427283888,
     "interplanar": 2.68667314,
@@ -2983,8 +3066,7 @@
    "params": {
     "axis_aspect_a": 0.95875718,
     "axis_aspect_b": 0.997884332,
-    "beta_a": 67.14034295,
-    "beta_b": 61.24758395,
+    "beta": 67.14034295,
     "cc_contact": 4.221757301,
     "centroid_distance": 6.266025996,
     "contact": 3.566951701,
@@ -2997,6 +3079,7 @@
     "dihedral": 7.021218338,
     "fragment_a": 1.0,
     "fragment_b": 3.0,
+    "gamma": 61.24758395,
     "height_a_over_b": 3.014119781,
     "height_b_over_a": 2.434195897,
     "interplanar": 2.729279394,
@@ -3066,8 +3149,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.9961998283,
-    "beta_a": 64.66646643,
-    "beta_b": 58.05068284,
+    "beta": 64.66646643,
     "cc_contact": 3.950969741,
     "centroid_distance": 5.804043482,
     "contact": 3.442673823,
@@ -3080,6 +3162,7 @@
     "dihedral": 6.734057801,
     "fragment_a": 1.0,
     "fragment_b": 3.0,
+    "gamma": 58.05068284,
     "height_a_over_b": 3.071319238,
     "height_b_over_a": 2.48347431,
     "interplanar": 2.782199432,
@@ -3148,8 +3231,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.9552717349,
-    "beta_a": 66.9876394,
-    "beta_b": 66.9876394,
+    "beta": 66.9876394,
     "cc_contact": 3.390137876,
     "centroid_distance": 8.603207428,
     "contact": 3.390137876,
@@ -3162,6 +3244,7 @@
     "dihedral": 0.0,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 66.9876394,
     "height_a_over_b": 3.363249323,
     "height_b_over_a": 3.363249323,
     "interplanar": 3.363249323,
@@ -3312,8 +3395,7 @@
    "params": {
     "axis_aspect_a": 0.95875718,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 65.29887281,
-    "beta_b": 65.97064724,
+    "beta": 65.29887281,
     "cc_contact": 3.43780389,
     "centroid_distance": 8.576858976,
     "contact": 3.43780389,
@@ -3326,6 +3408,7 @@
     "dihedral": 2.843232082,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 65.97064724,
     "height_a_over_b": 3.492536438,
     "height_b_over_a": 3.584140258,
     "interplanar": 3.53942778,
@@ -3476,8 +3559,7 @@
    "params": {
     "axis_aspect_a": 0.95875718,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 65.47074203,
-    "beta_b": 64.39681255,
+    "beta": 65.47074203,
     "cc_contact": 3.371891832,
     "centroid_distance": 8.442367482,
     "contact": 3.371891832,
@@ -3490,6 +3572,7 @@
     "dihedral": 2.843232082,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 64.39681255,
     "height_a_over_b": 3.648250226,
     "height_b_over_a": 3.504915203,
     "interplanar": 3.577683922,
@@ -3622,8 +3705,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.9552717349,
-    "beta_a": 65.53793822,
-    "beta_b": 65.53793822,
+    "beta": 65.53793822,
     "cc_contact": 3.40538048,
     "centroid_distance": 8.997336743,
     "contact": 3.404666762,
@@ -3636,6 +3718,7 @@
     "dihedral": 0.0,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
+    "gamma": 65.53793822,
     "height_a_over_b": 3.725712785,
     "height_b_over_a": 3.725712785,
     "interplanar": 3.725712785,
@@ -3818,8 +3901,7 @@
    "params": {
     "axis_aspect_a": 0.992064028,
     "axis_aspect_b": 0.990583826,
-    "beta_a": 22.70451223,
-    "beta_b": 23.82290426,
+    "beta": 22.70451223,
     "cc_contact": 3.371891832,
     "centroid_distance": 3.674966663,
     "contact": 3.371891832,
@@ -3832,6 +3914,7 @@
     "dihedral": 1.175663485,
     "fragment_a": 2.0,
     "fragment_b": 2.0,
+    "gamma": 23.82290426,
     "height_a_over_b": 3.361853166,
     "height_b_over_a": 3.390185027,
     "interplanar": 3.376196783,
@@ -3964,8 +4047,7 @@
    "params": {
     "axis_aspect_a": 0.9939875582,
     "axis_aspect_b": 0.9939875582,
-    "beta_a": 22.85633888,
-    "beta_b": 22.85633888,
+    "beta": 22.85633888,
     "cc_contact": 3.390137876,
     "centroid_distance": 3.666584984,
     "contact": 3.390137876,
@@ -3978,6 +4060,7 @@
     "dihedral": 1.20741827e-06,
     "fragment_a": 2.0,
     "fragment_b": 2.0,
+    "gamma": 22.85633888,
     "height_a_over_b": 3.378690826,
     "height_b_over_a": 3.378690826,
     "interplanar": 3.378690826,
@@ -4110,8 +4193,7 @@
    "params": {
     "axis_aspect_a": 0.9939875582,
     "axis_aspect_b": 0.9939875582,
-    "beta_a": 21.92115607,
-    "beta_b": 21.92115607,
+    "beta": 21.92115607,
     "cc_contact": 3.40538048,
     "centroid_distance": 3.642519394,
     "contact": 3.404666762,
@@ -4124,6 +4206,7 @@
     "dihedral": 1.20741827e-06,
     "fragment_a": 2.0,
     "fragment_b": 2.0,
+    "gamma": 21.92115607,
     "height_a_over_b": 3.37915966,
     "height_b_over_a": 3.37915966,
     "interplanar": 3.37915966,
@@ -4306,8 +4389,7 @@
    "params": {
     "axis_aspect_a": 0.95875718,
     "axis_aspect_b": 0.997884332,
-    "beta_a": 20.93700278,
-    "beta_b": 25.80064603,
+    "beta": 20.93700278,
     "cc_contact": 3.371891832,
     "centroid_distance": 3.765179142,
     "contact": 3.371891832,
@@ -4320,6 +4402,7 @@
     "dihedral": 5.903380639,
     "fragment_a": 1.0,
     "fragment_b": 3.0,
+    "gamma": 25.80064603,
     "height_a_over_b": 3.389842982,
     "height_b_over_a": 3.516579013,
     "interplanar": 3.457798433,
@@ -4470,8 +4553,7 @@
    "params": {
     "axis_aspect_a": 0.992064028,
     "axis_aspect_b": 0.990583826,
-    "beta_a": 22.70200899,
-    "beta_b": 22.60483007,
+    "beta": 22.70200899,
     "cc_contact": 3.43780389,
     "centroid_distance": 3.757613127,
     "contact": 3.43780389,
@@ -4484,6 +4566,7 @@
     "dihedral": 1.175663485,
     "fragment_a": 2.0,
     "fragment_b": 2.0,
+    "gamma": 22.60483007,
     "height_a_over_b": 3.468945086,
     "height_b_over_a": 3.466490388,
     "interplanar": 3.46790025,
@@ -4634,8 +4717,7 @@
    "params": {
     "axis_aspect_a": 0.9961998283,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 20.35345436,
-    "beta_b": 15.58271524,
+    "beta": 20.35345436,
     "cc_contact": 3.371891832,
     "centroid_distance": 3.644805111,
     "contact": 3.371891832,
@@ -4648,6 +4730,7 @@
     "dihedral": 9.331446909,
     "fragment_a": 3.0,
     "fragment_b": 1.0,
+    "gamma": 15.58271524,
     "height_a_over_b": 3.510835377,
     "height_b_over_a": 3.417241162,
     "interplanar": 3.475555471,
@@ -4798,8 +4881,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.9975456423,
-    "beta_a": 16.36750193,
-    "beta_b": 21.28355916,
+    "beta": 16.36750193,
     "cc_contact": 3.390137876,
     "centroid_distance": 3.676965792,
     "contact": 3.390137876,
@@ -4812,6 +4894,7 @@
     "dihedral": 6.295358073,
     "fragment_a": 1.0,
     "fragment_b": 3.0,
+    "gamma": 21.28355916,
     "height_a_over_b": 3.426179896,
     "height_b_over_a": 3.527952943,
     "interplanar": 3.482320117,
@@ -4962,8 +5045,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.9975456423,
-    "beta_a": 8.696136078,
-    "beta_b": 14.62776291,
+    "beta": 8.696136078,
     "cc_contact": 3.40538048,
     "centroid_distance": 3.602422304,
     "contact": 3.404666762,
@@ -4976,6 +5058,7 @@
     "dihedral": 6.295358073,
     "fragment_a": 1.0,
     "fragment_b": 3.0,
+    "gamma": 14.62776291,
     "height_a_over_b": 3.485656686,
     "height_b_over_a": 3.561009164,
     "interplanar": 3.52865653,
@@ -5158,8 +5241,7 @@
    "params": {
     "axis_aspect_a": 0.95875718,
     "axis_aspect_b": 0.997884332,
-    "beta_a": 12.1281327,
-    "beta_b": 15.19745237,
+    "beta": 12.1281327,
     "cc_contact": 3.43780389,
     "centroid_distance": 3.654033771,
     "contact": 3.43780389,
@@ -5172,6 +5254,7 @@
     "dihedral": 5.903380639,
     "fragment_a": 1.0,
     "fragment_b": 3.0,
+    "gamma": 15.19745237,
     "height_a_over_b": 3.526245456,
     "height_b_over_a": 3.572476448,
     "interplanar": 3.554076118,
@@ -5322,8 +5405,7 @@
    "params": {
     "axis_aspect_a": 0.9961998283,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 21.10220007,
-    "beta_b": 13.16912687,
+    "beta": 21.10220007,
     "cc_contact": 3.43780389,
     "centroid_distance": 3.727990711,
     "contact": 3.43780389,
@@ -5336,6 +5418,7 @@
     "dihedral": 9.331446909,
     "fragment_a": 3.0,
     "fragment_b": 1.0,
+    "gamma": 13.16912687,
     "height_a_over_b": 3.629951287,
     "height_b_over_a": 3.477990576,
     "interplanar": 3.56578714,
@@ -5486,8 +5569,7 @@
    "params": {
     "axis_aspect_a": 0.990583826,
     "axis_aspect_b": 0.997884332,
-    "beta_a": 89.61486882,
-    "beta_b": 89.71595157,
+    "beta": 89.61486882,
     "cc_contact": 0.0,
     "centroid_distance": 4.183005379,
     "contact": 1.480564751,
@@ -5500,6 +5582,7 @@
     "dihedral": 35.03821971,
     "fragment_a": 2.0,
     "fragment_b": 3.0,
+    "gamma": 89.71595157,
     "height_a_over_b": 0.02073750041,
     "height_b_over_a": 0.02811714336,
     "interplanar": 0.003869292402,
@@ -5634,8 +5717,7 @@
    "params": {
     "axis_aspect_a": 0.9535655041,
     "axis_aspect_b": 0.990583826,
-    "beta_a": 89.42078963,
-    "beta_b": 89.64083195,
+    "beta": 89.42078963,
     "cc_contact": 0.0,
     "centroid_distance": 4.312525487,
     "contact": 1.48093414,
@@ -5648,6 +5730,7 @@
     "dihedral": 26.4120421,
     "fragment_a": 1.0,
     "fragment_b": 2.0,
+    "gamma": 89.64083195,
     "height_a_over_b": 0.02703360071,
     "height_b_over_a": 0.04359512981,
     "interplanar": 0.008505698594,
@@ -5782,8 +5865,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.9939875582,
-    "beta_a": 88.99382115,
-    "beta_b": 88.39230045,
+    "beta": 88.99382115,
     "cc_contact": 0.0,
     "centroid_distance": 4.307798184,
     "contact": 1.482655626,
@@ -5796,6 +5878,7 @@
     "dihedral": 30.27346188,
     "fragment_a": 1.0,
     "fragment_b": 2.0,
+    "gamma": 88.39230045,
     "height_a_over_b": 0.1208594507,
     "height_b_over_a": 0.07564593228,
     "interplanar": 0.0234192811,
@@ -5930,8 +6013,7 @@
    "params": {
     "axis_aspect_a": 0.9939875582,
     "axis_aspect_b": 0.9975456423,
-    "beta_a": 89.2504248,
-    "beta_b": 87.89981418,
+    "beta": 89.2504248,
     "cc_contact": 0.0,
     "centroid_distance": 4.179057657,
     "contact": 1.47951755,
@@ -5944,6 +6026,7 @@
     "dihedral": 36.55222527,
     "fragment_a": 2.0,
     "fragment_b": 3.0,
+    "gamma": 87.89981418,
     "height_a_over_b": 0.1531497159,
     "height_b_over_a": 0.05467119293,
     "interplanar": 0.05185502041,
@@ -6078,8 +6161,7 @@
    "params": {
     "axis_aspect_a": 0.95875718,
     "axis_aspect_b": 0.992064028,
-    "beta_a": 89.49035636,
-    "beta_b": 88.62969995,
+    "beta": 89.49035636,
     "cc_contact": 0.0,
     "centroid_distance": 4.300520169,
     "contact": 1.474974976,
@@ -6092,6 +6174,7 @@
     "dihedral": 28.54388844,
     "fragment_a": 1.0,
     "fragment_b": 2.0,
+    "gamma": 88.62969995,
     "height_a_over_b": 0.1028425004,
     "height_b_over_a": 0.03825244806,
     "interplanar": 0.07279415199,
@@ -6226,8 +6309,7 @@
    "params": {
     "axis_aspect_a": 0.992064028,
     "axis_aspect_b": 0.9961998283,
-    "beta_a": 88.96466053,
-    "beta_b": 89.05350165,
+    "beta": 88.96466053,
     "cc_contact": 0.0,
     "centroid_distance": 4.177100246,
     "contact": 1.478560627,
@@ -6240,6 +6322,7 @@
     "dihedral": 35.04898418,
     "fragment_a": 2.0,
     "fragment_b": 3.0,
+    "gamma": 89.05350165,
     "height_a_over_b": 0.06900052157,
     "height_b_over_a": 0.07547643917,
     "interplanar": 0.07575436772,
@@ -6374,8 +6457,7 @@
    "params": {
     "axis_aspect_a": 0.9939875582,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 85.36817872,
-    "beta_b": 73.2724821,
+    "beta": 85.36817872,
     "cc_contact": 3.899945354,
     "centroid_distance": 7.103176186,
     "contact": 3.369907864,
@@ -6388,6 +6470,7 @@
     "dihedral": 27.66630503,
     "fragment_a": 2.0,
     "fragment_b": 1.0,
+    "gamma": 73.2724821,
     "height_a_over_b": 2.044439776,
     "height_b_over_a": 0.5735992997,
     "interplanar": 0.7573874299,
@@ -6474,8 +6557,7 @@
    "params": {
     "axis_aspect_a": 0.9939875582,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 84.30127217,
-    "beta_b": 71.96122044,
+    "beta": 84.30127217,
     "cc_contact": 4.141403748,
     "centroid_distance": 7.379337808,
     "contact": 3.479588657,
@@ -6488,6 +6570,7 @@
     "dihedral": 27.66630503,
     "fragment_a": 2.0,
     "fragment_b": 1.0,
+    "gamma": 71.96122044,
     "height_a_over_b": 2.28509038,
     "height_b_over_a": 0.7327509462,
     "interplanar": 0.7993541058,
@@ -6557,8 +6640,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.992064028,
-    "beta_a": 70.16007012,
-    "beta_b": 84.53345163,
+    "beta": 70.16007012,
     "cc_contact": 4.195855196,
     "centroid_distance": 6.984933986,
     "contact": 3.541016941,
@@ -6571,6 +6653,7 @@
     "dihedral": 28.46706717,
     "fragment_a": 1.0,
     "fragment_b": 2.0,
+    "gamma": 84.53345163,
     "height_a_over_b": 0.6654168232,
     "height_b_over_a": 2.370641509,
     "interplanar": 0.8796151082,
@@ -6640,8 +6723,7 @@
    "params": {
     "axis_aspect_a": 0.95875718,
     "axis_aspect_b": 0.990583826,
-    "beta_a": 71.57903541,
-    "beta_b": 86.77866157,
+    "beta": 71.57903541,
     "cc_contact": 3.906975433,
     "centroid_distance": 6.897805019,
     "contact": 3.381344242,
@@ -6654,6 +6736,7 @@
     "dihedral": 29.18370142,
     "fragment_a": 1.0,
     "fragment_b": 2.0,
+    "gamma": 86.77866157,
     "height_a_over_b": 0.3876107458,
     "height_b_over_a": 2.179680248,
     "interplanar": 0.9258996316,
@@ -6692,6 +6775,89 @@
     0,
     0,
     -1
+   ]
+  },
+  {
+   "a": 4,
+   "b": 8,
+   "count": 4,
+   "kind": "tilted",
+   "members": [
+    [
+     4,
+     8,
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    [
+     5,
+     9,
+     [
+      0,
+      0,
+      -1
+     ]
+    ],
+    [
+     6,
+     10,
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    [
+     7,
+     11,
+     [
+      0,
+      0,
+      1
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.95875718,
+    "axis_aspect_b": 0.990583826,
+    "beta": 69.46617397,
+    "cc_contact": 4.221757301,
+    "centroid_distance": 7.645675614,
+    "contact": 3.566951701,
+    "core_contact": 5.041273891,
+    "core_rms_a": 0.003264175976,
+    "core_rms_b": 0.00229008021,
+    "core_size_a": 6.0,
+    "core_size_b": 6.0,
+    "count": 4.0,
+    "dihedral": 29.18370142,
+    "fragment_a": 1.0,
+    "fragment_b": 2.0,
+    "gamma": 85.10384009,
+    "height_a_over_b": 0.6525595274,
+    "height_b_over_a": 2.681799537,
+    "interplanar": 1.048437338,
+    "lat_slip": 6.486517931,
+    "lat_slip_signed": 6.486517931,
+    "long_slip": 3.909247993,
+    "long_slip_signed": 3.909247993,
+    "mean_atom_height": 2.681799537,
+    "n_vdw_contacts": 0.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "slip": 7.573449329,
+    "slip_angle": 58.92377273,
+    "slip_direction": 58.92377273
+   },
+   "ring_pairs": [],
+   "shift": [
+    0,
+    0,
+    0
    ]
   },
   {
@@ -6740,8 +6906,7 @@
    "params": {
     "axis_aspect_a": 0.9939875582,
     "axis_aspect_b": 0.9961998283,
-    "beta_a": 84.34400796,
-    "beta_b": 66.56499902,
+    "beta": 84.34400796,
     "cc_contact": 4.195855196,
     "centroid_distance": 7.159462841,
     "contact": 3.541016941,
@@ -6754,6 +6919,7 @@
     "dihedral": 36.99765294,
     "fragment_a": 2.0,
     "fragment_b": 3.0,
+    "gamma": 66.56499902,
     "height_a_over_b": 2.847378917,
     "height_b_over_a": 0.7056039711,
     "interplanar": 1.129234864,
@@ -6823,8 +6989,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.992064028,
-    "beta_a": 69.88595983,
-    "beta_b": 88.09154866,
+    "beta": 69.88595983,
     "cc_contact": 3.950969741,
     "centroid_distance": 7.157568854,
     "contact": 3.442673823,
@@ -6837,6 +7002,7 @@
     "dihedral": 28.46706717,
     "fragment_a": 1.0,
     "fragment_b": 2.0,
+    "gamma": 88.09154866,
     "height_a_over_b": 0.2383656566,
     "height_b_over_a": 2.461414969,
     "interplanar": 1.146727337,
@@ -6923,8 +7089,7 @@
    "params": {
     "axis_aspect_a": 0.992064028,
     "axis_aspect_b": 0.997884332,
-    "beta_a": 85.96436774,
-    "beta_b": 67.78248858,
+    "beta": 85.96436774,
     "cc_contact": 4.221757301,
     "centroid_distance": 7.192143031,
     "contact": 3.566951701,
@@ -6937,6 +7102,7 @@
     "dihedral": 34.36982265,
     "fragment_a": 2.0,
     "fragment_b": 3.0,
+    "gamma": 67.78248858,
     "height_a_over_b": 2.719520056,
     "height_b_over_a": 0.5061603397,
     "interplanar": 1.15839501,
@@ -7006,8 +7172,7 @@
    "params": {
     "axis_aspect_a": 0.9975456423,
     "axis_aspect_b": 0.990583826,
-    "beta_a": 65.74024367,
-    "beta_b": 85.7851271,
+    "beta": 65.74024367,
     "cc_contact": 3.899945354,
     "centroid_distance": 7.081604655,
     "contact": 3.369907864,
@@ -7020,6 +7185,7 @@
     "dihedral": 35.20430905,
     "fragment_a": 3.0,
     "fragment_b": 2.0,
+    "gamma": 85.7851271,
     "height_a_over_b": 0.5204772545,
     "height_b_over_a": 2.909647951,
     "interplanar": 1.253264052,
@@ -7058,6 +7224,89 @@
     0,
     0,
     0
+   ]
+  },
+  {
+   "a": 0,
+   "b": 11,
+   "count": 4,
+   "kind": "tilted",
+   "members": [
+    [
+     0,
+     11,
+     [
+      0,
+      0,
+      -1
+     ]
+    ],
+    [
+     1,
+     10,
+     [
+      0,
+      0,
+      1
+     ]
+    ],
+    [
+     2,
+     9,
+     [
+      0,
+      0,
+      1
+     ]
+    ],
+    [
+     3,
+     8,
+     [
+      0,
+      0,
+      -1
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.9975456423,
+    "axis_aspect_b": 0.990583826,
+    "beta": 65.96860537,
+    "cc_contact": 4.141403748,
+    "centroid_distance": 7.55379248,
+    "contact": 3.479588657,
+    "core_contact": 5.023986123,
+    "core_rms_a": 0.02208309353,
+    "core_rms_b": 0.00229008021,
+    "core_size_a": 6.0,
+    "core_size_b": 6.0,
+    "count": 4.0,
+    "dihedral": 35.20430905,
+    "fragment_a": 3.0,
+    "fragment_b": 2.0,
+    "gamma": 86.05499399,
+    "height_a_over_b": 0.5196930187,
+    "height_b_over_a": 3.07618492,
+    "interplanar": 1.341034111,
+    "lat_slip": 3.95031031,
+    "lat_slip_signed": -3.95031031,
+    "long_slip": 6.297337279,
+    "long_slip_signed": 6.297337279,
+    "mean_atom_height": 3.07618492,
+    "n_vdw_contacts": 0.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "slip": 7.433801742,
+    "slip_angle": 32.09998748,
+    "slip_direction": -32.09998748
+   },
+   "ring_pairs": [],
+   "shift": [
+    0,
+    0,
+    -1
    ]
   },
   {
@@ -7106,8 +7355,7 @@
    "params": {
     "axis_aspect_a": 0.9939875582,
     "axis_aspect_b": 0.9961998283,
-    "beta_a": 85.17221237,
-    "beta_b": 63.19034831,
+    "beta": 85.17221237,
     "cc_contact": 3.950969741,
     "centroid_distance": 7.138050067,
     "contact": 3.442673823,
@@ -7120,6 +7368,7 @@
     "dihedral": 36.99765294,
     "fragment_a": 2.0,
     "fragment_b": 3.0,
+    "gamma": 63.19034831,
     "height_a_over_b": 3.219459687,
     "height_b_over_a": 0.6007462748,
     "interplanar": 1.380697113,
@@ -7206,8 +7455,7 @@
    "params": {
     "axis_aspect_a": 0.992064028,
     "axis_aspect_b": 0.997884332,
-    "beta_a": 86.9408176,
-    "beta_b": 64.30395406,
+    "beta": 86.9408176,
     "cc_contact": 3.906975433,
     "centroid_distance": 7.450650406,
     "contact": 3.381344242,
@@ -7220,6 +7468,7 @@
     "dihedral": 34.36982265,
     "fragment_a": 2.0,
     "fragment_b": 3.0,
+    "gamma": 64.30395406,
     "height_a_over_b": 3.230578911,
     "height_b_over_a": 0.3976221401,
     "interplanar": 1.482670423,
@@ -7306,8 +7555,7 @@
    "params": {
     "axis_aspect_a": 0.9975456423,
     "axis_aspect_b": 0.992064028,
-    "beta_a": 87.43325165,
-    "beta_b": 58.42975995,
+    "beta": 87.43325165,
     "cc_contact": 4.446526393,
     "centroid_distance": 7.193424203,
     "contact": 3.001819593,
@@ -7320,6 +7568,7 @@
     "dihedral": 34.59334969,
     "fragment_a": 3.0,
     "fragment_b": 2.0,
+    "gamma": 58.42975995,
     "height_a_over_b": 3.766070057,
     "height_b_over_a": 0.3221447501,
     "interplanar": 2.140924156,
@@ -7389,8 +7638,7 @@
    "params": {
     "axis_aspect_a": 0.990583826,
     "axis_aspect_b": 0.997884332,
-    "beta_a": 56.74439336,
-    "beta_b": 88.17915625,
+    "beta": 56.74439336,
     "cc_contact": 4.468161314,
     "centroid_distance": 7.115394146,
     "contact": 3.057079275,
@@ -7403,6 +7651,7 @@
     "dihedral": 35.08706186,
     "fragment_a": 2.0,
     "fragment_b": 3.0,
+    "gamma": 88.17915625,
     "height_a_over_b": 0.2260871629,
     "height_b_over_a": 3.901904699,
     "interplanar": 2.164679023,
@@ -7472,8 +7721,7 @@
    "params": {
     "axis_aspect_a": 0.9939875582,
     "axis_aspect_b": 0.9961998283,
-    "beta_a": 55.0362477,
-    "beta_b": 88.37773093,
+    "beta": 55.0362477,
     "cc_contact": 4.446526393,
     "centroid_distance": 6.944212389,
     "contact": 3.001819593,
@@ -7486,6 +7734,7 @@
     "dihedral": 36.99765294,
     "fragment_a": 2.0,
     "fragment_b": 3.0,
+    "gamma": 88.37773093,
     "height_a_over_b": 0.1965917198,
     "height_b_over_a": 3.979437101,
     "interplanar": 2.201780046,
@@ -7555,8 +7804,7 @@
    "params": {
     "axis_aspect_a": 0.9975456423,
     "axis_aspect_b": 0.992064028,
-    "beta_a": 84.9723645,
-    "beta_b": 54.57101586,
+    "beta": 84.9723645,
     "cc_contact": 4.490856451,
     "centroid_distance": 6.890517508,
     "contact": 3.059531419,
@@ -7569,6 +7817,7 @@
     "dihedral": 34.59334969,
     "fragment_a": 3.0,
     "fragment_b": 2.0,
+    "gamma": 54.57101586,
     "height_a_over_b": 3.994387838,
     "height_b_over_a": 0.6038589603,
     "interplanar": 2.408018685,
@@ -7638,8 +7887,7 @@
    "params": {
     "axis_aspect_a": 0.997884332,
     "axis_aspect_b": 0.990583826,
-    "beta_a": 83.90708379,
-    "beta_b": 55.29343414,
+    "beta": 83.90708379,
     "cc_contact": 4.468161314,
     "centroid_distance": 6.970928915,
     "contact": 3.057079275,
@@ -7652,6 +7900,7 @@
     "dihedral": 35.08706186,
     "fragment_a": 3.0,
     "fragment_b": 2.0,
+    "gamma": 55.29343414,
     "height_a_over_b": 3.969063826,
     "height_b_over_a": 0.7399023079,
     "interplanar": 2.469336315,
@@ -7721,8 +7970,7 @@
    "params": {
     "axis_aspect_a": 0.9939875582,
     "axis_aspect_b": 0.9961998283,
-    "beta_a": 55.13494865,
-    "beta_b": 84.92740044,
+    "beta": 55.13494865,
     "cc_contact": 4.490856451,
     "centroid_distance": 7.145623699,
     "contact": 3.059531419,
@@ -7735,6 +7983,7 @@
     "dihedral": 36.99765294,
     "fragment_a": 2.0,
     "fragment_b": 3.0,
+    "gamma": 84.92740044,
     "height_a_over_b": 0.6318014139,
     "height_b_over_a": 4.084763631,
     "interplanar": 2.486773739,
@@ -7755,6 +8004,338 @@
    "shift": [
     0,
     0,
+    0
+   ]
+  },
+  {
+   "a": 0,
+   "b": 9,
+   "count": 4,
+   "kind": "tilted",
+   "members": [
+    [
+     0,
+     9,
+     [
+      0,
+      -1,
+      0
+     ]
+    ],
+    [
+     1,
+     8,
+     [
+      -1,
+      0,
+      -1
+     ]
+    ],
+    [
+     2,
+     11,
+     [
+      0,
+      1,
+      0
+     ]
+    ],
+    [
+     3,
+     10,
+     [
+      1,
+      0,
+      1
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.9552717349,
+    "axis_aspect_b": 0.990583826,
+    "beta": 81.44371273,
+    "cc_contact": 3.881513149,
+    "centroid_distance": 7.792486917,
+    "contact": 3.881513149,
+    "core_contact": 5.426845273,
+    "core_rms_a": 0.001960507838,
+    "core_rms_b": 0.00229008021,
+    "core_size_a": 6.0,
+    "core_size_b": 6.0,
+    "count": 4.0,
+    "dihedral": 29.03250935,
+    "fragment_a": 1.0,
+    "fragment_b": 2.0,
+    "gamma": 60.46291412,
+    "height_a_over_b": 3.841593288,
+    "height_b_over_a": 1.159373583,
+    "interplanar": 2.582939733,
+    "lat_slip": 5.509926917,
+    "lat_slip_signed": 5.509926917,
+    "long_slip": 4.867440812,
+    "long_slip_signed": -4.867440812,
+    "mean_atom_height": 1.159373583,
+    "n_vdw_contacts": 0.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "slip": 7.351957202,
+    "slip_angle": 48.54278815,
+    "slip_direction": 131.4572118
+   },
+   "ring_pairs": [],
+   "shift": [
+    0,
+    -1,
+    0
+   ]
+  },
+  {
+   "a": 0,
+   "b": 9,
+   "count": 4,
+   "kind": "tilted",
+   "members": [
+    [
+     0,
+     9,
+     [
+      -1,
+      -1,
+      -1
+     ]
+    ],
+    [
+     1,
+     8,
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    [
+     2,
+     11,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     3,
+     10,
+     [
+      0,
+      0,
+      0
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.9552717349,
+    "axis_aspect_b": 0.990583826,
+    "beta": 81.87414091,
+    "cc_contact": 4.053463624,
+    "centroid_distance": 7.764748897,
+    "contact": 4.053463624,
+    "core_contact": 5.395046619,
+    "core_rms_a": 0.001960507838,
+    "core_rms_b": 0.00229008021,
+    "core_size_a": 6.0,
+    "core_size_b": 6.0,
+    "count": 4.0,
+    "dihedral": 29.03250935,
+    "fragment_a": 1.0,
+    "fragment_b": 2.0,
+    "gamma": 58.739373,
+    "height_a_over_b": 4.029375237,
+    "height_b_over_a": 1.097532047,
+    "interplanar": 2.647986454,
+    "lat_slip": 5.704783652,
+    "lat_slip_signed": -5.704783652,
+    "long_slip": 4.553563072,
+    "long_slip_signed": -4.553563072,
+    "mean_atom_height": 1.097532047,
+    "n_vdw_contacts": 0.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "slip": 7.299280318,
+    "slip_angle": 51.40310339,
+    "slip_direction": -128.5968966
+   },
+   "ring_pairs": [],
+   "shift": [
+    -1,
+    -1,
+    -1
+   ]
+  },
+  {
+   "a": 4,
+   "b": 7,
+   "count": 4,
+   "kind": "tilted",
+   "members": [
+    [
+     4,
+     7,
+     [
+      0,
+      0,
+      -1
+     ]
+    ],
+    [
+     4,
+     7,
+     [
+      1,
+      0,
+      0
+     ]
+    ],
+    [
+     5,
+     6,
+     [
+      0,
+      0,
+      -1
+     ]
+    ],
+    [
+     5,
+     6,
+     [
+      1,
+      0,
+      0
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.95875718,
+    "axis_aspect_b": 0.992064028,
+    "beta": 79.81513195,
+    "cc_contact": 3.86645782,
+    "centroid_distance": 7.656590908,
+    "contact": 3.86645782,
+    "core_contact": 5.358996573,
+    "core_rms_a": 0.003264175976,
+    "core_rms_b": 0.008478399633,
+    "core_size_a": 6.0,
+    "core_size_b": 6.0,
+    "count": 4.0,
+    "dihedral": 28.46978503,
+    "fragment_a": 1.0,
+    "fragment_b": 2.0,
+    "gamma": 60.36845498,
+    "height_a_over_b": 3.785575541,
+    "height_b_over_a": 1.353875201,
+    "interplanar": 2.651126129,
+    "lat_slip": 5.797115691,
+    "lat_slip_signed": -5.797115691,
+    "long_slip": 4.241269178,
+    "long_slip_signed": 4.241269178,
+    "mean_atom_height": 1.353875201,
+    "n_vdw_contacts": 0.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "slip": 7.182960015,
+    "slip_angle": 53.8101581,
+    "slip_direction": -53.8101581
+   },
+   "ring_pairs": [],
+   "shift": [
+    0,
+    0,
+    -1
+   ]
+  },
+  {
+   "a": 0,
+   "b": 9,
+   "count": 4,
+   "kind": "tilted",
+   "members": [
+    [
+     0,
+     9,
+     [
+      0,
+      -1,
+      0
+     ]
+    ],
+    [
+     1,
+     8,
+     [
+      -1,
+      0,
+      -1
+     ]
+    ],
+    [
+     2,
+     11,
+     [
+      0,
+      1,
+      0
+     ]
+    ],
+    [
+     3,
+     10,
+     [
+      1,
+      0,
+      1
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.9939875582,
+    "axis_aspect_b": 0.9535655041,
+    "beta": 57.73417968,
+    "cc_contact": 3.881513149,
+    "centroid_distance": 7.702399353,
+    "contact": 3.881513149,
+    "core_contact": 5.384557705,
+    "core_rms_a": 0.00281961084,
+    "core_rms_b": 0.004828464143,
+    "core_size_a": 6.0,
+    "core_size_b": 6.0,
+    "count": 4.0,
+    "dihedral": 27.66630503,
+    "fragment_a": 2.0,
+    "fragment_b": 1.0,
+    "gamma": 80.2068729,
+    "height_a_over_b": 1.31011107,
+    "height_b_over_a": 4.111910606,
+    "interplanar": 2.791989428,
+    "lat_slip": 5.330927765,
+    "lat_slip_signed": 5.330927765,
+    "long_slip": 4.807593992,
+    "long_slip_signed": -4.807593992,
+    "mean_atom_height": 4.111910606,
+    "n_vdw_contacts": 0.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "slip": 7.178561892,
+    "slip_angle": 47.95489112,
+    "slip_direction": 132.0451089
+   },
+   "ring_pairs": [],
+   "shift": [
+    0,
+    -1,
     0
    ]
   },
@@ -7804,8 +8385,7 @@
    "params": {
     "axis_aspect_a": 0.992064028,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 47.32994208,
-    "beta_b": 43.17359371,
+    "beta": 47.32994208,
     "cc_contact": 3.371891832,
     "centroid_distance": 4.850745106,
     "contact": 3.371891832,
@@ -7818,6 +8398,7 @@
     "dihedral": 25.85234148,
     "fragment_a": 2.0,
     "fragment_b": 1.0,
+    "gamma": 43.17359371,
     "height_a_over_b": 3.537570996,
     "height_b_over_a": 3.287716286,
     "interplanar": 3.501371477,
@@ -7968,8 +8549,7 @@
    "params": {
     "axis_aspect_a": 0.95875718,
     "axis_aspect_b": 0.990583826,
-    "beta_a": 44.32555469,
-    "beta_b": 48.79590593,
+    "beta": 44.32555469,
     "cc_contact": 3.43780389,
     "centroid_distance": 4.991599694,
     "contact": 3.43780389,
@@ -7982,6 +8562,7 @@
     "dihedral": 29.13709973,
     "fragment_a": 1.0,
     "fragment_b": 2.0,
+    "gamma": 48.79590593,
     "height_a_over_b": 3.288182467,
     "height_b_over_a": 3.570896379,
     "interplanar": 3.543471281,
@@ -8132,8 +8713,7 @@
    "params": {
     "axis_aspect_a": 0.9939875582,
     "axis_aspect_b": 0.9975456423,
-    "beta_a": 53.72780384,
-    "beta_b": 54.95353287,
+    "beta": 53.72780384,
     "cc_contact": 3.40538048,
     "centroid_distance": 5.804095777,
     "contact": 3.404666762,
@@ -8146,6 +8726,7 @@
     "dihedral": 36.55222527,
     "fragment_a": 2.0,
     "fragment_b": 3.0,
+    "gamma": 54.95353287,
     "height_a_over_b": 3.332947346,
     "height_b_over_a": 3.433830853,
     "interplanar": 3.563126368,
@@ -8328,8 +8909,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.9939875582,
-    "beta_a": 46.91467692,
-    "beta_b": 52.42711947,
+    "beta": 46.91467692,
     "cc_contact": 3.40538048,
     "centroid_distance": 5.343489759,
     "contact": 3.404666762,
@@ -8342,6 +8922,7 @@
     "dihedral": 30.27346188,
     "fragment_a": 1.0,
     "fragment_b": 2.0,
+    "gamma": 52.42711947,
     "height_a_over_b": 3.258300209,
     "height_b_over_a": 3.650066853,
     "interplanar": 3.578332231,
@@ -8524,8 +9105,7 @@
    "params": {
     "axis_aspect_a": 0.9961998283,
     "axis_aspect_b": 0.990583826,
-    "beta_a": 56.50971625,
-    "beta_b": 57.54433488,
+    "beta": 56.50971625,
     "cc_contact": 3.371891832,
     "centroid_distance": 6.267372136,
     "contact": 3.371891832,
@@ -8538,6 +9118,7 @@
     "dihedral": 35.65858907,
     "fragment_a": 3.0,
     "fragment_b": 2.0,
+    "gamma": 57.54433488,
     "height_a_over_b": 3.363365452,
     "height_b_over_a": 3.458308158,
     "interplanar": 3.582913497,
@@ -8688,8 +9269,7 @@
    "params": {
     "axis_aspect_a": 0.992064028,
     "axis_aspect_b": 0.997884332,
-    "beta_a": 56.13828874,
-    "beta_b": 57.46586132,
+    "beta": 56.13828874,
     "cc_contact": 3.371891832,
     "centroid_distance": 6.265569603,
     "contact": 3.371891832,
@@ -8702,6 +9282,7 @@
     "dihedral": 34.44715901,
     "fragment_a": 2.0,
     "fragment_b": 3.0,
+    "gamma": 57.46586132,
     "height_a_over_b": 3.36963607,
     "height_b_over_a": 3.491114711,
     "interplanar": 3.591427251,
@@ -8852,8 +9433,7 @@
    "params": {
     "axis_aspect_a": 0.9552717349,
     "axis_aspect_b": 0.9939875582,
-    "beta_a": 46.73135587,
-    "beta_b": 45.77248024,
+    "beta": 46.73135587,
     "cc_contact": 3.390137876,
     "centroid_distance": 5.01720904,
     "contact": 3.390137876,
@@ -8866,6 +9446,7 @@
     "dihedral": 30.27346188,
     "fragment_a": 1.0,
     "fragment_b": 2.0,
+    "gamma": 45.77248024,
     "height_a_over_b": 3.499550277,
     "height_b_over_a": 3.438895255,
     "interplanar": 3.593912,
@@ -9016,8 +9597,7 @@
    "params": {
     "axis_aspect_a": 0.992064028,
     "axis_aspect_b": 0.997884332,
-    "beta_a": 57.10541446,
-    "beta_b": 55.09025912,
+    "beta": 57.10541446,
     "cc_contact": 3.43780389,
     "centroid_distance": 6.197000641,
     "contact": 3.43780389,
@@ -9030,6 +9610,7 @@
     "dihedral": 34.44715901,
     "fragment_a": 2.0,
     "fragment_b": 3.0,
+    "gamma": 55.09025912,
     "height_a_over_b": 3.546452369,
     "height_b_over_a": 3.365560704,
     "interplanar": 3.618261748,
@@ -9180,8 +9761,7 @@
    "params": {
     "axis_aspect_a": 0.9961998283,
     "axis_aspect_b": 0.990583826,
-    "beta_a": 56.23910989,
-    "beta_b": 55.89844954,
+    "beta": 56.23910989,
     "cc_contact": 3.43780389,
     "centroid_distance": 6.184539878,
     "contact": 3.43780389,
@@ -9194,6 +9774,7 @@
     "dihedral": 35.65858907,
     "fragment_a": 3.0,
     "fragment_b": 2.0,
+    "gamma": 55.89844954,
     "height_a_over_b": 3.4674328,
     "height_b_over_a": 3.43692358,
     "interplanar": 3.626340555,
@@ -9344,8 +9925,7 @@
    "params": {
     "axis_aspect_a": 0.9939875582,
     "axis_aspect_b": 0.9975456423,
-    "beta_a": 57.26542526,
-    "beta_b": 54.393871,
+    "beta": 57.26542526,
     "cc_contact": 3.390137876,
     "centroid_distance": 6.147076779,
     "contact": 3.390137876,
@@ -9358,6 +9938,7 @@
     "dihedral": 36.55222527,
     "fragment_a": 2.0,
     "fragment_b": 3.0,
+    "gamma": 54.393871,
     "height_a_over_b": 3.578889235,
     "height_b_over_a": 3.324019633,
     "interplanar": 3.634807567,
@@ -9508,8 +10089,7 @@
    "params": {
     "axis_aspect_a": 0.95875718,
     "axis_aspect_b": 0.990583826,
-    "beta_a": 44.42984578,
-    "beta_b": 44.02205997,
+    "beta": 44.42984578,
     "cc_contact": 3.371891832,
     "centroid_distance": 4.926647617,
     "contact": 3.371891832,
@@ -9522,6 +10102,7 @@
     "dihedral": 29.13709973,
     "fragment_a": 1.0,
     "fragment_b": 2.0,
+    "gamma": 44.02205997,
     "height_a_over_b": 3.542615785,
     "height_b_over_a": 3.518159083,
     "interplanar": 3.647669539,
@@ -9672,8 +10253,7 @@
    "params": {
     "axis_aspect_a": 0.992064028,
     "axis_aspect_b": 0.9535655041,
-    "beta_a": 45.3485951,
-    "beta_b": 44.80271782,
+    "beta": 45.3485951,
     "cc_contact": 3.43780389,
     "centroid_distance": 5.078261015,
     "contact": 3.43780389,
@@ -9686,6 +10266,7 @@
     "dihedral": 25.85234148,
     "fragment_a": 2.0,
     "fragment_b": 1.0,
+    "gamma": 44.80271782,
     "height_a_over_b": 3.603215668,
     "height_b_over_a": 3.568959129,
     "interplanar": 3.679324727,

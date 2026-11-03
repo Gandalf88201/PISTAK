@@ -13,14 +13,14 @@ conti a mano.
 
 | # | Modulo | Problema o verifica | Priorità | Stato | Azione |
 | --- | --- | --- | --- | --- | --- |
-| 1 | params/extra.py | `beta_b` etichettato come γ | P1 → P3 | Verificato: i numeri sono giusti, è la chiave a essere fuorviante | Rinominare la chiave in `gamma` (alias `beta_b` per i CSV vecchi) |
+| 1 | params/extra.py | `beta_b` etichettato come γ | P1 → P3 | **Corretto**: i numeri erano giusti, la chiave no | Chiavi `beta` e `gamma`; `beta_a`, `beta_b` valgono ancora in `Pair.get` e nel registro |
 | 2 | params/extra.py | `mean_atom_height`: descrizione (piano di A) diversa dal codice (normale media) | P1 | **Corretto**: il vecchio codice dava la distanza interplanare sotto altro nome | Ora media di \|(x − Cg_A)·n_A\| sugli atomi di B; test in `tests/test_revisione.py` |
 | 3 | core/cores.py | `small_rings` può perdere anelli centrali | P1 | **Corretto**: era confermato sul coronene; pirene, trifenilene, perilene erano già giusti | Per ogni legame tutti i cicli più corti; test su coronene ed esabenzocoronene in 300 ordinamenti |
 | 4 | core/geometry.py | `unit()` restituisce il vettore nullo senza errore | P1 → P3 | Non raggiungibile: dimostrato e verificato | Nessuna sui numeri; facoltativo un `assert` |
 | 5 | core/pairs.py | `MAX_SHELLS` = 8 taglia la ricerca senza avviso | P1 | **Corretto** (avviso) | Nuovo avviso B `shellsTruncated` nei controlli rapidi, ricalcolato anche da `reanalyse`; il limite resta |
-| 6 | core/pairs.py | Coppie cercate entro 4,0 Å ma stack fino a 4,2 Å | P1 | **Confermato e più forte del previsto** | Decidere: alzare `contact_cutoff` o dichiarare 4,0 Å come soglia effettiva |
-| 7 | io/qc.py | Distanze X–H per P e Si senza fonte; C–H unico per sp² e sp³ | P1 | Da verificare sul testo di Allen & Bruno 2010 | — |
-| 8 | repository | Manca LICENSE; manca `license` in pyproject.toml | P1 | Confermato | Scelta della licenza: decisione dell'autore |
+| 6 | core/pairs.py | Coppie cercate entro 4,0 Å ma stack fino a 4,2 Å | P1 | **Corretto**: `contact_cutoff` = 4,5 Å (il modo del sito resta a 4,0) | Motivazione in `Limits`; test su colonne a 4,05–4,19 Å |
+| 7 | io/qc.py | Distanze X–H per P e Si senza fonte; C–H unico per sp² e sp³ | P1 | **Corretto** sul testo di Allen & Bruno 2010 | Medie a T ≤ 60 K, C–H secondo l'ibridazione; P–H tolto (nessuna fonte) |
+| 8 | repository | Manca LICENSE; manca `license` in pyproject.toml | P1 | **Corretto** | MIT: `LICENSE`, `license = "MIT"` in pyproject.toml, sezione nei due README |
 | 9 | tests/cifgen.py | Oracolo circolare? usa `cell_vectors` di PISTAK | P1 | Verificato: `cell_vectors` è corretto per un oracolo indipendente, quindi `cifgen` non è circolare | Nessuna; la verifica resta in `check_registro.py` |
 | 10 | core/cif.py | **Nuovo.** `tokenize` va in ciclo infinito (memoria che cresce senza limite) su un carattere di spaziatura diverso da spazio e tab: NBSP, form feed, tab verticale, U+2003… | P2 | **Corretto** | `if ch.isspace()` al posto di `if ch in " \t"`; test con 5 caratteri in un processo separato |
 
@@ -134,9 +134,23 @@ per lo slittamento, o nel paper la soglia dichiarata è il contatto atomo–atom
 
 ## 7. Distanze X–H
 
-`XH_NEUTRON = {C: 1.083, N: 1.009, O: 0.983, B: 1.19, S: 1.338, P: 1.42, Si: 1.48}`. C, N e O sono i valori di
-normalizzazione usati da CSD/Mercury e PLATON; C–H 1,083 Å è il valore del C aromatico. Non verificato sul testo di
-Allen & Bruno, Acta Cryst. B 66, 380 (2010), che non è nel repository: resta aperto, insieme alla fonte di B, S, P, Si.
+Prima: `{C: 1.083, N: 1.009, O: 0.983, B: 1.19, S: 1.338, P: 1.42, Si: 1.48}`. Controllato sul testo di Allen & Bruno,
+Acta Cryst. B66, 380 (2010):
+
+| Legame | Prima | Articolo | Ora |
+| --- | --- | --- | --- |
+| C–H | 1,083 (un solo valore) | C(ar)–H 1,083 e C=Csp²–H 1,082 (tab. 2, tutte le T); Csp²–H 1,085 e Csp³–H 1,095 a T ≤ 60 K (conclusioni, tab. 4); CH₃ accorciato di ~0,01 Å dalla librazione; Csp–H 1,055 | sp² e aromatico 1,085; sp³ 1,095; sp 1,055 |
+| N–H | 1,009 (valore CSD del 1987) | Z₂–N–H 1,015 (tab. 2); 1,020 a T ≤ 60 K; N⁺–H 1,040 | 1,020; N⁺ (4 vicini) 1,040 |
+| O–H | 0,983 | Z–O–H 0,983 (tab. 2); ossidrili 0,989 a T ≤ 60 K; acidi carbossilici 1,018 | 0,989 (gli acidi non si distinguono) |
+| B–H | 1,19 | terminale 1,185 (tab. 2) | 1,185 |
+| S–H | 1,338 | 1,338(2), una sola struttura (NALCYS02) | 1,338 |
+| Si–H | 1,48 | 1,506(2), una sola struttura (COQYUC01) | 1,506 |
+| P–H | 1,42 | assente | tolto: quegli H restano come nel CIF |
+
+Si usano i valori a bassa temperatura perché servono geometrie per calcoli quantistici, dove l'accorciamento dovuto
+alla librazione è un artefatto. L'ibridazione del carbonio si ricava dal numero di vicini (4 = sp³, 3 = sp² o
+aromatico, 2 = sp); i due casi richiesti, aromatico e sp³, danno 1,085 e 1,095 Å. Lo stesso vale per le celle
+periodiche (`io/periodic.py` usa la stessa funzione), quindi dimeri e celle restano coerenti.
 
 ## 9. `tests/cifgen.py`
 
@@ -176,3 +190,12 @@ Snapshot rigenerati e confrontati campo per campo con quelli precedenti (14 file
 `mean_atom_height` (121 valori) e la tabella anello–anello. Confrontate come insiemi, le 513 coppie di anelli hanno
 gli stessi valori: cambiano l'ordine e la numerazione degli anelli, più un rumore numerico di 10⁻⁶° su α (COD 2100417).
 Suite completa: 376 test superati, 3 saltati (servono i CIF di `DATI_REALI/`).
+
+## Decisioni dell'autore (3 novembre 2026)
+
+| Voce | Decisione | Effetto sui risultati |
+| --- | --- | --- |
+| 6 | `contact_cutoff` = 4,5 Å | Con piani paralleli il contatto non scende sotto la distanza interplanare, e un atomo di B dentro il contorno di A dista in proiezione al più ~1,4 Å (raggio di un anello) dall'atomo di A più vicino: √(4,2² + 1,4²) ≈ 4,43 Å < 4,5. Negli snapshot canonici: nessuna coppia persa, nessun tipo cambiato, nessuno stack nuovo; 4 coppie parallel in più nel naftalene sintetico, 10 coppie in più (9 inclinate) tra frammenti secondari in COD 2100417 e 4500022, perché la loro portata `contact_cutoff` + 1 Å passa da 5,0 a 5,5 Å. Il modo del sito resta a 4,0 Å |
+| 1 | Chiavi `beta`, `gamma` | Cambiano le intestazioni dei CSV; i valori no |
+| 8 | Licenza MIT | Nessuno |
+| 7 | X–H da Allen & Bruno 2010, C per ibridazione | Solo gli input per ORCA, Psi4, Gaussian e i file periodici |

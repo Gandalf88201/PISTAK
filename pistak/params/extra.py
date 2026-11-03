@@ -39,13 +39,13 @@ def slip_direction(ctx):
     return float(np.degrees(np.arctan2(ctx.slip_vector @ ctx.frame.W, ctx.slip_vector @ ctx.frame.L)))
 
 
-@parameter("beta_a", "β (Cg→normale A)", "°", "Angolo tra il vettore tra i centroidi e la normale del nucleo A (stile Janiak).", 1, G)
-def beta_a(ctx):
+@parameter("beta", "β (Cg→normale A)", "°", "Angolo tra il vettore tra i centroidi e la normale del nucleo A (β di PLATON e Janiak).", 1, G)
+def beta(ctx):
     return acute_angle_deg(ctx.d, ctx.core_a.normal)
 
 
-@parameter("beta_b", "γ (Cg→normale B)", "°", "Angolo tra il vettore tra i centroidi e la normale del nucleo B.", 1, G)
-def beta_b(ctx):
+@parameter("gamma", "γ (Cg→normale B)", "°", "Angolo tra il vettore tra i centroidi e la normale del nucleo B (γ di PLATON e Janiak).", 1, G)
+def gamma(ctx):
     return acute_angle_deg(ctx.d, ctx.core_b.normal)
 
 

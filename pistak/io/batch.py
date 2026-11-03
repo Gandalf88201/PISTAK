@@ -17,7 +17,7 @@ from pathlib import Path
 from pistak.core.config import Limits
 
 #: Parametri riportati per la coppia di π-stack migliore (la prima: la più vicina tra gli stack).
-SUMMARY_KEYS = ["interplanar", "long_slip", "lat_slip", "dihedral", "centroid_distance", "contact", "overlap_area", "beta_a"]
+SUMMARY_KEYS = ["interplanar", "long_slip", "lat_slip", "dihedral", "centroid_distance", "contact", "overlap_area", "beta"]
 #: Grandezze dell'intera struttura riportate nel riepilogo (chiavi del registro `pistak.params.structure`).
 STRUCTURE_KEYS = ["z_prime", "density_calc", "r1", "wr2", "goof", "temperature", "alerts_a", "alerts_b", "alerts_c"]
 

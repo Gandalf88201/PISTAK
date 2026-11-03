@@ -5,8 +5,8 @@ I monomeri sono le due molecole intere della coppia (per le coppie di frammenti 
 contengono: tagliare un frammento richiederebbe di saturare le valenze), con B già nella posizione della coppia.
 Le coppie intramolecolari non si esportano: i due frammenti sono legati covalentemente.
 
-Idrogeni: per impostazione le distanze X–H si portano ai valori medi da diffrazione di neutroni (F. H. Allen,
-Acta Cryst. B42, 515, 1986; Allen & Bruno, Acta Cryst. B66, 380, 2010), perché i raggi X le accorciano di ~0,1 Å
+Idrogeni: per impostazione le distanze X–H si portano ai valori medi da diffrazione di neutroni (Allen & Bruno,
+Acta Cryst. B66, 380, 2010; il C–H secondo l'ibridazione del carbonio, vedi `XH_NEUTRON`), perché i raggi X le accorciano di ~0,1 Å
 e l'energia d'interazione ne risente. Gli atomi pesanti restano dove li mette il cristallo (geometria sperimentale,
 nessuna ottimizzazione).
 
@@ -28,8 +28,23 @@ from pistak.core.analysis import Analysis
 from pistak.core.errors import PistakError
 from pistak.core.pairs import Pair
 
-#: Distanze X–H medie da diffrazione di neutroni (Å).
-XH_NEUTRON = {"C": 1.083, "N": 1.009, "O": 0.983, "B": 1.19, "S": 1.338, "P": 1.42, "Si": 1.48}
+#: Distanze X–H medie da diffrazione di neutroni (Å), da Allen & Bruno, Acta Cryst. B66, 380 (2010). C, N, O: le
+#: medie a T ≤ 60 K indicate nelle conclusioni (tab. 4), le meno accorciate dalla librazione; il C secondo
+#: l'ibridazione (`xh_kind`), N⁺ = azoto con quattro vicini. O–H è quello degli ossidrili (gli acidi carbossilici,
+#: 1,018 Å, non si distinguono). Csp–H 1,055 Å e B–H terminale 1,185 Å dalla tab. 2; S–H 1,338 e Si–H 1,506 Å da una
+#: sola struttura ciascuno (tab. 2, NALCYS02 e COQYUC01). P–H non c'è nell'articolo: quegli H restano dove li mette il CIF.
+XH_NEUTRON = {"Csp3": 1.095, "Csp2": 1.085, "Csp": 1.055, "N": 1.020, "N+": 1.040, "O": 0.989, "B": 1.185,
+              "S": 1.338, "Si": 1.506}
+
+
+def xh_kind(element: str, neighbours: int) -> str:
+    """La voce di `XH_NEUTRON` per un atomo X con `neighbours` vicini (H compresi). Per il carbonio: 4 vicini = sp³,
+    3 = sp² o aromatico, 2 = sp; per l'azoto 4 vicini = N⁺."""
+    if element == "C":
+        return {4: "Csp3", 3: "Csp2", 2: "Csp"}.get(neighbours, "")
+    if element == "N":
+        return "N+" if neighbours == 4 else "N"
+    return element
 
 PROGRAMS = ("orca", "psi4", "gaussian")
 METHODS = ("dft-d", "sapt")
@@ -113,7 +128,7 @@ def normalize_hydrogens(el: list[str], pos: np.ndarray, bonds: np.ndarray) -> tu
         if e != "H" or len(neighbours.get(h, [])) != 1:
             continue
         x = neighbours[h][0]
-        target = XH_NEUTRON.get(el[x])
+        target = XH_NEUTRON.get(xh_kind(el[x], len(neighbours[x])))
         d = pos[h] - pos[x]
         n = np.linalg.norm(d)
         if target is None or n == 0:
@@ -279,4 +294,4 @@ def exportable(pairs: list[Pair], kind: str | None = "stack") -> list[Pair]:
 
 
 __all__ = ["QCOptions", "QCError", "Dimer", "Monomer", "dimer", "dimer_input", "write_dimer_input", "suggested_name",
-           "normalize_hydrogens", "exportable", "XH_NEUTRON", "replace"]
+           "normalize_hydrogens", "exportable", "XH_NEUTRON", "xh_kind", "replace"]

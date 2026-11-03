@@ -22,8 +22,8 @@ EXAMPLES = sorted(p for p in EX.glob("*.cif") if not p.name.startswith("."))
 # ---- coppie uniche ed equivalenza per simmetria -------------------------------------------------------
 @pytest.mark.parametrize("cif", EXAMPLES, ids=[p.stem for p in EXAMPLES])
 def test_ogni_contatto_una_volta(cif):
-    site, canon = analyse_file(cif, Limits.site()), analyse_file(cif, Limits())
-    # il sito conta ogni contatto due volte (a→b e b→a)
+    # stesso contatto massimo nei due modi (il sito usa 4,0 Å): il sito conta ogni contatto due volte (a→b e b→a)
+    site, canon = analyse_file(cif, Limits.site()), analyse_file(cif, Limits(contact_cutoff=Limits.site().contact_cutoff))
     assert sum(p.count for p in site.pairs) == 2 * sum(p.count for p in canon.pairs)
     seen = set()
     for p in canon.pairs:
@@ -233,4 +233,4 @@ def test_soglie_da_dizionario():
                             "max_slip": True, "sconosciuta": 1})
     assert lim.pair_mode == "site" and lim.disorder == "3" and lim.max_dihedral == 15.0
     assert lim.overlap_measure == "atoms" and lim.max_slip == 0.0  # valori non validi ignorati
-    assert Limits.site() == Limits(pair_mode="site", disorder="first", fragments="largest")
+    assert Limits.site() == Limits(pair_mode="site", disorder="first", fragments="largest", contact_cutoff=4.0)

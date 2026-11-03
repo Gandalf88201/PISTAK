@@ -48,7 +48,7 @@ from pistak.io.stats import PairTable, correlation, describe, summary_rows, writ
 from pistak.params import get_spec
 
 KIND_FILTER = [("Solo π-stack", "stack"), ("Parallele", "parallel"), ("Inclinate", "tilted"), ("Tutti i tipi", None)]
-HEATMAP_DEFAULT = ["interplanar", "long_slip", "lat_slip", "dihedral", "centroid_distance", "contact", "overlap_area", "beta_a"]
+HEATMAP_DEFAULT = ["interplanar", "long_slip", "lat_slip", "dihedral", "centroid_distance", "contact", "overlap_area", "beta"]
 BY_KIND, BY_FILE = "kind", "file"  # valori interni (non tradotti) di «colora/impila per…»
 DIVERGING = pg.ColorMap([0.0, 0.5, 1.0], [(46, 111, 214), (245, 245, 245), (214, 69, 65)])
 

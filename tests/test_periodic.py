@@ -30,9 +30,9 @@ def test_cella_con_idrogeni_normalizzati(herring):
     shifts = np.array([(x, y, z) for x in (-1, 0, 1) for y in (-1, 0, 1) for z in (-1, 0, 1)]) @ cell.vectors
     h = [i for i, e in enumerate(cell.el) if e == "H"]
     c = [i for i, e in enumerate(cell.el) if e == "C"]
-    for i in h:  # ogni H a 1,083 Å dal carbonio più vicino (immagini periodiche comprese)
+    for i in h:  # ogni H a 1,085 Å (C aromatico) dal carbonio più vicino (immagini periodiche comprese)
         d = np.linalg.norm(cart[c][:, None, :] + shifts[None] - cart[i], axis=2).min()
-        assert d == pytest.approx(XH_NEUTRON["C"], abs=1e-6)
+        assert d == pytest.approx(XH_NEUTRON["Csp2"], abs=1e-6)
     raw = periodic.periodic_cell(herring, periodic.PeriodicOptions(normalize_h=False))
     assert any("as in the CIF" in n for n in raw.notes)
 

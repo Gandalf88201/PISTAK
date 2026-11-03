@@ -72,7 +72,10 @@ class Limits:
 
     max_dihedral: float = field(default=20.0, metadata={"label": "Angolo massimo tra i piani (°)", "min": 0, "max": 90, "step": 1})
     max_interplanar: float = field(default=4.2, metadata={"label": "Distanza interplanare massima (Å)", "min": 1, "max": 10, "step": 0.1})
-    contact_cutoff: float = field(default=4.0, metadata={"label": "Contatto massimo tra atomi pesanti (Å)", "min": 2, "max": 10, "step": 0.1})
+    #: 4,5 Å: con piani paralleli il contatto più corto non scende sotto la distanza interplanare, e un atomo di B dentro
+    #: il contorno di A dista al più ~1,4 Å (raggio di un anello) in proiezione dall'atomo di A più vicino; √(4,2² +
+    #: 1,4²) ≈ 4,43 Å, quindi ogni stack entro `max_interplanar` = 4,2 Å viene misurato. Il sito usava 4,0 Å.
+    contact_cutoff: float = field(default=4.5, metadata={"label": "Contatto massimo tra atomi pesanti (Å)", "min": 2, "max": 10, "step": 0.1})
     ring_rms: float = field(default=0.10, metadata={"label": "Planarità massima di un anello (Å rms)", "min": 0.01, "max": 1, "step": 0.01})
     molecule_rms: float = field(default=0.15, metadata={"label": "Planarità massima del nucleo (Å rms)", "min": 0.01, "max": 1, "step": 0.01})
     bond_tolerance: float = field(default=0.4, metadata={"label": "Tolleranza dei legami (Å)", "min": 0, "max": 1.5, "step": 0.05})
@@ -116,7 +119,7 @@ class Limits:
     @classmethod
     def site(cls, **kw) -> Limits:
         """Le soglie e le convenzioni dell'analizzatore del sito (per i confronti di parità)."""
-        return cls(pair_mode="site", disorder="first", fragments="largest", **kw)
+        return cls(**{"pair_mode": "site", "disorder": "first", "fragments": "largest", "contact_cutoff": 4.0, **kw})
 
     @classmethod
     def from_dict(cls, data: dict, base: Limits | None = None) -> Limits:

@@ -25,6 +25,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from pistak.core.analysis import Analysis, PairContext
+from pistak.core.pairs import RENAMED_KEYS
 from pistak.i18n import tr
 
 ParamFn = Callable[[PairContext], float]
@@ -103,7 +104,7 @@ class Registry:
         return list(self._specs.values())
 
     def get(self, key: str) -> ParamSpec | None:
-        return self._specs.get(key)
+        return self._specs.get(RENAMED_KEYS.get(key, key))
 
     def keys(self) -> list[str]:
         return list(self._specs)

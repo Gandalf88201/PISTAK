@@ -47,6 +47,8 @@ FRAGMENT_MARGIN = 1.0
 #: (a, b, shift, fa, fb): un contatto tra il frammento fa della molecola a e il frammento fb di b traslata di shift.
 Member = tuple[int, int, Shift, int, int]
 Fragments = list[list[Core]]
+#: Chiavi dei parametri rinominate: il nome vecchio vale ancora in `Pair.get` e nel registro.
+RENAMED_KEYS = {"beta_a": "beta", "beta_b": "gamma"}
 
 
 @dataclass
@@ -119,7 +121,7 @@ class Pair:
 
     def get(self, key: str, default: float = float("nan")) -> float:
         """Valore di un parametro del registro per questa coppia."""
-        return self.values.get(key, default)
+        return self.values.get(RENAMED_KEYS.get(key, key), default)
 
     @property
     def intramolecular(self) -> bool:

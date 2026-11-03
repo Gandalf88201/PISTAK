@@ -12,7 +12,7 @@ import numpy as np
 from pistak.io.batch import PairRow, StructureEntry
 
 #: Parametri della tabella di confronto (chiavi del registro).
-COMPARE_KEYS = ["interplanar", "long_slip", "lat_slip", "dihedral", "centroid_distance", "contact", "overlap_area", "beta_a"]
+COMPARE_KEYS = ["interplanar", "long_slip", "lat_slip", "dihedral", "centroid_distance", "contact", "overlap_area", "beta"]
 #: Parametri che descrivono la geometria del motivo di stack (per la distanza tra due motivi).
 MOTIF_KEYS = ("interplanar", "long_slip", "lat_slip")
 

@@ -125,7 +125,8 @@ TEXT: dict[str, str] = {
     "Coppia selezionata per calcoli quantistici (ORCA, Psi4, Gaussian)…": "Selected pair for quantum-chemistry calculations (ORCA, Psi4, Gaussian)…",
     "Correzione counterpoise (BSSE)": "Counterpoise correction (BSSE)",
     "Dimero per calcoli quantistici": "Dimer for quantum-chemistry calculations",
-    "Distanze X–H da neutroni (C–H 1,083 Å, N–H 1,009 Å, O–H 0,983 Å)": "X–H distances from neutron data (C–H 1.083 Å, N–H 1.009 Å, O–H 0.983 Å)",
+    "Distanze X–H da neutroni (Allen & Bruno 2010: C–H 1,085 aromatico, 1,095 sp³; N–H 1,020; O–H 0,989 Å)":
+        "X–H distances from neutron data (Allen & Bruno 2010: C–H 1.085 aromatic, 1.095 sp³; N–H 1.020; O–H 0.989 Å)",
     "Funzionale": "Functional",
     "I monomeri sono le due molecole intere della coppia, nella geometria del cristallo. Controlla le parole chiave con la versione del programma che usi.":
         "The monomers are the two whole molecules of the pair, in the crystal geometry. Check the keywords against the program version you use.",
@@ -445,9 +446,9 @@ TEXT: dict[str, str] = {
     "Angolo di s nel piano rispetto all'asse lungo: 0° = slittamento tutto longitudinale, 90° = tutto laterale.":
         "Angle of s in the plane relative to the long axis: 0° = purely longitudinal slip, 90° = purely lateral.",
     "β (Cg→normale A)": "β (Cg→normal A)",
-    "Angolo tra il vettore tra i centroidi e la normale del nucleo A (stile Janiak).": "Angle between the centroid–centroid vector and the normal of core A (Janiak style).",
+    "Angolo tra il vettore tra i centroidi e la normale del nucleo A (β di PLATON e Janiak).": "Angle between the centroid–centroid vector and the normal of core A (β of PLATON and Janiak).",
     "γ (Cg→normale B)": "γ (Cg→normal B)",
-    "Angolo tra il vettore tra i centroidi e la normale del nucleo B.": "Angle between the centroid–centroid vector and the normal of core B.",
+    "Angolo tra il vettore tra i centroidi e la normale del nucleo B (γ di PLATON e Janiak).": "Angle between the centroid–centroid vector and the normal of core B (γ of PLATON and Janiak).",
     "Quota di B sul piano A": "Height of B above plane A",
     "Distanza del centroide di B dal piano medio di A.": "Distance of the centroid of B from the mean plane of A.",
     "Quota di A sul piano B": "Height of A above plane B",

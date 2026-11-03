@@ -6,7 +6,7 @@
 # Soglie del sito "Analizzatore di π-stack" (moleculesfriends.eu). Unità: Å e gradi.
 max_dihedral = 20.0        # sopra questo angolo tra i piani medi la coppia è "inclinata"
 max_interplanar = 4.2      # sopra questa distanza interplanare non c'è π-stack
-contact_cutoff = 4.0       # due molecole sono vicine se hanno atomi pesanti più vicini di così
+contact_cutoff = 4.5       # due molecole sono vicine se hanno atomi pesanti più vicini di così (il sito: 4,0; vedi Limits)
 ring_rms = 0.10            # un anello è planare se lo scarto quadratico dal piano è sotto questo
 molecule_rms = 0.15        # idem per il nucleo π intero
 bond_tolerance = 0.4       # legame se d < somma dei raggi covalenti + tolleranza

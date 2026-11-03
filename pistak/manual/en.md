@@ -41,7 +41,7 @@ plane below `ring_rms`) and joins them into fused systems. Each planar system is
 PISTAK computes the centroid (Cg), the mean plane with its normal **n** and the *long axis* **L**, the direction of
 largest extent (or the one defined by two atoms, see [Long axis](#9-analysis-conventions)).
 
-**Pair.** Two fragments of neighbouring molecules (heavy atoms closer than `contact_cutoff`, 4 Å by default), the
+**Pair.** Two fragments of neighbouring molecules (heavy atoms closer than `contact_cutoff`, 4.5 Å by default), the
 second one possibly translated into another cell: the translation is written as `[1 0 0]`, `[0 -1 0]`…
 
 **The pair frame.** Every pair gets its own reference frame: **n** is the mean normal of the two planes, **L** the
@@ -253,7 +253,7 @@ view and in the exports, with a fixed key (English, the same in every language).
 | `slip_angle` | slip direction relative to L, 0–90° (0 = purely longitudinal) |
 | `long_slip_signed`, `lat_slip_signed` | signed components of **s**, from A towards B |
 | `slip_direction` | signed direction of **s**, −180…180°, from L towards W |
-| `beta_a`, `beta_b` | angle between **d** and the normal of A (β) or B (γ), Janiak style |
+| `beta`, `gamma` | angle between **d** and the normal of A (β) or B (γ), as in PLATON and Janiak (called `beta_a`, `beta_b` in earlier versions) |
 | `height_b_over_a`, `height_a_over_b` | height of the centroid of B above the plane of A and vice versa |
 | `mean_atom_height` | mean height of the atoms of core B above the plane of A |
 | `core_contact`, `cc_contact` | shortest contact between the cores; between two carbons |
@@ -358,7 +358,7 @@ criterion), from `user.toml` or on the command line.
 |---|---|---|
 | `max_dihedral` | 20° | above it, the pair is tilted |
 | `max_interplanar` | 4.2 Å | above it, no π-stack |
-| `contact_cutoff` | 4.0 Å | two molecules are neighbours if they have heavy atoms closer than this |
+| `contact_cutoff` | 4.5 Å | two molecules are neighbours if they have heavy atoms closer than this (above `max_interplanar`: with parallel planes the contact is never shorter than the interplanar distance) |
 | `overlap_measure` | atoms | how the overlap is measured (atoms / area) |
 | `min_overlap` | 0 | minimum overlap for a π-stack |
 | `max_slip` | 0 Å | maximum slip for a π-stack (0 = no limit) |
@@ -539,8 +539,10 @@ dimer of the selected pair, to compute its interaction energy.
 * **Monomers**: the two whole molecules of the pair, in the crystal geometry (B already translated into the right
   cell). Even for a contact between fragments, the energy is that of the whole dimer.
 * **Hydrogens**: X–H distances from X-ray diffraction are too short; by default every X–H bond is lengthened along
-  the bond to the mean neutron-diffraction distances (C–H 1.083 Å, N–H 1.009 Å, O–H 0.983 Å, B–H 1.19 Å,
-  S–H 1.338 Å). Heavy atoms do not move.
+  the bond to the low-temperature mean neutron-diffraction distances of Allen & Bruno (2010): C–H 1.085 Å for aromatic
+  or sp² carbon (three neighbours), 1.095 Å for sp³ (four neighbours), 1.055 Å for sp; N–H 1.020 Å (N⁺–H 1.040 Å);
+  O–H 0.989 Å; B–H 1.185 Å; S–H 1.338 Å; Si–H 1.506 Å. Hydrogens on phosphorus stay as in the CIF (the paper gives no
+  P–H value). Heavy atoms do not move.
 * **DFT-D** (default B3LYP-D3(BJ)/def2-TZVP) with counterpoise correction (Boys–Bernardi):
   E_int = E(AB) − E(A in the AB basis) − E(B in the AB basis). ORCA: three calculations in the same file (`$new_job`)
   with ghost atoms; Psi4: `bsse_type='cp'`; Gaussian: `Counterpoise=2` with fragments (Gaussian has no D4).

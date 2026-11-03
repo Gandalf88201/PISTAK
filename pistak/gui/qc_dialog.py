@@ -62,7 +62,7 @@ class QCDialog(QDialog):
             self.sapt_level.addItem(lev, lev)
         self.counterpoise = QCheckBox(tr("Correzione counterpoise (BSSE)"))
         self.counterpoise.setChecked(o.counterpoise)
-        self.normalize_h = QCheckBox(tr("Distanze X–H da neutroni (C–H 1,083 Å, N–H 1,009 Å, O–H 0,983 Å)"))
+        self.normalize_h = QCheckBox(tr("Distanze X–H da neutroni (Allen & Bruno 2010: C–H 1,085 aromatico, 1,095 sp³; N–H 1,020; O–H 0,989 Å)"))
         self.normalize_h.setChecked(o.normalize_h)
         charges, self.qa, self.qb = _pair(-9, o.charges)
         mults, self.ma, self.mb = _pair(1, o.multiplicities)

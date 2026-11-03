@@ -111,3 +111,64 @@ def test_celle_tagliate_danno_un_avviso():
 def test_nessun_avviso_sulle_celle_normali():
     an = finish(analyse_text(long_acene_column(a=6.0), "undecacene", Limits()))
     assert not _truncated(an)
+
+
+# ---- contact_cutoff: ogni stack entro max_interplanar viene misurato ---------------------------------------------
+def naphthalene_column(interplanar: float, slip: float) -> str:
+    """Colonna infinita di naftalene a piani esattamente paralleli: quota e slittamento imposti dalla cella monoclina."""
+    mol = cifgen.ring_system(2)
+    c = math.hypot(interplanar, slip)
+    beta = math.degrees(math.atan2(interplanar, slip))
+    return cifgen.make_cif(mol, Cell(20.0, 20.0, c, 90, beta, 90), ["x, y, z"], "colonna", "P 1", origin_frac=(0.5, 0.5, 0.0))
+
+
+@pytest.mark.parametrize("slip", [0.0, 1.4])
+@pytest.mark.parametrize("d", [3.5, 4.05, 4.1, 4.19])
+def test_stack_tra_4_0_e_4_2_angstrom(d, slip):
+    an = analyse_text(naphthalene_column(d, slip), "colonna", Limits())
+    stacks = [p for p in an.pairs if p.kind == "stack"]
+    assert len(stacks) == 1 and stacks[0].interplanar == pytest.approx(d, abs=1e-4)
+
+
+def test_oltre_max_interplanar_la_coppia_e_parallela():
+    an = analyse_text(naphthalene_column(4.3, 0.0), "colonna", Limits())
+    assert [p.kind for p in an.pairs] == ["parallel"]
+
+
+def test_il_modo_del_sito_tiene_4_angstrom():
+    assert Limits.site().contact_cutoff == 4.0 and Limits.site(contact_cutoff=5.0).contact_cutoff == 5.0
+    an = analyse_text(naphthalene_column(4.1, 0.0), "colonna", Limits.site())
+    assert not an.pairs
+
+
+# ---- beta_a / beta_b → beta / gamma -------------------------------------------------------------------------------
+def test_nomi_vecchi_di_beta_e_gamma():
+    from pistak.params import REGISTRY
+
+    an = finish(analyse_text((ROOT / "examples/tilted_anthracene.cif").read_text(encoding="utf-8"), "tilted", Limits()))
+    p = an.pairs[0]
+    assert "beta" in p.values and "gamma" in p.values and "beta_a" not in p.values
+    assert p.get("beta_a") == p.get("beta") and p.get("beta_b") == p.get("gamma")
+    assert REGISTRY.get("beta_b").key == "gamma" and REGISTRY.get("gamma").label.startswith("γ")
+
+
+# ---- distanze X–H secondo l'ibridazione ---------------------------------------------------------------------------
+def test_idrogeni_secondo_ibridazione():
+    from pistak.io.qc import normalize_hydrogens
+
+    # C0 sp³ (CH3–), C4 sp² (=CH–), N7 con quattro vicini (N⁺H3), P11 con un H: X–H tutti a 0,95 Å lungo assi diversi
+    el = ["C", "H", "H", "H", "C", "H", "C", "N", "H", "H", "H", "P", "H"]
+    bonds = np.array([(0, 1), (0, 2), (0, 3), (0, 4), (4, 5), (4, 6), (6, 7), (7, 8), (7, 9), (7, 10), (11, 12)])
+    pos = np.zeros((len(el), 3))
+    rng = np.random.default_rng(3)
+    for x, h in bonds:
+        if el[h] == "H":
+            v = rng.normal(size=3)
+            pos[h] = pos[x] + 0.95 * v / np.linalg.norm(v)
+    out, moved = normalize_hydrogens(el, pos, bonds)
+    length = lambda x, h: float(np.linalg.norm(out[h] - out[x]))
+    # valori di Allen & Bruno, Acta Cryst. B66, 380 (2010), medie a T ≤ 60 K
+    assert [length(0, h) for h in (1, 2, 3)] == pytest.approx([1.095] * 3, abs=1e-9)
+    assert length(4, 5) == pytest.approx(1.085, abs=1e-9)
+    assert [length(7, h) for h in (8, 9, 10)] == pytest.approx([1.040] * 3, abs=1e-9)
+    assert length(11, 12) == pytest.approx(0.95, abs=1e-9) and moved == 7  # P–H senza fonte: resta com'è

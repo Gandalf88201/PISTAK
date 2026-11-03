@@ -49,7 +49,7 @@ class PeriodicDialog(QDialog):
         self.kpoints.setSuffix(" Å")
         self.kpoints.setValue(o.kpoint_length)
         self.kpoints.setToolTip(tr("Punti k lungo ciascun asse: n = ⌈L / a⌉. 20 Å va bene per gli isolanti molecolari."))
-        self.normalize_h = QCheckBox(tr("Distanze X–H da neutroni (C–H 1,083 Å, N–H 1,009 Å, O–H 0,983 Å)"))
+        self.normalize_h = QCheckBox(tr("Distanze X–H da neutroni (Allen & Bruno 2010: C–H 1,085 aromatico, 1,095 sp³; N–H 1,020; O–H 0,989 Å)"))
         self.normalize_h.setChecked(o.normalize_h)
         for combo, value in ((self.program, o.program), (self.task, o.task), (self.dispersion, o.dispersion)):
             combo.setCurrentIndex(max(0, combo.findData(value)))

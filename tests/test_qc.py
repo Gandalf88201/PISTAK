@@ -32,7 +32,7 @@ def test_idrogeni_alle_distanze_da_neutroni(herring):
     for i, j in m.bonds:
         i, j = (i, j) if m.el[j] == "H" else (j, i)
         if m.el[j] == "H":
-            assert np.linalg.norm(pos[j] - pos[i]) == pytest.approx(qc.XH_NEUTRON[m.el[i]], abs=1e-9)
+            assert np.linalg.norm(pos[j] - pos[i]) == pytest.approx(qc.XH_NEUTRON[qc.xh_kind(m.el[i], int((m.bonds == i).sum()))], abs=1e-9)
     heavy = [k for k, e in enumerate(m.el) if e != "H"]
     assert np.allclose(pos[heavy], m.pos[heavy])
 

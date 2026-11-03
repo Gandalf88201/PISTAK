@@ -199,8 +199,9 @@ Tutte si scelgono in *Analisi ▸ Soglie…*, in `user.toml` (`[limits]`) o da t
   con una sola coppia l'input va sul terminale). I monomeri sono le **due molecole intere** della coppia nella geometria
   del cristallo (B già traslata nella cella giusta), non i soli frammenti π: per un contatto tra frammenti l'energia è
   comunque quella dell'intero dimero. Gli idrogeni da raggi X sono troppo corti: con la normalizzazione (predefinita,
-  `--raw-h` per toglierla) ogni X–H viene allungato lungo il legame alle distanze medie da neutroni (Allen 1987/2010:
-  C–H 1,083, N–H 1,009, O–H 0,983, B–H 1,19, S–H 1,338 Å); gli atomi pesanti non si muovono.
+  `--raw-h` per toglierla) ogni X–H viene allungato lungo il legame alle distanze medie da neutroni a bassa temperatura
+  (Allen & Bruno 2010: C–H 1,085 aromatico o sp², 1,095 sp³, 1,055 sp; N–H 1,020; O–H 0,989; B–H 1,185; S–H 1,338;
+  Si–H 1,506 Å); gli atomi pesanti non si muovono.
   - **DFT-D** (`--method dft-d`, predefinito B3LYP-D3(BJ)/def2-TZVP; `--functional`, `--dispersion d3bj|d3zero|d4|none`,
     `--basis`): energia di interazione con counterpoise (Boys–Bernardi). ORCA: tre lavori in un file (`$new_job`):
     dimero, A con B fantasma (`El :`), B con A fantasma; E_int = E(AB) − E(A^AB) − E(B^AB). Psi4:
@@ -274,3 +275,8 @@ scrive in `tests/snapshots/local/<modo>/`, che resta fuori dal repository.
 
 macOS crea file `._nome` accanto ai file copiati. `start.py` li rimuove dalla `.venv` dopo ogni installazione (rompono
 matplotlib) e i caricatori di plugin/CIF li ignorano. Se preferisci, sposta il progetto su un disco APFS.
+
+## Licenza
+
+MIT: vedi [LICENSE](LICENSE). Le dipendenze hanno licenze compatibili (numpy, scipy, spglib, pyqtgraph,
+pyvista: BSD o MIT; PySide6: LGPL, usata come libreria senza modifiche).

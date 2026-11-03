@@ -203,8 +203,9 @@ those of the website (`Limits.site()`).
   with a single pair the input goes to the terminal). The monomers are the **two whole molecules** of the pair in the
   crystal geometry (B already translated into the right cell), not just the π fragments: for a contact between
   fragments the energy is still that of the whole dimer. X-ray hydrogens are too short: with normalisation (default,
-  `--raw-h` to remove it) every X–H is lengthened along the bond to the mean neutron distances (Allen 1987/2010: C–H
-  1.083, N–H 1.009, O–H 0.983, B–H 1.19, S–H 1.338 Å); heavy atoms do not move.
+  `--raw-h` to remove it) every X–H is lengthened along the bond to the low-temperature mean neutron distances
+  (Allen & Bruno 2010: C–H 1.085 aromatic or sp², 1.095 sp³, 1.055 sp; N–H 1.020; O–H 0.989; B–H 1.185; S–H 1.338;
+  Si–H 1.506 Å); heavy atoms do not move.
   - **DFT-D** (`--method dft-d`, default B3LYP-D3(BJ)/def2-TZVP; `--functional`, `--dispersion d3bj|d3zero|d4|none`,
     `--basis`): interaction energy with counterpoise (Boys–Bernardi). ORCA: three jobs in one file (`$new_job`):
     dimer, A with ghost B (`El :`), B with ghost A; E_int = E(AB) − E(A^AB) − E(B^AB). Psi4:
@@ -279,3 +280,8 @@ writes to `tests/snapshots/local/<mode>/`, which stays out of the repository.
 
 macOS creates `._name` files next to copied files. `start.py` removes them from `.venv` after every installation (they
 break matplotlib) and the plugin/CIF loaders ignore them. If you prefer, move the project to an APFS disk.
+
+## License
+
+MIT: see [LICENSE](LICENSE). The dependencies have compatible licenses (numpy, scipy, spglib, pyqtgraph, pyvista:
+BSD or MIT; PySide6: LGPL, used as an unmodified library).

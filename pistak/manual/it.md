@@ -41,7 +41,7 @@ Il manuale è anche nella finestra: **Aiuto ▸ Manuale** (F1). Le figure usano 
 baricentro (Cg), il piano medio con la sua normale **n** e l'*asse lungo* **L**, la direzione in cui il frammento è
 più esteso (oppure quella definita da due atomi, vedi [Asse lungo](#9-convenzioni-dellanalisi)).
 
-**Coppia.** Due frammenti di molecole vicine (atomi pesanti a meno di `contact_cutoff`, 4 Å per impostazione),
+**Coppia.** Due frammenti di molecole vicine (atomi pesanti a meno di `contact_cutoff`, 4,5 Å per impostazione),
 la seconda eventualmente traslata in un'altra cella: la traslazione si scrive come `[1 0 0]`, `[0 -1 0]`…
 
 **Il sistema della coppia.** Per ogni coppia si costruisce un sistema di riferimento: **n** è la normale media dei
@@ -254,7 +254,7 @@ negli export, con una chiave fissa (in inglese, uguale in ogni lingua). `pistak 
 | `slip_angle` | direzione dello slittamento rispetto a L, 0–90° (0 = tutto longitudinale) |
 | `long_slip_signed`, `lat_slip_signed` | componenti di **s** con segno, da A verso B |
 | `slip_direction` | direzione di **s** con segno, −180…180°, da L verso W |
-| `beta_a`, `beta_b` | angolo tra **d** e la normale di A (β) o di B (γ), stile Janiak |
+| `beta`, `gamma` | angolo tra **d** e la normale di A (β) o di B (γ), come in PLATON e Janiak (nelle versioni precedenti `beta_a`, `beta_b`) |
 | `height_b_over_a`, `height_a_over_b` | quota del baricentro di B sul piano di A e viceversa |
 | `mean_atom_height` | quota media degli atomi del nucleo B sul piano di A |
 | `core_contact`, `cc_contact` | contatto più corto tra i nuclei; tra due carboni |
@@ -359,7 +359,7 @@ criterio), da `user.toml` o dal terminale.
 |---|---|---|
 | `max_dihedral` | 20° | sopra, la coppia è inclinata |
 | `max_interplanar` | 4,2 Å | sopra, niente π-stack |
-| `contact_cutoff` | 4,0 Å | due molecole sono vicine se hanno atomi pesanti più vicini di così |
+| `contact_cutoff` | 4,5 Å | due molecole sono vicine se hanno atomi pesanti più vicini di così (sopra `max_interplanar`: con piani paralleli il contatto non è mai più corto della distanza interplanare) |
 | `overlap_measure` | atoms | come si misura la sovrapposizione (atoms / area) |
 | `min_overlap` | 0 | sovrapposizione minima per una π-stack |
 | `max_slip` | 0 Å | slittamento massimo per una π-stack (0 = nessun limite) |
@@ -539,8 +539,10 @@ n,kind,molecule_a,molecule_b,shift,interplanar,long_slip,lat_slip,slip,dihedral,
 * **Monomeri**: le due molecole intere della coppia, nella geometria del cristallo (B già traslata nella cella giusta).
   Anche per un contatto tra frammenti l'energia è quella dell'intero dimero.
 * **Idrogeni**: le distanze X–H da raggi X sono troppo corte; per impostazione ogni X–H viene allungato lungo il legame
-  alle distanze medie da diffrazione di neutroni (C–H 1,083 Å, N–H 1,009 Å, O–H 0,983 Å, B–H 1,19 Å, S–H 1,338 Å).
-  Gli atomi pesanti non si muovono.
+  alle distanze medie da diffrazione di neutroni di Allen & Bruno (2010), quelle a bassa temperatura: C–H 1,085 Å
+  per il carbonio aromatico o sp² (tre vicini), 1,095 Å per lo sp³ (quattro vicini), 1,055 Å per lo sp; N–H 1,020 Å
+  (N⁺–H 1,040 Å); O–H 0,989 Å; B–H 1,185 Å; S–H 1,338 Å; Si–H 1,506 Å. Gli H legati al fosforo restano come nel CIF
+  (l'articolo non dà un valore per P–H). Gli atomi pesanti non si muovono.
 * **DFT-D** (predefinito B3LYP-D3(BJ)/def2-TZVP) con correzione counterpoise (Boys–Bernardi):
   E_int = E(AB) − E(A nella base AB) − E(B nella base AB). ORCA: tre calcoli nello stesso file (`$new_job`) con
   atomi fantasma; Psi4: `bsse_type='cp'`; Gaussian: `Counterpoise=2` con i frammenti (Gaussian non ha D4).

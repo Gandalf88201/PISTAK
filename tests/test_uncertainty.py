@@ -95,13 +95,13 @@ def test_registro_e_export(tmp_path):
     from pistak.io import export
 
     a = api.analyse_text(with_su((EX / "herringbone_anthracene.cif").read_text(), 20), "h", Limits())
-    u = api.uncertainty(a, samples=20, keys=["interplanar", "long_slip_signed", "beta_a"])
-    assert set(u.keys) == {"interplanar", "long_slip_signed", "beta_a"} and u.has_su
+    u = api.uncertainty(a, samples=20, keys=["interplanar", "long_slip_signed", "beta"])
+    assert set(u.keys) == {"interplanar", "long_slip_signed", "beta"} and u.has_su
     head = export.write_csv(a, tmp_path / "p.csv").read_text().splitlines()[0].split(",")
-    assert {"interplanar_su", "long_slip_signed_su", "beta_a_su", "kind_agreement"} <= set(head)
+    assert {"interplanar_su", "long_slip_signed_su", "beta_su", "kind_agreement"} <= set(head)
     data = json.loads(export.write_json(a, tmp_path / "a.json").read_text())
     assert data["summary"]["uncertainty"]["samples"] == 20
-    assert set(data["pairs"][0]["su"]) == {"interplanar", "long_slip_signed", "beta_a"}
+    assert set(data["pairs"][0]["su"]) == {"interplanar", "long_slip_signed", "beta"}
 
 
 def test_terminale(capsys):

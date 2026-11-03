@@ -144,8 +144,8 @@ def check_beta_gamma() -> None:
     γ: Cg(I)→Cg(J) e normale al piano J), ricalcolate con normali da SVD."""
     from pistak.params import REGISTRY
 
-    print("\n== beta_a / beta_b contro β, γ di PLATON ==")
-    for key in ("beta_a", "beta_b"):
+    print("\n== beta / gamma contro β, γ di PLATON ==")
+    for key in ("beta", "gamma"):
         s = REGISTRY.get(key)
         print(f"  {key}: etichetta «{s.label}»")
     worst = 0.0
@@ -158,7 +158,7 @@ def check_beta_gamma() -> None:
             na, nb = np.linalg.svd(pa - ca)[2][-1], np.linalg.svd(pb - cb)[2][-1]
             d = cb - ca
             ang = lambda u, v: math.degrees(math.acos(min(1.0, abs(u @ v) / np.linalg.norm(u) / np.linalg.norm(v))))
-            worst = max(worst, abs(p.get("beta_a") - ang(d, na)), abs(p.get("beta_b") - ang(d, nb)))
+            worst = max(worst, abs(p.get("beta") - ang(d, na)), abs(p.get("gamma") - ang(d, nb)))
     print(f"  scarto massimo dai valori ricalcolati: {worst:.2e}°  → i numeri sono β e γ di PLATON; la chiave beta_b no")
 
 
