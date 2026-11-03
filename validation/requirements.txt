@@ -1,2 +1,3 @@
 # Dipendenze delle verifiche in validation/ (non del programma): oracoli esterni.
 gemmi>=0.7
+networkx>=3.2

@@ -59,27 +59,35 @@ def site_multiplicity(cif: Cif, atom: CifAtom, vectors: np.ndarray | None = None
 
 def cell_contents(cif: Cif, include_omitted: bool = True, tol: float = 0.1) -> dict[str, float]:
     """Elemento → numero di atomi nella cella (pesati con l'occupanza). Con `include_omitted` conta anche le componenti
-    disordinate scartate dalla regola di disordine dell'analisi. Una posizione già occupata da un altro atomo dello
-    stesso elemento (entro `tol` Å: un CIF che elenca anche atomi equivalenti per simmetria) non si conta due volte;
-    le componenti disordinate stanno sempre più lontane di così."""
+    disordinate scartate dalla regola di disordine dell'analisi.
+
+    Le immagini di uno stesso atomo che coincidono (posizione speciale) contano una volta. Se invece la posizione è già
+    occupata da un altro atomo del CIF dello stesso elemento (entro `tol` Å), le occupanze si sommano fino a 1: un CIF
+    che elenca anche gli atomi equivalenti per simmetria con occupanza piena non conta doppio, uno che li elenca con
+    occupanza ½ (molecola su un centro di inversione scritta per intero) dà l'occupanza piena."""
     vectors = cell_vectors(cif.cell)
-    out: dict[str, float] = {}
-    placed: dict[str, np.ndarray] = {}
+    pos: dict[str, list[np.ndarray]] = {}
+    occ: dict[str, list[float]] = {}
     for atom in cif.atoms + (cif.omitted if include_omitted else []):
-        prev = placed.get(atom.el, np.zeros((0, 3)))
-        new = []
+        p, o = pos.setdefault(atom.el, []), occ.setdefault(atom.el, [])
+        mine: set[int] = set()  # posizioni già toccate da questo atomo
         for op in cif.symops:
             f = op.apply(atom.frac)
             f = f - np.floor(f + 1e-9)
-            others = np.vstack([prev, *new]) if new else prev
-            d = f - others
-            d -= np.round(d)
-            if not len(d) or (np.linalg.norm(d @ vectors, axis=1) >= tol).all():
-                new.append(f[None])
-        if new:
-            placed[atom.el] = np.vstack([prev, *new])
-        out[atom.el] = out.get(atom.el, 0.0) + atom.occ * len(new)
-    return out
+            hit = None
+            if p:
+                d = f - np.array(p)
+                d -= np.round(d)
+                near = np.flatnonzero(np.linalg.norm(d @ vectors, axis=1) < tol)
+                hit = int(near[0]) if len(near) else None
+            if hit is None:
+                p.append(f)
+                o.append(atom.occ)
+                mine.add(len(p) - 1)
+            elif hit not in mine:
+                o[hit] = min(1.0, o[hit] + atom.occ)
+                mine.add(hit)
+    return {e: float(sum(v)) for e, v in occ.items()}
 
 
 def parse_formula(text: str | None) -> dict[str, float]:

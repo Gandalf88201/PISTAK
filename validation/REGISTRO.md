@@ -9,6 +9,7 @@ verifica chiusa; sotto la tabella, per ogni voce, l'oracolo usato e il risultato
 .venv/bin/python validation/check_simmetria.py           # sezione 1: simboli di Hall e H-M contro gemmi
 .venv/bin/python validation/scarica_cod.py               # sezione 1: i 200 CIF COD di cod_sample.txt in cod_cache/
 .venv/bin/python validation/check_cif.py                 # sezione 1: lettura, s.u., elementi, disordine
+.venv/bin/python validation/check_struttura.py           # sezioni 1–3: cella, formule, cella obliqua, anelli, raggi
 ```
 
 Gli oracoli non usano `pistak.core`: geometria ricalcolata con numpy, topologia nota dei policicli, tensore metrico,
@@ -29,6 +30,9 @@ conti a mano.
 | 12 | core/cif.py | **Nuovo.** `element_of`: `BR2` senza type_symbol diventava boro, `CL1` carbonio; centroidi `Cg1` letti come carbonio, picchi `Q1` tenuti come atomi; `_atom_site_calc_flag dum` ignorato | P2 | **Corretto** | CL, BR a due lettere; Cg, Q e dum scartati; altre etichette maiuscole (CA, CD, HG) a una lettera |
 | 13 | core/validation.py | **Nuovo.** Operazioni elencate e simbolo del gruppo incoerenti: vincevano le operazioni, senza avviso | P2 | **Corretto** | Avviso C `symopsMismatch`; nessun falso positivo sui 200 CIF COD |
 | 14 | core/cif.py | Disordine su un elemento di simmetria (gruppi negativi): le immagini simmetriche del gruppo si sovrappongono alle posizioni originali | P1 | **Aperto** | Oggi lo segnala l'avviso A `overlap` (COD 4113834: C32A···C32B 0,38 Å); serve togliere le immagini che coincidono con l'altra parte |
+| 15 | core/crystal.py | **Nuovo.** `cell_contents` contava una volta sola una posizione occupata da due atomi diversi del CIF: un CIF che scrive anche le immagini per simmetria con occupanza ½ (COD 2100449) dava metà del contenuto della cella, e densità e formula sbagliate negli avvisi | P2 (avvisi, non coppie) | **Corretto** | Occupanze di atomi diversi sommate fino a 1; immagini dello stesso atomo (posizioni speciali) una volta; test |
+| 16 | core/elements.py | Raggi diversi dalle tabelle di gemmi: covalente C 0,76 (sp³, dichiarato) contro 0,73; Lu 1,87 e Hf 1,75 scambiati rispetto a gemmi; vdW H 1,10 (Rowland e Taylor) mentre il commento cita Bondi (1,20) | P1 (H: contatti vdW) | **Aperto** | Controllare sul testo di Cordero 2008 e Bondi 1964; correggere il commento su H |
+| 17 | core/structure.py | Formule ricostruite diverse da `_chemical_formula_moiety` non spiegate: 7208500 (due acetonitrili in un'unica "molecola"), 2201728 (un CH₃ in più) | P2 | **Aperto** | Da esaminare a mano |
 | 10 | core/cif.py | **Nuovo.** `tokenize` va in ciclo infinito (memoria che cresce senza limite) su un carattere di spaziatura diverso da spazio e tab: NBSP, form feed, tab verticale, U+2003… | P2 | **Corretto** | `if ch.isspace()` al posto di `if ch in " \t"`; test con 5 caratteri in un processo separato |
 
 ## 1. `beta_b` etichettato γ
@@ -232,3 +236,21 @@ Note:
   di compatibilità, lasciato com'è.
 - I gruppi con un solo membro in un assemblaggio (solventi a occupanza parziale, 1513296: occupanze 0,1–0,5) si
   tengono tutti: non c'è un'alternativa da scegliere.
+
+## Sezioni 1–3: cella, molecole, anelli (3 novembre 2026)
+
+Script: `validation/check_struttura.py`; stesso campione di 200 CIF COD. Oracoli: gemmi (`get_all_unit_cell_sites`),
+i valori dichiarati nei CIF, networkx (`minimum_cycle_basis`), una cella obliqua costruita a mano.
+
+| Verifica | Risultato |
+| --- | --- |
+| Atomi della cella (`fill_cell`) contro gemmi, CIF senza occupanze parziali | 132/132 uguali, elemento per elemento |
+| Contenuto della cella pesato con l'occupanza (`cell_contents`) contro gemmi | prima 192/200, dopo la correzione 15 197/200; nei 3 rimasti 2 volte PISTAK coincide con Z × formula e gemmi no, 1 (4117065, Br disordinati a meno di 0,5 Å) nessuno dei due |
+| Densità contro `_exptl_crystal_density_diffrn` (182 CIF) | scarto mediano 0,021 %; 21 oltre 0,5 %, tutti con contenuto della cella uguale a gemmi: solvente tolto con SQUEEZE ma dichiarato, formula o Z del CIF diversi dal modello |
+| Molecole ricostruite contro `_chemical_formula_moiety` (114 CIF) | 74 uguali, 4 diverse solo negli H; delle 36 diverse, quasi tutte per convenzione del CIF (formula per unità asimmetrica o per coppia di ioni, controione tenuto separato da PISTAK) o per reti estese (polimeri di coordinazione); da disordine non risolto 4064128 (gruppi negativi, voce 14), 7036933 e 4330346 (disordine senza gruppi nel CIF: solo l'avviso `partialOccupancy`); voce 17 aperta |
+| Cella obliqua equivalente (a' = a, b' = b + 2a, c' = c + a + b), 40 strutture | 39 identiche; in 1514883 due coppie differiscono di 0,001 Å (arrotondamento al terzo decimale). Nessun legame perso: la ricerca a ±1 cella regge anche celle non ridotte di questo tipo |
+| `small_rings` contro la base minima dei cicli (287 molecole distinte) | trovati tutti gli anelli della base tranne 2 anelli da 5 in un cluster Ag–Pt (anelli i cui legami stanno tutti in cicli da 3 col metallo); gli anelli in più sono cicli più corti di qualche legame, quasi tutti triangoli tra i Br disordinati di 4117065 |
+
+Il raddoppio dei solventi in 7036933 e 4330346 non è un difetto del programma: il CIF descrive un disordine (atomi a
+occupanza parziale vicini fra loro o alle loro immagini) senza dire quali atomi stanno insieme. PISTAK lo segnala con
+`partialOccupancy`; per escludere queste molecole dalle coppie serve un criterio nuovo (voce 14).

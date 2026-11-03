@@ -219,3 +219,20 @@ def test_operazioni_incoerenti_con_il_simbolo():
     assert not [x for x in finish(analyse_text(ok, "ok", Limits())).alerts if x.code == "symopsMismatch"]
     (alert,) = [x for x in finish(analyse_text(wrong, "no", Limits())).alerts if x.code == "symopsMismatch"]
     assert alert.level == "C" and alert.values == {"declared": "P 21/c", "n_cif": 2, "n_symbol": 4}
+
+
+# ---- contenuto della cella: atomi ripetuti dal CIF e posizioni speciali --------------------------------------------
+def test_contenuto_della_cella_con_atomi_ripetuti():
+    from pistak.core.cif import parse_cif
+    from pistak.core.crystal import cell_contents
+
+    text = "\n".join([
+        "data_t", "_cell_length_a 10", "_cell_length_b 10", "_cell_length_c 10", "_cell_angle_alpha 90",
+        "_cell_angle_beta 90", "_cell_angle_gamma 90", "loop_", "_symmetry_equiv_pos_as_xyz", "'x, y, z'", "'-x, -y, -z'",
+        "loop_", "_atom_site_label", "_atom_site_type_symbol", "_atom_site_fract_x", "_atom_site_fract_y",
+        "_atom_site_fract_z", "_atom_site_occupancy",
+        "C1 C 0.1 0.2 0.3 0.5", "C1i C -0.1 -0.2 -0.3 0.5",  # immagine scritta di nuovo, metà occupanza: in tutto 2 C
+        "N1 N 0.3 0.3 0.1 1", "N1i N -0.3 -0.3 -0.1 1",       # immagine scritta di nuovo, occupanza piena: 2 N, non 4
+        "O1 O 0 0 0 0.5",                                      # sul centro di inversione, mezzo occupato: 0,5 O
+        ""])
+    assert cell_contents(parse_cif(text, disorder="all")) == pytest.approx({"C": 2.0, "N": 2.0, "O": 0.5})
