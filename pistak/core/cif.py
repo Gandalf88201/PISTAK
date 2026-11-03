@@ -104,7 +104,7 @@ def tokenize(text: str) -> list[str]:
         j, n = 0, len(line)
         while j < n:
             ch = line[j]
-            if ch in " \t":
+            if ch.isspace():  # non solo spazio e tab: con NBSP o form feed la parola sotto sarebbe vuota e j fermo
                 j += 1
                 continue
             if ch == "#":

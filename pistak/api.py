@@ -40,8 +40,18 @@ def reanalyse(analysis: Analysis, limits: Limits) -> Analysis:
     from pistak.core.stages import CHECK_FIELDS, changed_fields
 
     # stessa cella, stesse molecole e stesse soglie dei controlli: gli avvisi non cambiano
-    if new.structure is analysis.structure and not CHECK_FIELDS & set(changed_fields(analysis.limits, limits)):
-        new.alerts = analysis.alerts
+    if (new.structure is analysis.structure and analysis.alerts is not None
+            and not CHECK_FIELDS & set(changed_fields(analysis.limits, limits))):
+        # tranne il controllo delle celle esplorate, che dipende da contact_cutoff e dai nuclei π
+        from pistak.core.validation import CHECKS
+
+        old = [a for a in analysis.alerts if a.code == "shellsTruncated"]
+        shells = CHECKS["shells"](new)
+        if shells == old:
+            new.alerts = analysis.alerts
+        else:
+            kept = [a for a in analysis.alerts if a.code != "shellsTruncated"]
+            new.alerts = sorted(kept + shells, key=lambda a: a.rank)
     return finish(new)
 
 

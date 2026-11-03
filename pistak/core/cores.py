@@ -59,7 +59,11 @@ class Core:
 
 
 def small_rings(n: int, bonds: np.ndarray, allowed, max_size: int = 8) -> list[list[int]]:
-    """Anelli fino a `max_size` atomi: per ogni legame, il ciclo più corto che lo contiene."""
+    """Anelli fino a `max_size` atomi: per ogni legame, tutti i cicli più corti che lo contengono.
+
+    Tenerne uno solo per legame dipende dall'ordine degli atomi e perde gli anelli con tutti i legami condivisi con
+    anelli della stessa taglia (l'anello centrale del coronene); con tutti i cicli più corti il risultato non dipende
+    dall'ordine e per i policicli benzenoidi dà esattamente gli esagoni."""
     adj: list[list[int]] = [[] for _ in range(n)]
     ok = [(int(p), int(q)) for p, q in bonds if allowed(p) and allowed(q)]
     for p, q in ok:
@@ -67,26 +71,32 @@ def small_rings(n: int, bonds: np.ndarray, allowed, max_size: int = 8) -> list[l
         adj[q].append(p)
     rings: dict[tuple[int, ...], list[int]] = {}
     for p, q in ok:
-        # cammino più corto da p a q senza usare il legame p–q
-        prev = {p: -1}
+        # distanze da p senza usare il legame p–q, con tutti i predecessori sui cammini più corti
+        dist = {p: 0}
+        preds: dict[int, list[int]] = {p: []}
         queue = deque([p])
-        while queue and q not in prev:
+        while queue:
             u = queue.popleft()
+            if q in dist and dist[u] >= dist[q] or dist[u] >= max_size - 1:
+                break
             for w in adj[u]:
-                if w in prev or (u == p and w == q):
+                if u == p and w == q:
                     continue
-                prev[w] = u
-                queue.append(w)
-        if q not in prev:
+                if w not in dist:
+                    dist[w] = dist[u] + 1
+                    preds[w] = [u]
+                    queue.append(w)
+                elif dist[w] == dist[u] + 1:
+                    preds[w].append(u)
+        if q not in dist or not 3 <= dist[q] + 1 <= max_size:
             continue
-        ring = []
-        u = q
-        while u != -1:
-            ring.append(u)
-            u = prev[u]
-        if len(ring) < 3 or len(ring) > max_size:
-            continue
-        rings[tuple(sorted(ring))] = ring
+        stack = [[q]]  # tutti i cammini più corti q → p, all'indietro sui predecessori
+        while stack:
+            path = stack.pop()
+            if path[-1] == p:
+                rings.setdefault(tuple(sorted(path)), path)
+                continue
+            stack.extend(path + [u] for u in sorted(preds[path[-1]], reverse=True))
     return list(rings.values())
 
 

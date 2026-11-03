@@ -441,22 +441,6 @@
    "ring_pairs": [
     {
      "alpha": 1.133089366,
-     "beta": 64.12502391,
-     "cg": 5.95122627,
-     "closest": 3.655988128,
-     "gamma": 64.14631547,
-     "rings": [
-      1,
-      0
-     ],
-     "sizes": [
-      6,
-      6
-     ],
-     "slippage": 5.354606708
-    },
-    {
-     "alpha": 1.133089366,
      "beta": 64.14631547,
      "cg": 5.95122627,
      "closest": 3.655988128,
@@ -470,6 +454,22 @@
       6
      ],
      "slippage": 5.355571467
+    },
+    {
+     "alpha": 1.133089366,
+     "beta": 64.12502391,
+     "cg": 5.95122627,
+     "closest": 3.655988128,
+     "gamma": 64.14631547,
+     "rings": [
+      1,
+      0
+     ],
+     "sizes": [
+      6,
+      6
+     ],
+     "slippage": 5.354606708
     },
     {
      "alpha": 0.7126438993,
@@ -689,7 +689,7 @@
     "lat_slip_signed": 1.615605867,
     "long_slip": 13.90839584,
     "long_slip_signed": 13.90839584,
-    "mean_atom_height": 3.485630417,
+    "mean_atom_height": 3.789233829,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -771,7 +771,7 @@
     "lat_slip_signed": 1.704605691,
     "long_slip": 13.89776877,
     "long_slip_signed": 13.89776877,
-    "mean_atom_height": 3.485630417,
+    "mean_atom_height": 2.476990633,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -853,7 +853,7 @@
     "lat_slip_signed": -2.968279113,
     "long_slip": 2.147005155,
     "long_slip_signed": 2.147005155,
-    "mean_atom_height": 3.710103564,
+    "mean_atom_height": 4.64361469,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -1111,7 +1111,7 @@
     "lat_slip_signed": -2.954474501,
     "long_slip": 2.165962247,
     "long_slip_signed": 2.165962247,
-    "mean_atom_height": 3.710103564,
+    "mean_atom_height": 2.026152017,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -1369,7 +1369,7 @@
     "lat_slip_signed": -2.970986081,
     "long_slip": 0.1500511476,
     "long_slip_signed": -0.1500511476,
-    "mean_atom_height": 3.717826835,
+    "mean_atom_height": 2.040471604,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -1643,7 +1643,7 @@
     "lat_slip_signed": -2.971885742,
     "long_slip": 0.1310296626,
     "long_slip_signed": -0.1310296626,
-    "mean_atom_height": 3.717826835,
+    "mean_atom_height": 4.643179464,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,

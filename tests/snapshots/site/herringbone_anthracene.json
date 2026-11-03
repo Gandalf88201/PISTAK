@@ -471,7 +471,7 @@
      "slippage": 1.268245636
     },
     {
-     "alpha": 0.0001967035931,
+     "alpha": 0.000196705446,
      "beta": 22.90004072,
      "cg": 4.248671542,
      "closest": 3.922063089,
@@ -624,7 +624,7 @@
     "lat_slip_signed": -1.456199318,
     "long_slip": 3.323689301,
     "long_slip_signed": -3.323689301,
-    "mean_atom_height": 5.851072254,
+    "mean_atom_height": 2.654679591,
     "n_vdw_contacts": 9.0,
     "overlap": 0.1428571429,
     "overlap_area": 0.7500904808,
@@ -740,7 +740,7 @@
     "lat_slip_signed": 3.018138731,
     "long_slip": 2.014513744,
     "long_slip_signed": -2.014513744,
-    "mean_atom_height": 5.851072254,
+    "mean_atom_height": 6.114267054,
     "n_vdw_contacts": 9.0,
     "overlap": 0.1428571429,
     "overlap_area": 0.7500904808,

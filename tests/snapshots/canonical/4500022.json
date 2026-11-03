@@ -1425,7 +1425,7 @@
     "lat_slip_signed": -1.072442186,
     "long_slip": 6.122165166,
     "long_slip_signed": 6.122165166,
-    "mean_atom_height": 0.3693298337,
+    "mean_atom_height": 0.3941235194,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -1508,7 +1508,7 @@
     "lat_slip_signed": -0.821689595,
     "long_slip": 6.170422146,
     "long_slip_signed": -6.170422146,
-    "mean_atom_height": 0.4833226958,
+    "mean_atom_height": 0.4527296999,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -1591,7 +1591,7 @@
     "lat_slip_signed": -0.5603153137,
     "long_slip": 6.214733874,
     "long_slip_signed": -6.214733874,
-    "mean_atom_height": 0.5078755695,
+    "mean_atom_height": 0.531880191,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -1674,7 +1674,7 @@
     "lat_slip_signed": -5.616846906,
     "long_slip": 16.51061915,
     "long_slip_signed": 16.51061915,
-    "mean_atom_height": 0.8841913469,
+    "mean_atom_height": 0.9965365919,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -1757,7 +1757,7 @@
     "lat_slip_signed": -6.088192158,
     "long_slip": 0.79089912,
     "long_slip_signed": 0.79089912,
-    "mean_atom_height": 1.114282969,
+    "mean_atom_height": 1.137362756,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -1840,7 +1840,7 @@
     "lat_slip_signed": 5.95245773,
     "long_slip": 0.5489432767,
     "long_slip_signed": -0.5489432767,
-    "mean_atom_height": 1.253107391,
+    "mean_atom_height": 1.116529082,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -1923,7 +1923,7 @@
     "lat_slip_signed": 6.531901531,
     "long_slip": 15.72902373,
     "long_slip_signed": 15.72902373,
-    "mean_atom_height": 1.358097924,
+    "mean_atom_height": 1.260369038,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -2006,7 +2006,7 @@
     "lat_slip_signed": -6.027315339,
     "long_slip": 16.15384823,
     "long_slip_signed": -16.15384823,
-    "mean_atom_height": 1.406833358,
+    "mean_atom_height": 2.07410914,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -2089,7 +2089,7 @@
     "lat_slip_signed": -4.577419353,
     "long_slip": 8.640994835,
     "long_slip_signed": 8.640994835,
-    "mean_atom_height": 2.094421538,
+    "mean_atom_height": 1.909617601,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -2189,7 +2189,7 @@
     "lat_slip_signed": 5.658067459,
     "long_slip": 8.144171502,
     "long_slip_signed": 8.144171502,
-    "mean_atom_height": 2.094745447,
+    "mean_atom_height": 2.222872775,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -2289,7 +2289,7 @@
     "lat_slip_signed": -5.500692131,
     "long_slip": 7.628664805,
     "long_slip_signed": -7.628664805,
-    "mean_atom_height": 2.419846074,
+    "mean_atom_height": 2.465343747,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -2372,7 +2372,7 @@
     "lat_slip_signed": 5.337324832,
     "long_slip": 8.575073957,
     "long_slip_signed": -8.575073957,
-    "mean_atom_height": 2.427027149,
+    "mean_atom_height": 2.366712731,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -2472,7 +2472,7 @@
     "lat_slip_signed": -5.32093154,
     "long_slip": 8.707557664,
     "long_slip_signed": 8.707557664,
-    "mean_atom_height": 2.487247461,
+    "mean_atom_height": 2.609183703,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -2555,7 +2555,7 @@
     "lat_slip_signed": 6.401614619,
     "long_slip": 8.249193693,
     "long_slip_signed": 8.249193693,
-    "mean_atom_height": 2.505337904,
+    "mean_atom_height": 2.951862184,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -2638,7 +2638,7 @@
     "lat_slip_signed": 4.77040658,
     "long_slip": 2.224103861,
     "long_slip_signed": -2.224103861,
-    "mean_atom_height": 2.555474691,
+    "mean_atom_height": 2.95447191,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -2738,7 +2738,7 @@
     "lat_slip_signed": -5.003273112,
     "long_slip": 2.198943727,
     "long_slip_signed": 2.198943727,
-    "mean_atom_height": 2.617756149,
+    "mean_atom_height": 3.031360961,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -2821,7 +2821,7 @@
     "lat_slip_signed": -5.211217245,
     "long_slip": 1.806449265,
     "long_slip_signed": -1.806449265,
-    "mean_atom_height": 2.676671262,
+    "mean_atom_height": 2.348582168,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -2904,7 +2904,7 @@
     "lat_slip_signed": -4.1530246,
     "long_slip": 2.724778933,
     "long_slip_signed": 2.724778933,
-    "mean_atom_height": 2.68667314,
+    "mean_atom_height": 2.427283888,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -3004,7 +3004,7 @@
     "lat_slip_signed": 4.697238064,
     "long_slip": 3.122510263,
     "long_slip_signed": -3.122510263,
-    "mean_atom_height": 2.729279394,
+    "mean_atom_height": 2.434195897,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -3087,7 +3087,7 @@
     "lat_slip_signed": 4.54677973,
     "long_slip": 2.296319042,
     "long_slip_signed": 2.296319042,
-    "mean_atom_height": 2.782199432,
+    "mean_atom_height": 2.48347431,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -3333,7 +3333,7 @@
     "lat_slip_signed": -0.6140887226,
     "long_slip": 7.788315346,
     "long_slip_signed": -7.788315346,
-    "mean_atom_height": 3.53942778,
+    "mean_atom_height": 3.584140258,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -3497,7 +3497,7 @@
     "lat_slip_signed": 0.5358806414,
     "long_slip": 7.628012742,
     "long_slip_signed": -7.628012742,
-    "mean_atom_height": 3.577683922,
+    "mean_atom_height": 3.504915203,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -3655,22 +3655,6 @@
    "ring_pairs": [
     {
      "alpha": 6.295358073,
-     "beta": 8.696136078,
-     "cg": 3.602422304,
-     "closest": 3.449395042,
-     "gamma": 14.62776291,
-     "rings": [
-      0,
-      2
-     ],
-     "sizes": [
-      6,
-      6
-     ],
-     "slippage": 0.5446652059
-    },
-    {
-     "alpha": 6.295358073,
      "beta": 14.62776291,
      "cg": 3.602422304,
      "closest": 3.449395042,
@@ -3684,6 +3668,22 @@
       6
      ],
      "slippage": 0.9097493744
+    },
+    {
+     "alpha": 6.295358073,
+     "beta": 8.696136078,
+     "cg": 3.602422304,
+     "closest": 3.449395042,
+     "gamma": 14.62776291,
+     "rings": [
+      0,
+      2
+     ],
+     "sizes": [
+      6,
+      6
+     ],
+     "slippage": 0.5446652059
     },
     {
      "alpha": 0.0,
@@ -3839,7 +3839,7 @@
     "lat_slip_signed": -0.9078986956,
     "long_slip": 1.132428901,
     "long_slip_signed": 1.132428901,
-    "mean_atom_height": 3.376196783,
+    "mean_atom_height": 3.390185027,
     "n_vdw_contacts": 1.0,
     "overlap": 0.3333333333,
     "overlap_area": 1.557973687,
@@ -4143,22 +4143,6 @@
    "ring_pairs": [
     {
      "alpha": 6.295358073,
-     "beta": 8.696136078,
-     "cg": 3.602422304,
-     "closest": 3.449395042,
-     "gamma": 14.62776291,
-     "rings": [
-      0,
-      2
-     ],
-     "sizes": [
-      6,
-      6
-     ],
-     "slippage": 0.5446652059
-    },
-    {
-     "alpha": 6.295358073,
      "beta": 14.62776291,
      "cg": 3.602422304,
      "closest": 3.449395042,
@@ -4172,6 +4156,22 @@
       6
      ],
      "slippage": 0.9097493744
+    },
+    {
+     "alpha": 6.295358073,
+     "beta": 8.696136078,
+     "cg": 3.602422304,
+     "closest": 3.449395042,
+     "gamma": 14.62776291,
+     "rings": [
+      0,
+      2
+     ],
+     "sizes": [
+      6,
+      6
+     ],
+     "slippage": 0.5446652059
     },
     {
      "alpha": 0.0,
@@ -4327,7 +4327,7 @@
     "lat_slip_signed": 0.6292509855,
     "long_slip": 1.350646944,
     "long_slip_signed": 1.350646944,
-    "mean_atom_height": 3.457798433,
+    "mean_atom_height": 3.516579013,
     "n_vdw_contacts": 1.0,
     "overlap": 0.3333333333,
     "overlap_area": 1.269875019,
@@ -4491,7 +4491,7 @@
     "lat_slip_signed": 1.305773829,
     "long_slip": 0.6231203554,
     "long_slip_signed": 0.6231203554,
-    "mean_atom_height": 3.46790025,
+    "mean_atom_height": 3.466490388,
     "n_vdw_contacts": 0.0,
     "overlap": 0.3333333333,
     "overlap_area": 1.538789379,
@@ -4655,7 +4655,7 @@
     "lat_slip_signed": 0.2572679188,
     "long_slip": 1.067207424,
     "long_slip_signed": 1.067207424,
-    "mean_atom_height": 3.475555471,
+    "mean_atom_height": 3.417241162,
     "n_vdw_contacts": 1.0,
     "overlap": 0.3333333333,
     "overlap_area": 2.126881108,
@@ -4819,7 +4819,7 @@
     "lat_slip_signed": -1.172807062,
     "long_slip": 0.1343414762,
     "long_slip_signed": -0.1343414762,
-    "mean_atom_height": 3.482320117,
+    "mean_atom_height": 3.527952943,
     "n_vdw_contacts": 2.0,
     "overlap": 0.5,
     "overlap_area": 1.953338308,
@@ -4983,7 +4983,7 @@
     "lat_slip_signed": 0.4598975605,
     "long_slip": 0.5608242023,
     "long_slip_signed": -0.5608242023,
-    "mean_atom_height": 3.52865653,
+    "mean_atom_height": 3.561009164,
     "n_vdw_contacts": 0.0,
     "overlap": 0.5,
     "overlap_area": 2.999423341,
@@ -4993,22 +4993,6 @@
     "slip_direction": 140.6469209
    },
    "ring_pairs": [
-    {
-     "alpha": 6.295358073,
-     "beta": 8.696136078,
-     "cg": 3.602422304,
-     "closest": 3.449395042,
-     "gamma": 14.62776291,
-     "rings": [
-      0,
-      2
-     ],
-     "sizes": [
-      6,
-      6
-     ],
-     "slippage": 0.5446652059
-    },
     {
      "alpha": 6.295358073,
      "beta": 14.62776291,
@@ -5024,6 +5008,22 @@
       6
      ],
      "slippage": 0.9097493744
+    },
+    {
+     "alpha": 6.295358073,
+     "beta": 8.696136078,
+     "cg": 3.602422304,
+     "closest": 3.449395042,
+     "gamma": 14.62776291,
+     "rings": [
+      0,
+      2
+     ],
+     "sizes": [
+      6,
+      6
+     ],
+     "slippage": 0.5446652059
     },
     {
      "alpha": 0.0,
@@ -5179,7 +5179,7 @@
     "lat_slip_signed": -0.7537720748,
     "long_slip": 0.3902991245,
     "long_slip_signed": 0.3902991245,
-    "mean_atom_height": 3.554076118,
+    "mean_atom_height": 3.572476448,
     "n_vdw_contacts": 0.0,
     "overlap": 0.3333333333,
     "overlap_area": 2.658836439,
@@ -5343,7 +5343,7 @@
     "lat_slip_signed": -1.060794455,
     "long_slip": 0.2403995469,
     "long_slip_signed": 0.2403995469,
-    "mean_atom_height": 3.56578714,
+    "mean_atom_height": 3.477990576,
     "n_vdw_contacts": 0.0,
     "overlap": 0.3333333333,
     "overlap_area": 2.151210949,
@@ -5507,7 +5507,7 @@
     "lat_slip_signed": -2.042304089,
     "long_slip": 3.65054969,
     "long_slip_signed": -3.65054969,
-    "mean_atom_height": 0.003869292402,
+    "mean_atom_height": 0.455430606,
     "n_vdw_contacts": 150.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -5655,7 +5655,7 @@
     "lat_slip_signed": 0.04248678255,
     "long_slip": 4.312307805,
     "long_slip_signed": -4.312307805,
-    "mean_atom_height": 0.008505698594,
+    "mean_atom_height": 0.3694047776,
     "n_vdw_contacts": 150.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -5803,7 +5803,7 @@
     "lat_slip_signed": 0.0471520314,
     "long_slip": 4.307476456,
     "long_slip_signed": 4.307476456,
-    "mean_atom_height": 0.0234192811,
+    "mean_atom_height": 0.4280642799,
     "n_vdw_contacts": 150.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -5951,7 +5951,7 @@
     "lat_slip_signed": 1.600513084,
     "long_slip": 3.860076661,
     "long_slip_signed": 3.860076661,
-    "mean_atom_height": 0.05185502041,
+    "mean_atom_height": 0.4855361888,
     "n_vdw_contacts": 150.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -6099,7 +6099,7 @@
     "lat_slip_signed": -0.6469104282,
     "long_slip": 4.250962436,
     "long_slip_signed": -4.250962436,
-    "mean_atom_height": 0.07279415199,
+    "mean_atom_height": 0.39171479,
     "n_vdw_contacts": 150.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -6247,7 +6247,7 @@
     "lat_slip_signed": 1.093713911,
     "long_slip": 4.0306597,
     "long_slip_signed": -4.0306597,
-    "mean_atom_height": 0.07575436772,
+    "mean_atom_height": 0.4694623397,
     "n_vdw_contacts": 150.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -6395,7 +6395,7 @@
     "lat_slip_signed": 5.961466387,
     "long_slip": 3.787135426,
     "long_slip_signed": 3.787135426,
-    "mean_atom_height": 0.7573874299,
+    "mean_atom_height": 0.5776646204,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -6495,7 +6495,7 @@
     "lat_slip_signed": -5.827496996,
     "long_slip": 4.456000253,
     "long_slip_signed": 4.456000253,
-    "mean_atom_height": 0.7993541058,
+    "mean_atom_height": 0.7327509462,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -6578,7 +6578,7 @@
     "lat_slip_signed": -6.481426262,
     "long_slip": 2.450855699,
     "long_slip_signed": -2.450855699,
-    "mean_atom_height": 0.8796151082,
+    "mean_atom_height": 2.370641509,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -6661,7 +6661,7 @@
     "lat_slip_signed": -5.2494469,
     "long_slip": 4.377868339,
     "long_slip_signed": 4.377868339,
-    "mean_atom_height": 0.9258996316,
+    "mean_atom_height": 2.179680248,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -6761,7 +6761,7 @@
     "lat_slip_signed": -4.022124298,
     "long_slip": 5.81422849,
     "long_slip_signed": -5.81422849,
-    "mean_atom_height": 1.129234864,
+    "mean_atom_height": 0.7191565735,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -6844,7 +6844,7 @@
     "lat_slip_signed": 4.970074452,
     "long_slip": 5.021371153,
     "long_slip_signed": -5.021371153,
-    "mean_atom_height": 1.146727337,
+    "mean_atom_height": 2.461414969,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -6944,7 +6944,7 @@
     "lat_slip_signed": 7.085088825,
     "long_slip": 0.4319244393,
     "long_slip_signed": -0.4319244393,
-    "mean_atom_height": 1.15839501,
+    "mean_atom_height": 0.6073508634,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -7027,7 +7027,7 @@
     "lat_slip_signed": 6.746887249,
     "long_slip": 1.748704138,
     "long_slip_signed": 1.748704138,
-    "mean_atom_height": 1.253264052,
+    "mean_atom_height": 2.909647951,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -7127,7 +7127,7 @@
     "lat_slip_signed": 6.822893564,
     "long_slip": 1.579100269,
     "long_slip_signed": -1.579100269,
-    "mean_atom_height": 1.380697113,
+    "mean_atom_height": 0.6616662373,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -7227,7 +7227,7 @@
     "lat_slip_signed": -1.768261472,
     "long_slip": 7.084287632,
     "long_slip_signed": 7.084287632,
-    "mean_atom_height": 1.482670423,
+    "mean_atom_height": 0.5704970758,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -7327,7 +7327,7 @@
     "lat_slip_signed": -3.213217886,
     "long_slip": 6.069351394,
     "long_slip_signed": 6.069351394,
-    "mean_atom_height": 2.140924156,
+    "mean_atom_height": 0.5644889264,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -7410,7 +7410,7 @@
     "lat_slip_signed": -3.36494452,
     "long_slip": 5.883888761,
     "long_slip_signed": -5.883888761,
-    "mean_atom_height": 2.164679023,
+    "mean_atom_height": 3.901904699,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -7493,7 +7493,7 @@
     "lat_slip_signed": -6.53014933,
     "long_slip": 0.8552192977,
     "long_slip_signed": 0.8552192977,
-    "mean_atom_height": 2.201780046,
+    "mean_atom_height": 3.979437101,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -7576,7 +7576,7 @@
     "lat_slip_signed": 6.453460126,
     "long_slip": 0.1831118333,
     "long_slip_signed": -0.1831118333,
-    "mean_atom_height": 2.408018685,
+    "mean_atom_height": 0.6522916025,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -7659,7 +7659,7 @@
     "lat_slip_signed": 6.518743785,
     "long_slip": 0.04698474404,
     "long_slip_signed": 0.04698474404,
-    "mean_atom_height": 2.469336315,
+    "mean_atom_height": 0.7399023079,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -7742,7 +7742,7 @@
     "lat_slip_signed": 3.996387857,
     "long_slip": 5.376316446,
     "long_slip_signed": 5.376316446,
-    "mean_atom_height": 2.486773739,
+    "mean_atom_height": 4.084763631,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -7825,7 +7825,7 @@
     "lat_slip_signed": -0.9283241117,
     "long_slip": 3.226195934,
     "long_slip_signed": -3.226195934,
-    "mean_atom_height": 3.501371477,
+    "mean_atom_height": 3.287716286,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -7989,7 +7989,7 @@
     "lat_slip_signed": 0.4270627794,
     "long_slip": 3.489626938,
     "long_slip_signed": -3.489626938,
-    "mean_atom_height": 3.543471281,
+    "mean_atom_height": 3.570896379,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -8153,7 +8153,7 @@
     "lat_slip_signed": -1.940395976,
     "long_slip": 4.150484518,
     "long_slip_signed": -4.150484518,
-    "mean_atom_height": 3.563126368,
+    "mean_atom_height": 3.433830853,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -8163,22 +8163,6 @@
     "slip_direction": -154.9434075
    },
    "ring_pairs": [
-    {
-     "alpha": 6.295358073,
-     "beta": 8.696136078,
-     "cg": 3.602422304,
-     "closest": 3.449395042,
-     "gamma": 14.62776291,
-     "rings": [
-      0,
-      2
-     ],
-     "sizes": [
-      6,
-      6
-     ],
-     "slippage": 0.5446652059
-    },
     {
      "alpha": 6.295358073,
      "beta": 14.62776291,
@@ -8194,6 +8178,22 @@
       6
      ],
      "slippage": 0.9097493744
+    },
+    {
+     "alpha": 6.295358073,
+     "beta": 8.696136078,
+     "cg": 3.602422304,
+     "closest": 3.449395042,
+     "gamma": 14.62776291,
+     "rings": [
+      0,
+      2
+     ],
+     "sizes": [
+      6,
+      6
+     ],
+     "slippage": 0.5446652059
     },
     {
      "alpha": 0.0,
@@ -8349,7 +8349,7 @@
     "lat_slip_signed": -0.3636732509,
     "long_slip": 3.951729117,
     "long_slip_signed": 3.951729117,
-    "mean_atom_height": 3.578332231,
+    "mean_atom_height": 3.650066853,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -8359,22 +8359,6 @@
     "slip_direction": -5.258056416
    },
    "ring_pairs": [
-    {
-     "alpha": 6.295358073,
-     "beta": 8.696136078,
-     "cg": 3.602422304,
-     "closest": 3.449395042,
-     "gamma": 14.62776291,
-     "rings": [
-      0,
-      2
-     ],
-     "sizes": [
-      6,
-      6
-     ],
-     "slippage": 0.5446652059
-    },
     {
      "alpha": 6.295358073,
      "beta": 14.62776291,
@@ -8390,6 +8374,22 @@
       6
      ],
      "slippage": 0.9097493744
+    },
+    {
+     "alpha": 6.295358073,
+     "beta": 8.696136078,
+     "cg": 3.602422304,
+     "closest": 3.449395042,
+     "gamma": 14.62776291,
+     "rings": [
+      0,
+      2
+     ],
+     "sizes": [
+      6,
+      6
+     ],
+     "slippage": 0.5446652059
     },
     {
      "alpha": 0.0,
@@ -8545,7 +8545,7 @@
     "lat_slip_signed": -2.21632629,
     "long_slip": 4.640105832,
     "long_slip_signed": 4.640105832,
-    "mean_atom_height": 3.582913497,
+    "mean_atom_height": 3.458308158,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -8709,7 +8709,7 @@
     "lat_slip_signed": -1.717720346,
     "long_slip": 4.838227936,
     "long_slip_signed": 4.838227936,
-    "mean_atom_height": 3.591427251,
+    "mean_atom_height": 3.491114711,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -8873,7 +8873,7 @@
     "lat_slip_signed": 0.2281785128,
     "long_slip": 3.49343923,
     "long_slip_signed": 3.49343923,
-    "mean_atom_height": 3.593912,
+    "mean_atom_height": 3.438895255,
     "n_vdw_contacts": 2.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -9037,7 +9037,7 @@
     "lat_slip_signed": -1.5843174,
     "long_slip": 4.775032696,
     "long_slip_signed": 4.775032696,
-    "mean_atom_height": 3.618261748,
+    "mean_atom_height": 3.365560704,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -9201,7 +9201,7 @@
     "lat_slip_signed": -2.067448325,
     "long_slip": 4.563315145,
     "long_slip_signed": 4.563315145,
-    "mean_atom_height": 3.626340555,
+    "mean_atom_height": 3.43692358,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -9365,7 +9365,7 @@
     "lat_slip_signed": -1.8863962,
     "long_slip": 4.584346874,
     "long_slip_signed": -4.584346874,
-    "mean_atom_height": 3.634807567,
+    "mean_atom_height": 3.324019633,
     "n_vdw_contacts": 2.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -9529,7 +9529,7 @@
     "lat_slip_signed": -0.07973590848,
     "long_slip": 3.310589957,
     "long_slip_signed": -3.310589957,
-    "mean_atom_height": 3.647669539,
+    "mean_atom_height": 3.518159083,
     "n_vdw_contacts": 1.0,
     "overlap": 0.0,
     "overlap_area": 0.0,
@@ -9693,7 +9693,7 @@
     "lat_slip_signed": -0.3186596799,
     "long_slip": 3.485650657,
     "long_slip_signed": -3.485650657,
-    "mean_atom_height": 3.679324727,
+    "mean_atom_height": 3.568959129,
     "n_vdw_contacts": 0.0,
     "overlap": 0.0,
     "overlap_area": 0.0,

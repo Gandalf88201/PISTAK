@@ -52,6 +52,8 @@ ALERT_TEXT = {
                       "il CIF dichiara {declared}.",
     "pseudoSymmetry": "Pseudosimmetria: entro {tolerance} Å il modello ha la simmetria di {found} (dichiarato {declared}).",
     "addsymUnavailable": "Ricerca della simmetria mancata non eseguita: serve il pacchetto spglib.",
+    "shellsTruncated": "Coppie cercate entro ±{max} celle, ma con molecole così estese ne servirebbero {needed}: qualche "
+                       "contatto tra molecole lontane in celle può mancare.",
     "checkFailed": "Il controllo «{check}» non è riuscito: {error}",
 }
 #: Perché un'analisi non ha coppie (`pistak.core.diagnosis`), in italiano: si traducono al momento dell'uso.

@@ -270,6 +270,19 @@ def _disorder(a: Analysis) -> list[Alert]:
     return out
 
 
+# ---- ricerca delle coppie -------------------------------------------------------------------------------------
+@check("shells")
+def _shells(a: Analysis) -> list[Alert]:
+    """Il limite `MAX_SHELLS` alle celle esplorate taglia la ricerca delle coppie: lo si dice invece di tacerlo."""
+    from pistak.core.pairs import neighbour_shells, shells_needed
+
+    cores = a.fragments or a.cores
+    need, used = shells_needed(a.structure, cores, a.limits), neighbour_shells(a.structure, cores, a.limits)
+    if need == used:
+        return []
+    return [Alert("shellsTruncated", "B", {"needed": ", ".join(f"±{n}" for n in need), "max": max(used)})]
+
+
 def _spglib_get(ds, key: str):
     return getattr(ds, key) if hasattr(ds, key) else ds[key]
 

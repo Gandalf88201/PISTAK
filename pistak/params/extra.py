@@ -59,10 +59,11 @@ def height_a_over_b(ctx):
     return abs(float(np.dot(ctx.d, ctx.core_b.normal)))
 
 
-@parameter("mean_atom_height", "Quota media degli atomi di B", "Å", "Distanza media degli atomi del nucleo B dal piano medio di A: meno sensibile al baricentro.", 2, "distanze")
+@parameter("mean_atom_height", "Quota media degli atomi di B", "Å", "Distanza media degli atomi del nucleo B dal piano medio di A (media delle distanze, non distanza della media): con piani inclinati non coincide con la quota del baricentro.", 2, "distanze")
 def mean_atom_height(ctx):
-    z = ctx.proj_b[ctx.core_b.atoms, 2]
-    return float(abs(z.mean()))
+    # la media delle quote con segno sarebbe la quota del baricentro di B (height_b_over_a): servono i valori assoluti
+    z = (ctx.pos_b[ctx.core_b.atoms] - ctx.core_a.centroid) @ ctx.core_a.normal
+    return float(np.abs(z).mean())
 
 
 def _core_heavy(ctx, which: str):

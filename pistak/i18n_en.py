@@ -453,8 +453,9 @@ TEXT: dict[str, str] = {
     "Quota di A sul piano B": "Height of A above plane B",
     "Distanza del centroide di A dal piano medio di B.": "Distance of the centroid of A from the mean plane of B.",
     "Quota media degli atomi di B": "Mean height of the atoms of B",
-    "Distanza media degli atomi del nucleo B dal piano medio di A: meno sensibile al baricentro.":
-        "Mean distance of the atoms of core B from the mean plane of A: less sensitive to the centroid.",
+    "Distanza media degli atomi del nucleo B dal piano medio di A (media delle distanze, non distanza della media): con piani inclinati non coincide con la quota del baricentro.":
+        "Mean distance of the atoms of core B from the mean plane of A (mean of the distances, not distance of the mean): "
+        "with tilted planes it differs from the height of the centroid.",
     "Contatto più corto tra i nuclei": "Shortest contact between cores",
     "Distanza minima tra atomi dei due nuclei π.": "Minimum distance between atoms of the two π cores.",
     "Contatto C···C più corto": "Shortest C···C contact",
@@ -612,6 +613,10 @@ TEXT: dict[str, str] = {
     "Pseudosimmetria: entro {tolerance} Å il modello ha la simmetria di {found} (dichiarato {declared}).":
         "Pseudosymmetry: within {tolerance} Å the model has the symmetry of {found} (declared {declared}).",
     "Ricerca della simmetria mancata non eseguita: serve il pacchetto spglib.": "Missed-symmetry search not run: it needs the spglib package.",
+    "Coppie cercate entro ±{max} celle, ma con molecole così estese ne servirebbero {needed}: qualche contatto tra "
+    "molecole lontane in celle può mancare.":
+        "Pairs searched within ±{max} cells, but molecules this large would need {needed}: some contacts between "
+        "molecules many cells apart may be missing.",
     "Il controllo «{check}» non è riuscito: {error}": "The “{check}” check failed: {error}",
     "Geometria": "Geometry",
     "Controlli": "Checks",

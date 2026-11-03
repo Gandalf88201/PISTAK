@@ -228,9 +228,9 @@ def remeasure(s: Structure, frags: Fragments, pair: Pair, limits: Limits) -> Pai
     return q
 
 
-def neighbour_shells(s: Structure, cores: Sequence, limits: Limits) -> tuple[int, int, int]:
-    """Celle da esplorare (±) lungo a, b, c. Nel modo del sito sempre `neighbour_shells`; altrimenti quante ne
-    servono perché due molecole qualunque a contatto siano trovate, ma almeno `neighbour_shells`.
+def shells_needed(s: Structure, cores: Sequence, limits: Limits) -> tuple[int, int, int]:
+    """Celle da esplorare (±) lungo a, b, c perché due molecole qualunque a contatto siano trovate, ma almeno
+    `neighbour_shells` e senza il limite `MAX_SHELLS`. Nel modo del sito sempre `neighbour_shells`.
 
     Due molecole si toccano solo se |Δbaricentri| ≤ D = E_a + E_b + contact_cutoff (E = estensione); la
     componente frazionaria i di un vettore g è al più |g|·|a*_i| e i baricentri stanno nella cella [0, 1), quindi
@@ -245,7 +245,16 @@ def neighbour_shells(s: Structure, cores: Sequence, limits: Limits) -> tuple[int
     D = 2 * max(ext) + limits.contact_cutoff
     recip = np.linalg.norm(np.linalg.inv(s.vectors), axis=0)  # |a*_i|: colonne di M⁻¹
     need = np.floor(D * recip + 1).astype(int)
-    return tuple(int(min(MAX_SHELLS, max(R, n))) for n in need)  # type: ignore[return-value]
+    return tuple(int(max(R, n)) for n in need)  # type: ignore[return-value]
+
+
+def neighbour_shells(s: Structure, cores: Sequence, limits: Limits) -> tuple[int, int, int]:
+    """Le celle esplorate davvero: `shells_needed` limitato a `MAX_SHELLS` (se il limite taglia, i controlli rapidi
+    lo segnalano con l'avviso `shellsTruncated`)."""
+    need = shells_needed(s, cores, limits)
+    if limits.pair_mode == "site":
+        return need
+    return tuple(min(MAX_SHELLS, n) for n in need)  # type: ignore[return-value]
 
 
 def _neg(sh: Shift) -> Shift:
