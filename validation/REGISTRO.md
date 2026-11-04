@@ -306,7 +306,8 @@ la formula |d · n̄|, n̄ = (n_A + n_B)/|n_A + n_B|.
 
 ### Rapporto PDF
 
-Il confronto, con dati e tabelle, è documentato in `validation/platon/PISTAK_vs_PLATON.pdf`, prodotto da
+Il confronto, con dati e tabelle, è documentato in `validation/platon/PISTAK_vs_PLATON.pdf` (in inglese
+`validation/platon/PISTAK_vs_PLATON_en.pdf`), prodotto da
 `validation/rapporto_platon.py` (tutte le coppie abbinate anche in `validation/platon/coppie_abbinate.csv`; i dati
 della distanza interplanare in `validation/platon/interplanare.json`, ricalcolabili con `--rifai` dai CIF di
 `cod_cache/`). Le 249 classi con un anello che PISTAK non considera si dividono così: 205 anelli perimetrali da 8 atomi,
