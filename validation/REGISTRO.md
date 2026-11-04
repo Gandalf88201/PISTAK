@@ -297,9 +297,19 @@ PISTAK misura la distanza interplanare lungo la normale media dei due nuclei; PL
 | --- | --- | --- | --- |
 | 0–5° | 1096 | 0,000 (1,10) Å | 0,000 (0,12) Å |
 | 5–10° | 132 | 0,54 (1,94) Å | 0,007 (0,36) Å |
-| 10–15° | 88 | 0,72 (3,79) Å | 0,020 (0,76) Å |
-| 15–20° | 65 | 1,10 (4,60) Å | 0,033 (0,95) Å |
+| 10–15° | 88 | 0,72 (3,79) Å | 0,020 (0,75) Å |
+| 15–20° | 65 | 1,10 (4,60) Å | 0,033 (0,94) Å |
 
 Per il paper: con piani non paralleli le due distanze «alla PLATON» possono differire di qualche ångström, mentre la
 distanza lungo la normale media è un solo numero, vicino alla loro media. Va scritto che è questa la definizione, con
 la formula |d · n̄|, n̄ = (n_A + n_B)/|n_A + n_B|.
+
+### Rapporto PDF
+
+Il confronto, con dati e tabelle, è documentato in `validation/platon/PISTAK_vs_PLATON.pdf`, prodotto da
+`validation/rapporto_platon.py` (tutte le coppie abbinate anche in `validation/platon/coppie_abbinate.csv`; i dati
+della distanza interplanare in `validation/platon/interplanare.json`, ricalcolabili con `--rifai` dai CIF di
+`cod_cache/`). Le 249 classi con un anello che PISTAK non considera si dividono così: 205 anelli perimetrali da 8 atomi,
+40 anelli con atomi generati per simmetria (etichette `_a` di PLATON), 4 anelli di una componente di disordine
+scartata (tutti in 2204537, atomi con suffisso A). Rispetto alla prima stesura della tabella qui sopra, due massimi
+erano arrotondati per eccesso (0,7546 e 0,9446 Å, ora 0,75 e 0,94).

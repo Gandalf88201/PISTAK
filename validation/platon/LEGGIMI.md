@@ -29,3 +29,6 @@ Nessuna opzione da cambiare: i valori predefiniti di PLATON (Cg–Cg < 6,0 Å, �
 Eseguito il 4 novembre 2026 con PLATON V-200626 (`printf 'CALC ALL\nEXIT\n' | platon -o nome.cif`); confronto in
 `confronto.txt`, prodotto da `../check_platon.py`, e riassunto in `../REGISTRO.md`. PLATON non legge 2205356 (tabella
 anisotropa prima degli atomi) e su 7242996 si ferma su ADDSYM.
+
+Il rapporto PDF del confronto, con dati e tabelle, è `PISTAK_vs_PLATON.pdf`, prodotto da
+`../rapporto_platon.py`; tutte le coppie abbinate sono in `coppie_abbinate.csv`.

@@ -1,3 +1,6 @@
 # Dipendenze delle verifiche in validation/ (non del programma): oracoli esterni.
 gemmi>=0.7
 networkx>=3.2
+reportlab>=4.0      # rapporto PDF del confronto con PLATON
+matplotlib>=3.8
+pypdf>=4.0

@@ -76,6 +76,7 @@ def compare(stem: str) -> dict:
     diffs: dict[str, list[float]] = {k: [] for k in ("cg", "alpha", "beta", "gamma", "perp_a", "perp_b", "slip")}
     matched_ref = set()
     unmatched_mine = 0
+    rows: list[dict] = []  # una per coppia abbinata, nella notazione di PLATON (anello I → anello J)
     for la, lb, rp in mine:
         hits = []
         for k, r in enumerate(ref):
@@ -106,16 +107,21 @@ def compare(stem: str) -> dict:
         diffs["gamma"].append(gamma - r["gamma"])
         diffs["perp_a"].append(pa - r["perp_j"])
         diffs["perp_b"].append(pb - r["perp_i"])
+        slip = float(np.sqrt(max(0.0, rp.cg_distance ** 2 - pa ** 2)))
         if r["slip"] is not None:
-            slip = float(np.sqrt(max(0.0, rp.cg_distance ** 2 - pa ** 2)))
             diffs["slip"].append(slip - r["slip"])
+        rows.append({"stem": stem, "i": r["i"], "j": r["j"], "size_i": len(rings[r["i"]]), "size_j": len(rings[r["j"]]),
+                     "pistak": {"cg": rp.cg_distance, "alpha": rp.alpha, "beta": beta, "gamma": gamma,
+                                "perp_i": pb, "perp_j": pa, "slip": slip},
+                     "platon": {k: r[k] for k in ("cg", "alpha", "beta", "gamma", "perp_i", "perp_j", "slip")}})
     inter = [k for k, r in enumerate(ref) if not r["intra"]]
     # classi: stessi due anelli (in qualunque ordine) e stessa Cg–Cg; PLATON elenca anche le copie per simmetria
     cls = lambda r: (frozenset((rings[r["i"]], rings[r["j"]])), round(r["cg"], 2))  # noqa: E731
     found = {cls(ref[k]) for k in matched_ref}
     missed = [r for r in {cls(ref[k]): ref[k] for k in inter}.values() if cls(r) not in found]
     return {"stem": stem, "mine": len(mine), "matched": len(mine) - unmatched_mine, "ref_inter": len(inter),
-            "ref_missed": missed, "diffs": diffs, "n_rings": len(rings)}
+            "ref_missed": missed, "diffs": diffs, "n_rings": len(rings), "rows": rows, "rings": rings,
+            "space_group": an.cif.space_group}
 
 
 def main() -> None:
