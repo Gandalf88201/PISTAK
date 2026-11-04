@@ -10,6 +10,7 @@ verifica chiusa; sotto la tabella, per ogni voce, l'oracolo usato e il risultato
 .venv/bin/python validation/scarica_cod.py               # sezione 1: i 200 CIF COD di cod_sample.txt in cod_cache/
 .venv/bin/python validation/check_cif.py                 # sezione 1: lettura, s.u., elementi, disordine
 .venv/bin/python validation/check_struttura.py           # sezioni 1–3: cella, formule, cella obliqua, anelli, raggi
+.venv/bin/python validation/check_platon.py              # sezioni 4–5: coppie di anelli contro PLATON CALC ALL
 ```
 
 Gli oracoli non usano `pistak.core`: geometria ricalcolata con numpy, topologia nota dei policicli, tensore metrico,
@@ -254,3 +255,51 @@ i valori dichiarati nei CIF, networkx (`minimum_cycle_basis`), una cella obliqua
 Il raddoppio dei solventi in 7036933 e 4330346 non è un difetto del programma: il CIF descrive un disordine (atomi a
 occupanza parziale vicini fra loro o alle loro immagini) senza dire quali atomi stanno insieme. PISTAK lo segnala con
 `partialOccupancy`; per escludere queste molecole dalle coppie serve un criterio nuovo (voce 14).
+
+## Sezioni 4–5: coppie di anelli contro PLATON (4 novembre 2026)
+
+Oracolo: PLATON V-200626 (A. L. Spek), compilato dal sorgente, `CALC ALL` con le impostazioni predefinite su 20 CIF
+COD organici con stack (`validation/platon/elenco.txt`; output `.lis` nella stessa cartella, confronto completo in
+`confronto.txt`). PLATON non ha letto 2 CIF: 2205356 (tabella anisotropa prima di quella degli atomi) e 7242996 (si
+ferma su ADDSYM). Restano 18 strutture.
+
+| Grandezza | Coppie abbinate | Scarto massimo PISTAK − PLATON | Mediano |
+| --- | --- | --- | --- |
+| Cg···Cg | 667 | 0,0011 Å | 0,0001 Å |
+| α | 667 | 0,052° | 0,004° |
+| β, γ | 667 | 0,056° | 0,03° |
+| distanze perpendicolari (CgJ_Perp = `perp_a`, CgI_Perp = `perp_b`) | 667 | 0,0009 Å | 0,0001 Å |
+| slippage | 339 (PLATON lo dà solo con α < 20°) | 0,0011 Å | 0,0002 Å |
+
+Gli scarti stanno nella precisione con cui PLATON stampa (0,1° per gli angoli, 0,001 Å per le distanze): **i parametri
+anello–anello di PISTAK coincidono con quelli di PLATON**. Le definizioni di PLATON stampate nel `.lis` confermano
+quelle di PISTAK: β rispetto alla normale del piano I, γ a quella del piano J (voce 1), slippage come proiezione di
+Cg(J) sul piano I.
+
+Coppie che PLATON elenca e PISTAK no (classi di simmetria, 279):
+
+- 249: un anello che PISTAK non considera. Quasi tutti sono anelli da 8 atomi che sono il perimetro di due anelli
+  condensati (5 + 5, 4 + 6): PLATON li elenca come anelli, PISTAK per costruzione no (solo gli anelli più corti di
+  qualche legame). Gli altri sono anelli attraverso un elemento di simmetria (PLATON chiama `C1_a` gli atomi generati,
+  quindi l'abbinamento per etichetta non li trova) o di una componente di disordine scartata da `major`.
+- 30: molecole senza atomi pesanti entro `contact_cutoff` = 4,5 Å; PLATON guarda solo Cg···Cg < 6 Å. È una scelta di
+  PISTAK, da dichiarare: la tabella anello–anello copre solo le coppie di molecole a contatto.
+
+PLATON elenca soltanto le coppie con β < 60° (in almeno un verso); PISTAK le elenca tutte entro 6 Å, per questo ha
+più righe (725 contro le 667 abbinate).
+
+### Distanza interplanare: PISTAK contro le distanze perpendicolari di PLATON
+
+PISTAK misura la distanza interplanare lungo la normale media dei due nuclei; PLATON dà le due distanze perpendicolari
+(il baricentro di ciascun piano dall'altro piano). Sulle 1381 coppie stack o parallel dei 200 CIF COD:
+
+| Angolo tra i piani | Coppie | |⟂A − ⟂B| mediano (max) | interplanare PISTAK − media(⟂A, ⟂B), mediano (max) |
+| --- | --- | --- | --- |
+| 0–5° | 1096 | 0,000 (1,10) Å | 0,000 (0,12) Å |
+| 5–10° | 132 | 0,54 (1,94) Å | 0,007 (0,36) Å |
+| 10–15° | 88 | 0,72 (3,79) Å | 0,020 (0,76) Å |
+| 15–20° | 65 | 1,10 (4,60) Å | 0,033 (0,95) Å |
+
+Per il paper: con piani non paralleli le due distanze «alla PLATON» possono differire di qualche ångström, mentre la
+distanza lungo la normale media è un solo numero, vicino alla loro media. Va scritto che è questa la definizione, con
+la formula |d · n̄|, n̄ = (n_A + n_B)/|n_A + n_B|.

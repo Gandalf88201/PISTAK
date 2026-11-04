@@ -17,3 +17,7 @@ build/
 
 # campione COD scaricato da validation/scarica_cod.py (si rigenera)
 validation/cod_cache/
+# copie dei CIF COD per PLATON (si rigenerano); gli output .lis invece si tengono
+validation/platon/*.cif
+validation/platon/*.spf
+validation/platon/*.ckf
