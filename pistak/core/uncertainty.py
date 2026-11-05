@@ -55,6 +55,11 @@ class Uncertainty:
     mean: dict[int, dict[str, float]] = field(default_factory=dict)
     #: Frazione dei campioni in cui la coppia ha lo stesso tipo (stack/parallel/tilted) di quella nominale.
     kind_agreement: dict[int, float] = field(default_factory=dict)
+    #: Campioni con un valore finito, per coppia e parametro: la σ è calcolata solo su questi.
+    valid: dict[int, dict[str, int]] = field(default_factory=dict)
+    #: Parametri con un valore nominale ma mancanti (NaN) in parte dei campioni, per coppia: {chiave: campioni validi}.
+    #: Non si scartano in silenzio: la σ viene da meno campioni, e chi fallisce può essere proprio la geometria estrema.
+    incomplete: dict[int, dict[str, int]] = field(default_factory=dict)
 
     def get(self, pair: Pair | int, key: str) -> float:
         i = pair if isinstance(pair, int) else pair.index
@@ -133,9 +138,12 @@ def monte_carlo(analysis: Analysis, samples: int = 100, seed: int = 0, evaluate:
             progress(n + 1, samples)
     out = Uncertainty(samples, seed, include_cell, has_su(analysis, include_cell), keys)
     for i, by_key in acc.items():
-        out.sigma[i], out.mean[i] = {}, {}
+        out.sigma[i], out.mean[i], out.valid[i] = {}, {}, {}
         for k, vals in by_key.items():
             nom = nominal[i].get(k, math.nan)
             out.sigma[i][k], out.mean[i][k] = _spread(vals, nom, k in periodic)
+            n_ok = out.valid[i][k] = int(np.count_nonzero(np.isfinite(vals)))
+            if math.isfinite(nom) and n_ok < samples:
+                out.incomplete.setdefault(i, {})[k] = n_ok
         out.kind_agreement[i] = same[i] / samples if samples else math.nan
     return out

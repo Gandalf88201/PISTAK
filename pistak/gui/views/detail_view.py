@@ -318,6 +318,10 @@ class DetailView(PairView):
         if u is not None:
             QTreeWidgetItem(self.params, [tr("Incertezze"), tf("Monte Carlo, {n} campioni", n=u.samples),
                                           tf("tipo stabile nel {p:.0f}% dei campioni", p=100 * u.kind_agreement.get(pair.index, 0))])
+            miss = u.incomplete.get(pair.index)
+            if miss:
+                QTreeWidgetItem(self.params, ["", tr("σ da meno campioni (il parametro manca negli altri)"),
+                                              ", ".join(f"{k} {m}/{u.samples}" for k, m in miss.items())])
         groups: dict[str, QTreeWidgetItem] = {}
         for s in specs():
             top = groups.get(s.group_name)

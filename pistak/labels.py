@@ -59,6 +59,8 @@ ALERT_TEXT = {
     "shellsTruncated": "Coppie cercate entro ±{max} celle, ma con molecole così estese ne servirebbero {needed}: qualche "
                        "contatto tra molecole lontane in celle può mancare.",
     "checkFailed": "Il controllo «{check}» non è riuscito: {error}",
+    "vdwDefault": "Raggio di van der Waals non tabulato per {elements}: contatti e parametri di van der Waals usano "
+                  "{r} Å.",
 }
 #: Perché un'analisi non ha coppie (`pistak.core.diagnosis`), in italiano: si traducono al momento dell'uso.
 NO_PAIRS_TEXT = {

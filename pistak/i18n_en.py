@@ -177,6 +177,9 @@ TEXT: dict[str, str] = {
     "seme del generatore casuale del Monte Carlo": "seed of the Monte Carlo random generator",
     "stabilità del tipo": "type stability",
     "tipo stabile nel {p:.0f}% dei campioni": "same type in {p:.0f}% of the samples",
+    "σ da meno campioni (il parametro manca negli altri)": "σ from fewer samples (the parameter is missing in the others)",
+    "attenzione: coppia {n}, σ da meno campioni (il parametro manca negli altri): {keys}":
+        "warning: pair {n}, σ from fewer samples (the parameter is missing in the others): {keys}",
     "tutti i sistemi di anelli planari": "all planar ring systems",
     "solo il più grande (come il sito)": "only the largest (as the website)",
     "Atomi minimi in un frammento π secondario": "Minimum atoms in a secondary π fragment",
@@ -629,6 +632,8 @@ TEXT: dict[str, str] = {
         "Pairs searched within ±{max} cells, but molecules this large would need {needed}: some contacts between "
         "molecules many cells apart may be missing.",
     "Il controllo «{check}» non è riuscito: {error}": "The “{check}” check failed: {error}",
+    "Raggio di van der Waals non tabulato per {elements}: contatti e parametri di van der Waals usano {r} Å.":
+        "No tabulated van der Waals radius for {elements}: contacts and van der Waals parameters use {r} Å.",
     "Geometria": "Geometry",
     "Controlli": "Checks",
     "Legami": "Bonds",

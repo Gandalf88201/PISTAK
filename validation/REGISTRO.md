@@ -15,6 +15,7 @@ verifica chiusa; sotto la tabella, per ogni voce, l'oracolo usato e il risultato
 .venv/bin/python validation/check_export.py              # sezione 7: file per ORCA/Psi4/Gaussian e codici periodici
 .venv/bin/python validation/check_snapshot.py            # sezione 8: istantanee COD rifatte con numpy
 .venv/bin/python validation/check_struttura.py oblique origin   # sezione 8: invarianza per cella e origine
+.venv/bin/python validation/check_riproducibilita.py    # sezione 9: batch 1 contro 4 processi, seme del Monte Carlo
 ```
 
 Gli oracoli non usano `pistak.core`: geometria ricalcolata con numpy, topologia nota dei policicli, tensore metrico,
@@ -36,7 +37,7 @@ conti a mano.
 | 13 | core/validation.py | **Nuovo.** Operazioni elencate e simbolo del gruppo incoerenti: vincevano le operazioni, senza avviso | P2 | **Corretto** | Avviso C `symopsMismatch`; nessun falso positivo sui 200 CIF COD |
 | 14 | core/cif.py | Disordine su un elemento di simmetria (gruppi negativi): le immagini simmetriche del gruppo si sovrappongono alle posizioni originali | P1 | **Aperto** | Oggi lo segnala l'avviso A `overlap` (COD 4113834: C32A···C32B 0,38 Å); serve togliere le immagini che coincidono con l'altra parte |
 | 15 | core/crystal.py | **Nuovo.** `cell_contents` contava una volta sola una posizione occupata da due atomi diversi del CIF: un CIF che scrive anche le immagini per simmetria con occupanza ½ (COD 2100449) dava metà del contenuto della cella, e densità e formula sbagliate negli avvisi | P2 (avvisi, non coppie) | **Corretto** | Occupanze di atomi diversi sommate fino a 1; immagini dello stesso atomo (posizioni speciali) una volta; test |
-| 16 | core/elements.py | Raggi diversi dalle tabelle di gemmi: covalente C 0,76 (sp³, dichiarato) contro 0,73; Lu 1,87 e Hf 1,75 scambiati rispetto a gemmi; vdW H 1,10 (Rowland e Taylor) mentre il commento cita Bondi (1,20) | P1 (H: contatti vdW) | **Aperto** | Controllare sul testo di Cordero 2008 e Bondi 1964; correggere il commento su H |
+| 16 | core/elements.py | Raggi diversi dalle tabelle di gemmi: covalente C 0,76 (sp³, dichiarato) contro 0,73; Lu 1,87 e Hf 1,75 scambiati rispetto a gemmi; vdW H 1,10 (Rowland e Taylor) mentre il commento cita Bondi (1,20) | P1 (H: contatti vdW) | **Corretto** (commento) | Valori giusti: i 96 covalenti uguali alla tabella di Cordero 2008 (le differenze erano di gemmi); i vdW uguali alla tab. 12 di Mantina 2009 per i gruppi principali (H 1,10 di Rowland e Taylor 1996), Br 1,85 e metalli di transizione di Bondi 1964. Corretti il commento in `elements.py` e il manuale, che citavano solo Bondi |
 | 17 | core/structure.py | Formule ricostruite diverse da `_chemical_formula_moiety` non spiegate: 7208500 (due acetonitrili in un'unica "molecola"), 2201728 (un CH₃ in più) | P2 | **Aperto** | Da esaminare a mano |
 | 10 | core/cif.py | **Nuovo.** `tokenize` va in ciclo infinito (memoria che cresce senza limite) su un carattere di spaziatura diverso da spazio e tab: NBSP, form feed, tab verticale, U+2003… | P2 | **Corretto** | `if ch.isspace()` al posto di `if ch in " \t"`; test con 5 caratteri in un processo separato |
 | 18 | core/intramolecular.py | **Nuovo.** Torsioni riportate anche attraverso tre atomi allineati (X–M–X su un centro di inversione, angolo 180°): valore indefinito, che dipende dagli arrotondamenti | P2 | **Corretto** | Torsioni con un angolo di legame oltre 175° non riportate (`MAX_TORSION_ANGLE`); test, manuale |
@@ -55,6 +56,14 @@ conti a mano.
 | 31 | configurazione utente | **Nuovo.** `analyse_file` senza soglie usa il file dell'utente (`user.toml`): su questa macchina `contact_cutoff` = 4,0 (il vecchio predefinito, salvato prima della voce 6), `max_dihedral` = 5, `overlap_measure` = area, `contact_check` = vdw. I test sono isolati (`PISTAK_CONFIG_DIR` temporanea), le analisi dell'utente no | P1 (risultati dell'utente) | **Aperto** | Decidere se aggiornare `user.toml` e se avvisare quando un valore salvato coincide con un vecchio predefinito |
 | 32 | tests/ | Copertura (`pytest --cov`) e test basati su proprietà (hypothesis) | P2 | **Aperto** | Servono `pytest-cov` e `hypothesis`, non installati |
 | 33 | tests/ | Nomi dei test in italiano | P3 | Aperto | Da decidere: docstring in inglese o traduzione |
+| 34 | core/validation.py | **Nuovo.** Se spglib c'è ma non riesce, `find_symmetry` restituiva None come quando spglib manca: avviso G «serve il pacchetto spglib» (falso) a 0,1 Å, nessun avviso a 0,3 Å | P2 | **Corretto** | L'errore di spglib diventa l'avviso G `checkFailed` con il messaggio; test. Su 200 CIF COD nessun nuovo avviso |
+| 35 | core/uncertainty.py | **Nuovo.** Un parametro NaN in parte dei campioni del Monte Carlo (un plugin che fallisce, una geometria degenere) dava una σ calcolata sui soli campioni rimasti, senza dirlo | P2 | **Corretto** | `Uncertainty.valid` e `incomplete`: avviso nel terminale, riga nel Dettaglio, campo `su_samples` nel JSON; test |
+| 36 | core/elements.py | **Nuovo.** 48 elementi su 96 senza raggio di van der Waals (Fe, Co, Mn, Ru, Ti, lantanidi, …): contatti e parametri di vdW usavano 1,9 Å in silenzio | P2 | **Corretto** (avviso) | Avviso G `vdwDefault` con gli elementi; Po, At, Rn, Fr, Ra aggiunti dalla tab. 12 di Mantina 2009. Resta da decidere se adottare una tabella per i metalli (es. Alvarez 2013) |
+| 37 | gui/flow_layout.py | **Nuovo.** «Adattato dall'esempio Flow Layout di Qt» senza nota di copyright né licenza (gli esempi di Qt for Python sono BSD-3-Clause, che chiede di conservarle) | P1 (licenza) | **Corretto** | Nota di copyright e testo BSD-3 nell'intestazione; README aggiornati. Da confermare sull'esempio originale (copyright Riverbank 2013, Qt Company 2022) |
+| 38 | README | Licenze delle dipendenze: mancavano gemmi (MPL-2.0, facoltativo) e vtk (BSD, tramite pyvista) | P3 | **Corretto** | Aggiunte; le altre (numpy, scipy, spglib BSD; pyqtgraph, pyvista MIT; PySide6 LGPL) confermate dai metadati installati |
+| 39 | requirements | Solo versioni minime (`>=`), nessun file di versioni bloccate: i numeri del paper non sono legati a un ambiente | P2 | **Corretto** (documentato) | `validation/ambiente.txt`: versioni esatte con cui girano test e controlli. Batch e Monte Carlo deterministici (`check_riproducibilita.py`) |
+| 40 | pistak/ | Leggibilità: ruff pulito (nessun import o variabile inutilizzati; 11 argomenti non usati, tutti segnature di slot Qt). vulture non installato; il mypy di sistema (1.19) non legge le stub di numpy 2.5 | P3 | **Aperto** | Installare mypy e vulture nel venv (insieme alla voce 32) |
+| 41 | paper | Dichiarazione sull'uso dell'IA | P1 (paper) | **Bozza** | `validation/dichiarazione_ia.md`: fatti dal repository (29 commit con Claude co-autore), testo IT/EN, parti da completare dall'autore |
 
 ## 1. `beta_b` etichettato γ
 
@@ -448,4 +457,50 @@ e 10⁻³°. Restano larghe, motivatamente: densità contro il CIF (scarto 3·10
 `DATI_REALI/` (CIF della CSD) serve a test_geometry, test_checks e test_manual; senza, quei casi si saltano con un messaggio
 esplicito («CIF reali non distribuiti»). Le stesse verifiche girano sui CIF COD in `tests/data/cod/` e, in grande,
 negli script di `validation/`: la copertura dei numeri non dipende da `DATI_REALI/`.
+
+## Sezione 9: rischi del codice generato (5 novembre 2026)
+
+### Costanti e fonti
+
+- **Raggi covalenti**: i 96 valori di `COVALENT_RADII` uguali, uno per uno, alla tabella di Cordero et al. 2008 (C sp³,
+  Mn/Fe/Co a basso spin come dichiarato). Le differenze con gemmi della voce 16 sono di gemmi.
+- **Raggi di van der Waals**: gruppi principali uguali alla tab. 12 di Mantina et al. 2009 (H 1,10 di Rowland e Taylor
+  1996), Br 1,85 di Bondi (Mantina 1,83), metalli di transizione di Bondi 1964 come li riporta WebElements. Il commento
+  citava solo Bondi: corretto, con il manuale.
+- **X–H da neutroni**: già controllate sul testo di Allen e Bruno 2010 (voce 7). Riferimenti citati (Hall 1981, Acta
+  Cryst. A37, 517; International Tables B §1.4; Cordero, Dalton Trans. 2008, 2832; Mantina, J. Phys. Chem. A 2009, 113,
+  5806; Bondi, J. Phys. Chem. 1964, 68, 441; Allen e Bruno, Acta Cryst. B66, 380): volumi e pagine corretti.
+- **Soglie che sono scelte scientifiche** (da dichiarare nel paper, non hanno una fonte unica): `max_dihedral` 20°,
+  `max_interplanar` 4,2 Å, `ring_rms` 0,10 e `molecule_rms` 0,15 Å, `bond_tolerance` 0,4 Å, `same_site` 0,3 Å,
+  `max_ring_size` 8, `ring_pair_max_distance` 6,0 Å (come PLATON), `min_fragment_atoms` 5, soglie fisse dei contatti
+  (C···C 3,0, H···H 1,8 Å) e margine 0,5 Å, sovrapposizione 0,7 Å, tolleranze ADDSYM 0,1/0,3 Å, margine dei frammenti
+  1,0 Å. Motivate nel codice: `contact_cutoff`, `MAX_TORSION_ANGLE`, `TRIPLE_CX`, `SP_ANGLE`, `ADDSYM_MAX_EXCLUDED`.
+- **Limiti tecnici**: `MAX_SHELLS` 8 (segnalato, avviso `shellsTruncated`), `max_cell_atoms` 6000, `MAX_BYTES` 50 MB
+  (errori espliciti), `neighbour_shells` 2.
+
+### Blocchi `except Exception` (23)
+
+| Esito | Dove | Giudizio |
+| --- | --- | --- |
+| Messaggio all'utente | cli.py (4), gui/session.py (3), gui/main_window.py (2), batch.py (3, la riga della struttura riporta l'errore), collection_window.py, view3d.py (vista 3D sostituita da un riquadro con il messaggio) | Corretti |
+| Avviso o registro degli errori | validation.py:83 (G `checkFailed`), params/registry.py e params/structure.py (`param_errors`, scheda Avvisi), params/plugins.py (`load_errors`) | Corretti |
+| Ripiego dichiarato | i18n.py (configurazione illeggibile → italiano), spacegroups.py (gemmi non accetta il simbolo → «gruppo sconosciuto» più avanti), main_window.py:314 (l'errore lo mostra poi l'analisi) | Corretti |
+| Silenziosi, ora segnalati | validation.py:361 spglib (voce 34), params/uncertainty.py:29 NaN nei campioni (voce 35) | Corretti |
+
+Altri ripieghi silenziosi: `DEFAULT_COVALENT` non si usa mai (il lettore scarta gli elementi sconosciuti);
+`DEFAULT_VDW` sì, ora con l'avviso `vdwDefault` (voce 36).
+
+### Licenze e proprietà intellettuale
+
+Il parser dei simboli di Hall e quello dei CIF sono propri (nessuna traccia di sginfo, cctbx, PyCifRW); l'unico codice
+derivato è `gui/flow_layout.py` (voce 37). Licenze delle dipendenze dai metadati installati (voce 38).
+
+### Riproducibilità
+
+`check_riproducibilita.py`: 40 strutture COD in 1 e in 4 processi, e due volte in 4, danno risultati identici; il Monte
+Carlo con lo stesso seme dà le stesse σ. Versioni esatte in `ambiente.txt` (voce 39).
+
+### Dichiarazione sull'uso dell'IA
+
+Bozza in `dichiarazione_ia.md` (voce 41).
 

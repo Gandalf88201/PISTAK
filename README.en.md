@@ -283,5 +283,6 @@ break matplotlib) and the plugin/CIF loaders ignore them. If you prefer, move th
 
 ## License
 
-MIT: see [LICENSE](LICENSE). The dependencies have compatible licenses (numpy, scipy, spglib, pyqtgraph, pyvista:
-BSD or MIT; PySide6: LGPL, used as an unmodified library).
+MIT: see [LICENSE](LICENSE). The dependencies have compatible licenses (numpy, scipy, spglib, pyqtgraph, pyvista,
+vtk: BSD or MIT; gemmi, optional: MPL-2.0; PySide6: LGPL, used as an unmodified library). `pistak/gui/flow_layout.py`
+is derived from a Qt for Python example (BSD-3-Clause, copyright notice in the file).

@@ -119,6 +119,8 @@ def pair_dict(p: Pair, keys: list[str], uncertainty=None) -> dict:
     if uncertainty is not None:
         d["su"] = {k: _clean(uncertainty.get(p, k)) for k in keys if k in uncertainty.keys}
         d["kind_agreement"] = _clean(uncertainty.kind_agreement.get(p.index, math.nan))
+        if p.index in uncertainty.incomplete:  # σ da meno campioni: quanti hanno dato un valore
+            d["su_samples"] = dict(uncertainty.incomplete[p.index])
     return d
 
 

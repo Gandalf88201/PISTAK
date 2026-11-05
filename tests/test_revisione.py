@@ -11,11 +11,14 @@ import numpy as np
 import pytest
 
 import cifgen
+from pistak import api
 from pistak.api import analyse_text, finish, reanalyse
 from pistak.core.cif import Cell
 from pistak.core.config import Limits
 from pistak.core.cores import small_rings
 from pistak.core.pairs import MAX_SHELLS
+
+EX = Path(__file__).resolve().parents[1] / "examples"
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -299,3 +302,55 @@ def test_valori_mancanti_nel_cif():
                                     "_cell_formula_units_Z ?\n_chemical_formula_sum 'C6 H6'\n")
     codes = {x.code for x in validate(analyse_text(text, "mancanti"))}
     assert "formulaUnchecked" in codes and "density" not in codes and "checkFailed" not in codes
+
+
+# ---- sezione 9: comportamenti silenziosi -------------------------------------------------------------------------
+def test_spglib_che_fallisce_non_si_scambia_per_spglib_mancante(monkeypatch):
+    """Se spglib c'è ma non riesce, l'avviso è checkFailed con il messaggio, non «serve il pacchetto spglib»."""
+    import spglib
+
+    from pistak.core.validation import validate
+
+    def broken(*_a, **_k):
+        return None  # come spglib < 2.5 quando fallisce
+
+    monkeypatch.setattr(spglib, "get_symmetry_dataset", broken)
+    a = api.analyse_file(EX / "demo_naphthalene.cif")
+    codes = {x.code: x for x in validate(a)}
+    assert "addsymUnavailable" not in codes
+    assert codes["checkFailed"].values["check"] == "addsym" and "spglib" in codes["checkFailed"].values["error"]
+
+
+def test_monte_carlo_conta_i_campioni_mancanti():
+    """Un parametro che manca in metà dei campioni: la σ viene dagli altri e `incomplete` lo dice."""
+    import math
+
+    from pistak.core.uncertainty import geometry_values, monte_carlo
+
+    a = api.analyse_file(EX / "demo_naphthalene.cif")
+    calls = {"n": 0}
+
+    def flaky(analysis, pair):
+        v = geometry_values(analysis, pair)
+        calls["n"] += 1
+        if calls["n"] > len(a.pairs) and calls["n"] % 2:  # i nominali sempre, poi un campione su due manca
+            v["interplanar"] = math.nan
+        return v
+
+    u = monte_carlo(a, samples=20, seed=1, evaluate=flaky)
+    i = a.pairs[0].index
+    assert 0 < u.incomplete[i]["interplanar"] < 20 == u.valid[i]["slip"]
+    assert "slip" not in u.incomplete.get(i, {})
+
+
+def test_raggio_vdw_non_tabulato_si_segnala():
+    """Fe non ha un raggio di van der Waals nelle tabelle (Bondi, Mantina): l'avviso G dice che si usa il valore medio."""
+    from pistak.core.elements import DEFAULT_VDW, VDW_RADII
+    from pistak.core.validation import validate
+
+    assert "Fe" not in VDW_RADII and VDW_RADII["Ra"] == 2.83  # Ra da Mantina 2009, tab. 12
+    cif = cifgen.make_cif([("Fe", np.array([1.0, 1.0, 1.0])), ("O", np.array([1.0, 1.0, 2.8]))],
+                          Cell(10, 10, 10, 90, 90, 90), ["x, y, z"], "ferro")
+    alerts = {x.code: x for x in validate(analyse_text(cif, "ferro"))}
+    assert alerts["vdwDefault"].values == {"elements": "Fe", "r": DEFAULT_VDW}
+    assert "vdwDefault" not in {x.code for x in validate(api.analyse_file(EX / "demo_naphthalene.cif"))}

@@ -23,7 +23,7 @@ import numpy as np
 from scipy.spatial import cKDTree
 
 from pistak.core.crystal import cell_contents, cell_volume, cif_value, density, formula_text, reported_formula
-from pistak.core.elements import atomic_number
+from pistak.core.elements import DEFAULT_VDW, VDW_RADII, atomic_number
 
 if TYPE_CHECKING:
     from pistak.core.analysis import Analysis
@@ -269,6 +269,13 @@ def _vdw_contacts(a: Analysis, margin: float) -> list[Alert]:
 
 
 # ---- affinamento ----------------------------------------------------------------------------------------------
+@check("vdwRadii")
+def _vdw_radii(a: Analysis) -> list[Alert]:
+    """Elementi senza raggio di van der Waals tabulato: contatti e parametri di vdW usano `DEFAULT_VDW`."""
+    missing = sorted({e for e in a.structure.cell_el if e not in VDW_RADII}, key=atomic_number)
+    return [Alert("vdwDefault", "G", {"elements": ", ".join(missing), "r": DEFAULT_VDW})] if missing else []
+
+
 @check("refinement")
 def _refinement(a: Analysis) -> list[Alert]:
     out = []
@@ -343,8 +350,8 @@ def _spglib_get(ds, key: str):
 
 
 def find_symmetry(a: Analysis, tolerance: float) -> tuple[int, str, int] | None:
-    """Gruppo spaziale del modello trovato da spglib: (operazioni nella cella data, simbolo, numero); None senza spglib
-    o se spglib non trova nulla."""
+    """Gruppo spaziale del modello trovato da spglib: (operazioni nella cella data, simbolo, numero); None senza spglib.
+    Se spglib non riesce (per esempio atomi sovrapposti) solleva un'eccezione, che `validate` riporta come avviso G."""
     try:
         import spglib
     except ImportError:
@@ -356,12 +363,9 @@ def find_symmetry(a: Analysis, tolerance: float) -> tuple[int, str, int] | None:
     cell = (s.vectors, s.cell_frac[keep], [kinds[e] for e in els])
     with warnings.catch_warnings():  # spglib ≥ 2.5 avvisa del vecchio modo di segnalare gli errori (None)
         warnings.simplefilter("ignore", DeprecationWarning)
-        try:
-            ds = spglib.get_symmetry_dataset(cell, symprec=tolerance)
-        except Exception:  # noqa: BLE001  (SpglibError con la nuova gestione degli errori)
-            return None
-    if ds is None:
-        return None
+        ds = spglib.get_symmetry_dataset(cell, symprec=tolerance)  # spglib ≥ 2.5: SpglibError se non riesce
+    if ds is None:  # spglib < 2.5: None se non riesce. Non è "spglib manca": diventa l'avviso G checkFailed
+        raise RuntimeError(f"spglib non trova la simmetria (symprec {tolerance} Å)")
     return len(_spglib_get(ds, "rotations")), str(_spglib_get(ds, "international")), int(_spglib_get(ds, "number"))
 
 

@@ -279,4 +279,5 @@ matplotlib) e i caricatori di plugin/CIF li ignorano. Se preferisci, sposta il p
 ## Licenza
 
 MIT: vedi [LICENSE](LICENSE). Le dipendenze hanno licenze compatibili (numpy, scipy, spglib, pyqtgraph,
-pyvista: BSD o MIT; PySide6: LGPL, usata come libreria senza modifiche).
+pyvista, vtk: BSD o MIT; gemmi, facoltativo: MPL-2.0; PySide6: LGPL, usata come libreria senza modifiche).
+`pistak/gui/flow_layout.py` deriva da un esempio di Qt for Python (BSD-3-Clause, nota di copyright nel file).

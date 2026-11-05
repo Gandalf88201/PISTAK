@@ -221,6 +221,9 @@ def _print_uncertainty(a, args) -> None:
         print(f"{p.index + 1:>3} {p.interplanar:7.3f}±{s['interplanar']:<7.3f} {p.long_slip:7.3f}±{s['long_slip']:<7.3f} "
               f"{p.lat_slip:7.3f}±{s['lat_slip']:<7.3f} {p.dihedral:6.2f}±{s['dihedral']:<6.2f} "
               f"{100 * u.kind_agreement[p.index]:>19.0f}%")
+    for i, miss in sorted(u.incomplete.items()):
+        print(tf("attenzione: coppia {n}, σ da meno campioni (il parametro manca negli altri): {keys}", n=i + 1,
+                 keys=", ".join(f"{k} {m}/{u.samples}" for k, m in miss.items())), file=sys.stderr)
 
 
 def _entries(args):

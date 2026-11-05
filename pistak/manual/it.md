@@ -300,6 +300,7 @@ con lo stesso livello.
 | sovrapposizioni | atomi distinti a meno di 0,7 Å (A): disordine non risolto o atomi doppi |
 | legami | C–C, C–N, C–O fuori dagli intervalli plausibili (B); C–H, N–H, O–H (C) |
 | contatti | con `contact_check = "fixed"` (predefinito): C···C intermolecolari sotto 3,0 Å e H···H sotto 1,8 Å (C); con `"vdw"`: per ogni coppia di elementi, i contatti più corti della somma dei raggi di van der Waals di oltre `contact_check_margin` (0,5 Å), esclusi i legami a idrogeno plausibili (H legato a N o O verso N, O, F) (C, `vdwContact`) |
+| raggi di van der Waals | elementi senza raggio nelle tabelle (Fe, Co, Ru, lantanidi, …): contatti e parametri di van der Waals usano 1,9 Å (G, `vdwDefault`) |
 | affinamento | R1 > 0,075 (C) o > 0,10 (B), wR2 > 0,20 (C) o > 0,25 (B), GoF fuori da 0,8–2,0, densità residua > 1 e/Å³ per gli atomi leggeri |
 | disordine | atomi esclusi dalla regola di disordine (G), occupanze parziali nel modello analizzato (C), operazioni di simmetria ricavate dal simbolo (G) |
 | simmetria mancata | come ADDSYM di PLATON: il pacchetto `spglib` cerca il gruppo del modello; più operazioni di quelle dichiarate entro 0,1 Å → A, solo entro 0,3 Å → C (pseudosimmetria). Come in PLATON, gli atomi con occupanza parziale restano fuori; se sono più della metà degli atomi non idrogeno la ricerca non si fa (G) |
@@ -309,7 +310,8 @@ Il controllo dei contatti si sceglie in **Analisi ▸ Soglie…** (*Controllo de
 stessa misura della scheda *Geometria*, dove ogni contatto ha la colonna *d − Σ r vdW*.
 
 Da terminale: `./start.py check file.cif` (esce con codice 2 se ci sono avvisi A, comodo negli script; `--csv` li
-scrive). Senza `spglib` installato la ricerca della simmetria mancata si salta con un avviso G.
+scrive). Senza `spglib` installato la ricerca della simmetria mancata si salta con un avviso G; se spglib c'è ma non riesce
+(per esempio con atomi sovrapposti) l'avviso G è `checkFailed`, con il messaggio di spglib.
 
 ![Dettaglio: i controlli rapidi](img/it/detail_checks.png)
 
@@ -324,7 +326,7 @@ angolo di legame oltre 175° (gruppi lineari, per esempio X–M–X su un centro
 atomi allineati il piano non è definito.
 
 I **contatti** sono le coppie di atomi di due molecole diverse (o di due copie della stessa) più vicine della somma dei
-raggi di van der Waals (Bondi; H 1,10 Å), dal più corto in proporzione: oltre alla distanza danno la somma dei raggi e
+raggi di van der Waals (Bondi 1964 e Mantina et al. 2009; H 1,10 Å di Rowland e Taylor), dal più corto in proporzione: oltre alla distanza danno la somma dei raggi e
 la differenza *d − Σ r vdW*. Il primo atomo è sempre della molecola indipendente; ogni contatto equivalente per
 simmetria compare una volta. Ci finiscono i legami a idrogeno (H···O e H···N sotto 2,6 Å), i contatti stretti delle
 colonne di stack e gli scontri da controllare; quelli più corti di 3,0 Å tra carboni e di 1,8 Å tra idrogeni
@@ -477,7 +479,9 @@ campioni. Per ogni coppia si calcola anche la frazione dei campioni in cui il ti
 stesso (*kind_agreement*): sotto 1 la classificazione è al limite delle soglie.
 
 Il Dettaglio mostra «valore ± σ»; il CSV aggiunge le colonne `<chiave>_su` e `kind_agreement`, il JSON un campo `su`
-per coppia. Da terminale: `analyze file.cif --mc 200`.
+per coppia. Da terminale: `analyze file.cif --mc 200`. Se un parametro manca (NaN) in una parte dei campioni, la
+sua σ viene dagli altri: lo dicono il Dettaglio, un avviso nel terminale e il campo `su_samples` del JSON (campioni
+validi per parametro).
 
 Approssimazioni (le stesse dei programmi cristallografici senza matrice di covarianza): coordinate indipendenti,
 posizioni speciali non vincolate, atomi senza s.u. fermi. Una σ grande sugli slittamenti L e W di un nucleo quasi
