@@ -129,20 +129,52 @@ def _density(a: Analysis) -> list[Alert]:
 
 
 # ---- idrogeni -------------------------------------------------------------------------------------------------
+#: Un C terminale legato solo a N o O più corto di così è un triplo legame (cianuro, isonitrile, carbonile metallico:
+#: 1,13–1,17 Å) e non porta idrogeni; un doppio legame C=O è più lungo (da 1,19 Å).
+TRIPLE_CX = 1.18
+#: Un C con due vicini e un angolo sotto questo valore è sp² (≈ 120°) e gli manca un H; un C sp (≈ 180°) no.
+SP_ANGLE = 150.0
+
+
+def _h_deficient(m, nb: list[list[int]], k: int) -> tuple[bool, bool]:
+    """(il C `k` ha un solo vicino non idrogeno e non è un triplo legame terminale,
+        il C `k` ha meno vicini di quanti ne vuole la sua geometria: il primo caso, o due vicini ad angolo < SP_ANGLE)."""
+    if any(m.el[x] == "H" for x in nb[k]):
+        return False, False
+    if len(nb[k]) == 0:
+        return True, True
+    if len(nb[k]) == 1:
+        x = nb[k][0]
+        triple = m.el[x] in ("N", "O") and float(np.linalg.norm(m.pos[x] - m.pos[k])) <= TRIPLE_CX
+        return not triple, not triple
+    if len(nb[k]) == 2:
+        u, v = m.pos[nb[k][0]] - m.pos[k], m.pos[nb[k][1]] - m.pos[k]
+        ang = math.degrees(math.acos(np.clip(u @ v / np.linalg.norm(u) / np.linalg.norm(v), -1, 1)))
+        return False, ang < SP_ANGLE
+    return False, False
+
+
 @check("hydrogens")
 def _hydrogens(a: Analysis) -> list[Alert]:
+    """Idrogeni mancanti. Senza nessun H nel modello l'avviso B scatta solo se qualche C sembra volerne (terminale,
+    o con due vicini ad angolo da sp²): un cianuro, un carbonile metallico, un fullerene non hanno idrogeni."""
     els = a.structure.cell_el
-    if "C" in els and "H" not in els and not any(at.el == "H" for at in a.cif.omitted):
-        return [Alert("noHydrogens", "B")]
     bare: list[str] = []
+    deficient = False
     for m in a.structure.molecules:
         nb = [[] for _ in m.el]
         for i, j in m.bonds:
             nb[i].append(j)
             nb[j].append(i)
         for k, e in enumerate(m.el):
-            if e == "C" and len(nb[k]) <= 1 and not any(m.el[x] == "H" for x in nb[k]) and m.labels[k] not in bare:
+            if e != "C":
+                continue
+            terminal, wants_h = _h_deficient(m, nb, k)
+            deficient |= wants_h
+            if terminal and m.labels[k] not in bare:
                 bare.append(m.labels[k])
+    if "C" in els and "H" not in els and not any(at.el == "H" for at in a.cif.omitted):
+        return [Alert("noHydrogens", "B")] if deficient else []
     return [Alert("missingH", "C", {"n": len(bare), "atoms": _labels(bare)})] if bare else []
 
 
@@ -318,8 +350,10 @@ def find_symmetry(a: Analysis, tolerance: float) -> tuple[int, str, int] | None:
     except ImportError:
         return None
     s = a.structure
-    kinds = {e: k + 1 for k, e in enumerate(sorted(set(s.cell_el)))}
-    cell = (s.vectors, s.cell_frac, [kinds[e] for e in s.cell_el])
+    keep = ordered_atoms(a)
+    els = [e for e, k in zip(s.cell_el, keep) if k]
+    kinds = {e: k + 1 for k, e in enumerate(sorted(set(els)))}
+    cell = (s.vectors, s.cell_frac[keep], [kinds[e] for e in els])
     with warnings.catch_warnings():  # spglib ≥ 2.5 avvisa del vecchio modo di segnalare gli errori (None)
         warnings.simplefilter("ignore", DeprecationWarning)
         try:
@@ -331,8 +365,27 @@ def find_symmetry(a: Analysis, tolerance: float) -> tuple[int, str, int] | None:
     return len(_spglib_get(ds, "rotations")), str(_spglib_get(ds, "international")), int(_spglib_get(ds, "number"))
 
 
+#: Come PLATON ADDSYM, gli atomi con occupanza parziale (componenti di disordine) restano fuori dalla ricerca: la
+#: componente tenuta dalla regola del disordine può avere più simmetria del modello completo. Se resta fuori più di
+#: questa frazione degli atomi non idrogeno, la ricerca non si fa.
+ADDSYM_MAX_EXCLUDED = 0.5
+
+
+def ordered_atoms(a: Analysis) -> np.ndarray:
+    """Per ogni atomo della cella: vero se viene da un sito con occupanza piena."""
+    s = a.structure
+    if not len(s.cell_origin):
+        return np.ones(len(s.cell_el), dtype=bool)
+    occ = np.array([a.cif.atoms[int(i)].occ for i in s.cell_origin[:, 0]])
+    return occ >= 0.99
+
+
 @check("addsym")
 def _addsym(a: Analysis) -> list[Alert]:
+    heavy = np.array([e != "H" for e in a.structure.cell_el])
+    excluded = int(np.count_nonzero(heavy & ~ordered_atoms(a)))
+    if heavy.any() and excluded > ADDSYM_MAX_EXCLUDED * np.count_nonzero(heavy):
+        return [Alert("addsymDisorder", "G", {"n": excluded})]
     declared = len(a.cif.symops)
     for k, tol in enumerate(ADDSYM_TOLERANCES):
         found = find_symmetry(a, tol)

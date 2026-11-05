@@ -288,19 +288,21 @@ colonne Z′, R1 e Avvisi della finestra di confronto.
 I **controlli rapidi** sono una parte di ciò che controllano checkCIF e PLATON: quella che si può fare con il solo CIF,
 senza il file dei fattori di struttura (.fcf). **Non sostituiscono checkCIF**: servono a trovare in fretta i problemi
 che falsano l'analisi delle coppie. Livelli: **A** problema serio, **B** possibile problema, **C** da controllare,
-**G** informazione. Le soglie sono indicative.
+**G** informazione. Livelli e nomi richiamano checkCIF, ma **non sono gli alert ufficiali dell'IUCr**: soglie e
+controlli sono di PISTAK (scritte nella tabella sotto), quindi un avviso di PISTAK non corrisponde a un alert di checkCIF
+con lo stesso livello.
 
 | controllo | che cosa guarda |
 |---|---|
 | formula | formula del modello per unità formula contro `_chemical_formula_sum` (B per gli atomi pesanti, C per gli idrogeni) |
 | densità | densità calcolata contro quella dichiarata (C oltre 0,02 g/cm³, B oltre 0,1) |
-| idrogeni | nessun idrogeno nel modello (B); carboni terminali senza idrogeni (C) |
+| idrogeni | nessun idrogeno nel modello quando qualche carbonio ne vorrebbe (B: non per cianuri, carbonili metallici, fullereni); carboni terminali senza idrogeni (C), tranne quelli con un triplo legame a N o O (≤ 1,18 Å: cianuro, isonitrile, CO) |
 | sovrapposizioni | atomi distinti a meno di 0,7 Å (A): disordine non risolto o atomi doppi |
 | legami | C–C, C–N, C–O fuori dagli intervalli plausibili (B); C–H, N–H, O–H (C) |
 | contatti | con `contact_check = "fixed"` (predefinito): C···C intermolecolari sotto 3,0 Å e H···H sotto 1,8 Å (C); con `"vdw"`: per ogni coppia di elementi, i contatti più corti della somma dei raggi di van der Waals di oltre `contact_check_margin` (0,5 Å), esclusi i legami a idrogeno plausibili (H legato a N o O verso N, O, F) (C, `vdwContact`) |
 | affinamento | R1 > 0,075 (C) o > 0,10 (B), wR2 > 0,20 (C) o > 0,25 (B), GoF fuori da 0,8–2,0, densità residua > 1 e/Å³ per gli atomi leggeri |
 | disordine | atomi esclusi dalla regola di disordine (G), occupanze parziali nel modello analizzato (C), operazioni di simmetria ricavate dal simbolo (G) |
-| simmetria mancata | come ADDSYM di PLATON: il pacchetto `spglib` cerca il gruppo del modello; più operazioni di quelle dichiarate entro 0,1 Å → A, solo entro 0,3 Å → C (pseudosimmetria) |
+| simmetria mancata | come ADDSYM di PLATON: il pacchetto `spglib` cerca il gruppo del modello; più operazioni di quelle dichiarate entro 0,1 Å → A, solo entro 0,3 Å → C (pseudosimmetria). Come in PLATON, gli atomi con occupanza parziale restano fuori; se sono più della metà degli atomi non idrogeno la ricerca non si fa (G) |
 
 Il controllo dei contatti si sceglie in **Analisi ▸ Soglie…** (*Controllo dei contatti corti* e *Margine*) o in
 `user.toml`: le soglie fisse vedono solo carboni e idrogeni; la somma dei raggi vale per tutti gli elementi ed è la
@@ -317,7 +319,9 @@ Legami, angoli di legame e torsioni (con segno, −180…180°) delle sole molec
 insieme di molecole equivalenti si prende quella con più atomi dell'unità asimmetrica come sono nel CIF. Gli atomi
 generati da un'altra operazione portano un **codice di simmetria** come nei CIF di SHELXL: C2#1 è l'atomo C2 portato
 dall'operazione #1, e la legenda sotto la tabella dice quale (per esempio `#1 = -x+1,-y,-z`). Le misure uguali per la
-simmetria interna della molecola compaiono una volta, con meno atomi trasformati possibile.
+simmetria interna della molecola compaiono una volta, con meno atomi trasformati possibile. Le torsioni con un
+angolo di legame oltre 175° (gruppi lineari, per esempio X–M–X su un centro di inversione) non si riportano: con tre
+atomi allineati il piano non è definito.
 
 I **contatti** sono le coppie di atomi di due molecole diverse (o di due copie della stessa) più vicine della somma dei
 raggi di van der Waals (Bondi; H 1,10 Å), dal più corto in proporzione: oltre alla distanza danno la somma dei raggi e

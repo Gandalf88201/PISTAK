@@ -52,7 +52,7 @@ pistak/
     analysis.py     the whole chain, `reanalyse`, the PairContext and the per-molecule summary (MoleculeContact)
     uncertainty.py  parameter uncertainties with a Monte Carlo over the s.u. of the CIF
     crystal.py      cell content (with all disordered components), density, Z′, refinement values
-    validation.py   quick checks (pre-checkCIF): A/B/C/G alerts with stable codes; ADDSYM with optional spglib
+    validation.py   quick checks (checkCIF-like levels, own thresholds): A/B/C/G alerts with stable codes; ADDSYM with optional spglib
     intramolecular.py  bonds, angles, torsions and van der Waals contacts of the independent molecules, symmetry
                        codes (C2#1), s.u. propagated from the coordinates
     diagnosis.py    why an analysis has no pairs (saturated rings, no rings, distant cores…), for the empty views

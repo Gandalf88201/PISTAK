@@ -11,6 +11,7 @@ verifica chiusa; sotto la tabella, per ogni voce, l'oracolo usato e il risultato
 .venv/bin/python validation/check_cif.py                 # sezione 1: lettura, s.u., elementi, disordine
 .venv/bin/python validation/check_struttura.py           # sezioni 1–3: cella, formule, cella obliqua, anelli, raggi
 .venv/bin/python validation/check_platon.py              # sezioni 4–5: coppie di anelli contro PLATON CALC ALL
+.venv/bin/python validation/check_incertezze.py          # sezione 6: Monte Carlo, geometria contro le tabelle _geom_
 ```
 
 Gli oracoli non usano `pistak.core`: geometria ricalcolata con numpy, topologia nota dei policicli, tensore metrico,
@@ -35,6 +36,12 @@ conti a mano.
 | 16 | core/elements.py | Raggi diversi dalle tabelle di gemmi: covalente C 0,76 (sp³, dichiarato) contro 0,73; Lu 1,87 e Hf 1,75 scambiati rispetto a gemmi; vdW H 1,10 (Rowland e Taylor) mentre il commento cita Bondi (1,20) | P1 (H: contatti vdW) | **Aperto** | Controllare sul testo di Cordero 2008 e Bondi 1964; correggere il commento su H |
 | 17 | core/structure.py | Formule ricostruite diverse da `_chemical_formula_moiety` non spiegate: 7208500 (due acetonitrili in un'unica "molecola"), 2201728 (un CH₃ in più) | P2 | **Aperto** | Da esaminare a mano |
 | 10 | core/cif.py | **Nuovo.** `tokenize` va in ciclo infinito (memoria che cresce senza limite) su un carattere di spaziatura diverso da spazio e tab: NBSP, form feed, tab verticale, U+2003… | P2 | **Corretto** | `if ch.isspace()` al posto di `if ch in " \t"`; test con 5 caratteri in un processo separato |
+| 18 | core/intramolecular.py | **Nuovo.** Torsioni riportate anche attraverso tre atomi allineati (X–M–X su un centro di inversione, angolo 180°): valore indefinito, che dipende dagli arrotondamenti | P2 | **Corretto** | Torsioni con un angolo di legame oltre 175° non riportate (`MAX_TORSION_ANGLE`); test, manuale |
+| 19 | core/intramolecular.py | **Nuovo.** Misure con le stesse etichette considerate uguali per simmetria: L1–M–L2 e L1–M–L2′ (θ e 180° − θ attorno a un centro di inversione), torsioni cis e trans dello stesso frammento, ne restava una | P1 (geometria riportata) | **Corretto** | Uguali solo se legate da un'operazione del cristallo (posizioni relative, simmetria del sito del primo atomo); 2100417: una torsione in più; misure CIF senza corrispondente da 539 a 27 |
+| 20 | core/validation.py | `_hydrogens`: falsi positivi su isonitrile (C terminale) e su composti senza H per natura (cianuri, carbonili metallici: avviso B) | P2 | **Corretto** | C terminale con triplo legame a N/O (≤ 1,18 Å) escluso; `noHydrogens` solo se qualche C sembra volerne; test |
+| 21 | core/validation.py | ADDSYM su strutture disordinate: la componente tenuta da `major` aveva più simmetria del modello, avviso A falso (COD 1530955, 1531236; PLATON non trova nulla) | P2 | **Corretto** | Come PLATON, atomi con occupanza parziale esclusi; oltre metà esclusi, avviso G `addsymDisorder` |
+| 22 | manuale, README | «pre-checkCIF» e livelli A/B/C/G fanno pensare agli alert ufficiali IUCr | P2 | **Corretto** | Detto nel manuale (it, en) e nei README che soglie e controlli sono di PISTAK |
+| 23 | core/validation.py | `TRIPLE_CX` = 1,18 Å e `SP_ANGLE` = 150°: valori motivati (C≡N, C≡O 1,13–1,17 Å; C=O da 1,19 Å; sp 180°, sp² 120°) ma senza una tabella citata | P3 | **Aperto** | Controllare sulle tabelle di Allen et al. 1987 |
 
 ## 1. `beta_b` etichettato γ
 
@@ -314,3 +321,62 @@ della distanza interplanare in `validation/platon/interplanare.json`, ricalcolab
 40 anelli con atomi generati per simmetria (etichette `_a` di PLATON), 4 anelli di una componente di disordine
 scartata (tutti in 2204537, atomi con suffisso A). Rispetto alla prima stesura della tabella qui sopra, due massimi
 erano arrotondati per eccesso (0,7546 e 0,9446 Å, ora 0,75 e 0,94).
+
+## Sezione 6: incertezze, controlli rapidi, geometria intramolecolare (5 novembre 2026)
+
+Script: `validation/check_incertezze.py`. Oracoli: propagazione lineare e geometria della coppia ricalcolate con numpy su
+cristalli scritti a mano come testo CIF; tabelle `_geom_` dei CIF COD lette con gemmi; PLATON ADDSYM (V-200626).
+
+### Monte Carlo
+
+| Verifica | Risultato |
+| --- | --- |
+| σ Monte Carlo (N = 4000) contro propagazione lineare, P1 con due benzeni | scarti −0,7…+1,3 % (errore statistico atteso ±1,1 %) |
+| idem, benzene e sua immagine per inversione (P-1) | −0,2…+2,8 %; angolo tra i piani nullo in ogni campione (σ = 0), come deve |
+| idem, naftalene sul centro di inversione, Z′ = ½ (P-1) | −0,5 %: gli spostamenti delle due metà sono coerenti |
+| σ in funzione di N (50…1000, 5 semi, 3 coppie COD) | dispersione relativa della σ stimata come 1/√(2(N−1)): 10 % a N = 50, 5 % a 200, 3 % a 500, 2 % a 1000 |
+| media − valore nominale (bias), N = 1000 | entro 0,02 σ per distanza interplanare, Cg···Cg, slittamento e angolo tra piani non nullo |
+| σ degli slittamenti L/W, nucleo isotropo (benzene) contro allungato (naftalene) | 0,48 Å contro 0,003–0,005 Å con le stesse s.u.: σ alta su L/W indica davvero un asse non definito, come dice il manuale |
+| `kind_agreement` su una coppia costruita a 20° = `max_dihedral` | 0,503 (atteso 0,5 ± 0,011) |
+
+**Scelta di N per il paper (da decidere).** Con N = 500 la σ ha un'incertezza relativa del 3 %, abbondante per
+riportarla con una o due cifre; costa circa 0,04 s per campione per una struttura con 50 coppie. N = 200 (5 %) basta
+per una cifra significativa.
+
+Il bias è riportato nei campi `mean` del Monte Carlo ma non nell'esportazione: per gli angoli tra piani quasi
+paralleli la media è spostata in alto (l'angolo è un valore assoluto), e lì conviene riportare valore(σ) senza
+correggere.
+
+### Geometria contro le tabelle `_geom_` (182 CIF COD)
+
+| Misure con s.u. nel CIF | n | \|Δ\| mediano | oltre 3 s.u. |
+| --- | --- | --- | --- |
+| legami | 9840 | 0,0004 Å | 1 (riga malformata in 7206203: il codice di simmetria è nella colonna sbagliata) |
+| angoli | 18353 | 0,022° | 0 |
+| torsioni | 7438 | 0,029° | 0; nessun segno opposto (IUPAC/Klyne–Prelog, come SHELXL) |
+
+Il 63–66 % degli scarti sta entro mezza unità dell'ultima cifra scritta nel CIF; il resto è l'arrotondamento delle
+coordinate del CIF rispetto a quelle del raffinamento. La checklist chiedeva 0,001 Å e 0,1°: si rispettano per l'83 %
+dei legami e il 91–94 % di angoli e torsioni, e lo scarto è sempre entro 3 s.u.
+
+**s.u.** PISTAK/CIF: mediana 1,06 (legami), 1,01 (angoli), 1,03 (torsioni), 5–95 % tra 0,84 e 1,56. PISTAK propaga
+solo la diagonale delle s.u. delle coordinate; il programma di raffinamento usa la covarianza completa e le s.u. di
+cella. Lo scarto atteso, quindi il limite da dichiarare, è di questo ordine: in genere entro il ±15 %, fino al 50 % in
+qualche legame.
+
+**Codici di simmetria.** 20954 misure con atomi trasformati rifatte dalle coordinate del CIF con le operazioni scritte
+da PISTAK: tutte uguali. Il formato (`C2#1` con legenda `#1 = -x+1,-y,-z`) è quello delle tabelle di SHELXL. Delle
+misure del CIF con atomi trasformati, 2192 hanno in PISTAK la stessa relazione di simmetria, 813 lo stesso valore su
+un'altra copia equivalente, 27 nessun corrispondente: in tutte c'è un legame a un atomo trasformato che il programma
+di raffinamento considera tale e PISTAK no (Cu–Cl a 3,0 Å, Na–O, Ag–O, un atomo di disordine).
+
+### Controlli rapidi
+
+* **Idrogeni.** Sui 200 CIF COD `missingH` scatta in 6. Su cristalli costruiti a mano davano falsi positivi
+  l'isonitrile (C terminale) e i composti senza idrogeni per natura (cianuro, Cr(CO)₆: avviso B); corretto (voce 20).
+  Nitrili e acetiluri erano già giusti.
+* **ADDSYM.** spglib con tolleranze 0,1 e 0,3 Å. Sei strutture COD riscritte in P1 (P2₁2₁2₁, Pbca, P2₁/c, P-1, P2₁/n,
+  C2/c): PISTAK e PLATON ritrovano lo stesso gruppo in tutti e sei i casi. Sui 200 CIF originali PISTAK dava due
+  avvisi A in strutture disordinate dove PLATON non trova nulla; corretto (voce 21).
+* **Valori mancanti** (`?` per densità e Z): nessun errore, la formula non si controlla (avviso G); test.
+

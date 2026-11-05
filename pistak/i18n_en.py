@@ -617,6 +617,8 @@ TEXT: dict[str, str] = {
         "Probably missed symmetry: within {tolerance} Å the model has the symmetry of {found}, the CIF declares {declared}.",
     "Pseudosimmetria: entro {tolerance} Å il modello ha la simmetria di {found} (dichiarato {declared}).":
         "Pseudosymmetry: within {tolerance} Å the model has the symmetry of {found} (declared {declared}).",
+    "Ricerca della simmetria mancata non eseguita: {n} atomi non idrogeno hanno occupanza parziale (come PLATON ADDSYM, gli atomi disordinati restano fuori dalla ricerca).":
+        "Missed-symmetry search not run: {n} non-hydrogen atoms have partial occupancy (as in PLATON ADDSYM, disordered atoms are left out of the search).",
     "Ricerca della simmetria mancata non eseguita: serve il pacchetto spglib.": "Missed-symmetry search not run: it needs the spglib package.",
     "Coppie cercate entro ±{max} celle, ma con molecole così estese ne servirebbero {needed}: qualche contatto tra "
     "molecole lontane in celle può mancare.":

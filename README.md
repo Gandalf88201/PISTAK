@@ -53,7 +53,7 @@ pistak/
     analysis.py     la catena completa, `reanalyse`, il PairContext e il riepilogo per molecola (MoleculeContact)
     uncertainty.py  incertezze dei parametri con un Monte Carlo sulle s.u. del CIF
     crystal.py      contenuto della cella (con tutte le componenti disordinate), densità, Z′, valori dell'affinamento
-    validation.py   controlli rapidi (pre-checkCIF): avvisi A/B/C/G con codici stabili; ADDSYM con spglib facoltativo
+    validation.py   controlli rapidi (livelli come checkCIF, soglie proprie): avvisi A/B/C/G con codici stabili; ADDSYM con spglib facoltativo
     intramolecular.py  legami, angoli, torsioni e contatti di van der Waals delle molecole indipendenti, codici di
                        simmetria (C2#1), s.u. propagate dalle coordinate
     diagnosis.py    perché un'analisi non ha coppie (anelli saturi, nessun anello, nuclei lontani…), per le viste vuote

@@ -53,6 +53,8 @@ ALERT_TEXT = {
     "missedSymmetry": "Simmetria probabilmente mancata: entro {tolerance} Å il modello ha la simmetria di {found}, "
                       "il CIF dichiara {declared}.",
     "pseudoSymmetry": "Pseudosimmetria: entro {tolerance} Å il modello ha la simmetria di {found} (dichiarato {declared}).",
+    "addsymDisorder": "Ricerca della simmetria mancata non eseguita: {n} atomi non idrogeno hanno occupanza parziale "
+                      "(come PLATON ADDSYM, gli atomi disordinati restano fuori dalla ricerca).",
     "addsymUnavailable": "Ricerca della simmetria mancata non eseguita: serve il pacchetto spglib.",
     "shellsTruncated": "Coppie cercate entro ±{max} celle, ma con molecole così estese ne servirebbero {needed}: qualche "
                        "contatto tra molecole lontane in celle può mancare.",

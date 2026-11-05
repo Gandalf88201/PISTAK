@@ -32,6 +32,10 @@ from pistak.core.structure import Structure
 
 KINDS = ("bond", "angle", "torsion", "contact")
 _STEP = 1e-4  # Å, per le differenze finite
+#: Una torsione i-j-k-l non è definita se i-j-k o j-k-l sono allineati (piano indefinito); vicino all'allineamento la
+#: sua s.u. cresce come 1/sin dell'angolo (×11 a 175°) e il valore dipende dagli arrotondamenti. Oltre questo angolo
+#: di legame la torsione non si riporta (gruppi lineari X–M–X su un centro di inversione, nitrili, alchini).
+MAX_TORSION_ANGLE = 175.0
 
 
 @dataclass(frozen=True)
@@ -213,6 +217,17 @@ def molecule_geometry(s: Structure, cif: Cif, molecules: list[int] | None = None
     indipendenti per simmetria)."""
     prop = _Propagator(s, cif)
     sym = _Codes(s, cif) if len(s.cell_origin) else None
+    stabilizers: dict[int, list[np.ndarray]] = {}
+
+    def site_rotations(ia: int) -> list[np.ndarray]:
+        """Le parti rotazionali delle operazioni che lasciano l'atomo `ia` del CIF al suo posto (a meno di una
+        traslazione di reticolo): la simmetria del sito. Solo l'identità per un atomo in posizione generale."""
+        if ia not in stabilizers:
+            x = cif.atoms[ia].frac
+            stabilizers[ia] = [op.r for op in s.symops
+                               if np.allclose((op.apply(x) - x + 0.5) % 1.0 - 0.5, 0.0, atol=1e-3)] or [np.eye(3)]
+        return stabilizers[ia]
+
     mols = unique_molecules(s) if molecules is None else molecules
     out: list[GeometryItem] = []
     for mi in mols:
@@ -221,8 +236,22 @@ def molecule_geometry(s: Structure, cif: Cif, molecules: list[int] | None = None
             ops = sym.ops(m.cell_index, m.pos)
             ref = sym.reference(ops)
             codes = [sym.text(op, ref) for op in ops]
+            frac = m.pos @ sym.inv
         else:
-            codes = [""] * len(m)
+            codes, ops, frac = [""] * len(m), [], np.zeros((len(m), 3))
+
+        def frame(idx: tuple[int, ...], ops=ops, frac=frac) -> np.ndarray:
+            """Le posizioni degli atomi della misura, rispetto al primo, portate dall'operazione inversa di quella del
+            primo atomo (che torna nel suo orientamento del CIF). Due misure con queste posizioni uguali (e le stesse etichette) differiscono per
+            un'operazione del cristallo, quindi hanno lo stesso valore; con le sole etichette, L1–M–L2 e L1–M–L2' (M su
+            un centro di inversione, θ e 180° − θ) sembrerebbero la stessa misura."""
+            if sym is None:
+                return np.zeros((0, 3))
+            k, n = ops[idx[0]]
+            so = s.symops[k]
+            rel = (frac[list(idx)] - so.t - n) @ np.linalg.inv(so.r).T
+            return rel[1:] - rel[0]  # rispetto al primo atomo: toglie anche la traslazione di reticolo
+
         nb: list[list[int]] = [[] for _ in m.el]
         for i, j in m.bonds:
             nb[i].append(int(j))
@@ -233,19 +262,39 @@ def molecule_geometry(s: Structure, cif: Cif, molecules: list[int] | None = None
         groups["bond"] = [(int(i), int(j)) for i, j in m.bonds]
         groups["angle"] = [(i, j, k) for j in range(len(m.el)) for x, i in enumerate(nb[j]) for k in nb[j][x + 1:]]
         groups["torsion"] = [(i, j, k, t) for j, k in groups["bond"] for i in nb[j] if i != k
-                             for t in nb[k] if t not in (j, i)]
-        # misure uguali per simmetria interna (stesse etichette): una sola, quella con meno atomi trasformati
-        best: dict[tuple[str, ...], tuple[int, ...]] = {}
+                             for t in nb[k] if t not in (j, i)
+                             if max(angle(m.pos[[i, j, k]]), angle(m.pos[[j, k, t]])) <= MAX_TORSION_ANGLE]
+        # misure uguali per simmetria interna (stesse etichette, atomi legati dalla stessa operazione del cristallo): una
+        # sola, quella con meno atomi trasformati
+        best: dict[tuple, list[list]] = {}  # (tipo, etichette) → [[posizioni relative, indici], …]
         for kind in (k for k in kinds if k in MEASURES):
             for idx in groups[kind]:
                 if not include_h and any(m.el[i] == "H" for i in idx):
                     continue
-                base = tuple(m.labels[i] for i in idx)
-                key = (kind, *min(base, base[::-1]))
+                # verso canonico per il confronto; la torsione si riporta nel verso in cui è stata costruita
+                out_idx = idx
+                labs = [m.labels[i] for i in idx]
+                if labs[::-1] < labs:
+                    idx = idx[::-1]
+                    labs = labs[::-1]
+                if kind != "torsion":
+                    out_idx = idx
+                # le posizioni relative, e quelle ruotate dalla simmetria del sito del primo atomo (un atomo su un asse
+                # binario vede le due copie di un vicino come la stessa misura)
+                rots = site_rotations(int(s.cell_origin[m.cell_index[idx[0]], 0])) if sym is not None else [np.eye(3)]
+                fs = [frame(idx) @ r.T for r in rots]
+                if labs == labs[::-1]:
+                    fs += [frame(idx[::-1]) @ r.T for r in rots]
                 n_coded = sum(bool(codes[i]) for i in idx)
-                if key not in best or n_coded < sum(bool(codes[i]) for i in best[key]):
-                    best[key] = idx
-        for (kind, *_), idx in best.items():
+                entries = best.setdefault((kind, tuple(labs)), [])
+                for e in entries:  # confronto con tolleranza: le coordinate del CIF hanno 4–5 decimali
+                    if any(np.allclose(e[0], f, atol=1e-3) for f in fs):
+                        if n_coded < sum(bool(codes[i]) for i in e[1]):
+                            e[1] = out_idx
+                        break
+                else:
+                    entries.append([fs[0], out_idx])
+        for (kind, _), idx in ((key, e[1]) for key, es in best.items() for e in es):
             if [m.labels[i] for i in idx[::-1]] < [m.labels[i] for i in idx] and kind != "torsion":
                 idx = idx[::-1]  # ordine di lettura stabile (la torsione no: ha un verso)
             fn = MEASURES[kind]

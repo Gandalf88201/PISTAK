@@ -171,3 +171,75 @@ def test_json_completo(tmp_path):
     assert hb["delta"] == pytest.approx(hb["value"] - hb["vdw_sum"]) and len(hb["symops"]) == 2 and hb["molecule_b"]
     assert sum(m["independent"] for m in data["molecule_list"]) == len(unique_molecules(a.structure))
     assert data["ring_pairs"] and all(r["pair"] >= 1 for r in data["ring_pairs"]) and len(data["symops"]) == 4
+
+
+def test_niente_torsioni_su_tre_atomi_allineati():
+    # Ni su un centro di inversione con due S trans (S–Ni–S = 180°): le torsioni S–Ni–S–C non sono definite
+    from pistak.core.analysis import analyse_text
+    from pistak.core.intramolecular import MAX_TORSION_ANGLE
+
+    cif = """data_lineare
+_cell_length_a 12
+_cell_length_b 12
+_cell_length_c 12
+_cell_angle_alpha 90
+_cell_angle_beta 90
+_cell_angle_gamma 90
+loop_
+_symmetry_equiv_pos_as_xyz
+'x,y,z'
+'-x,-y,-z'
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+Ni1 Ni 0 0 0
+S1 S 0.18 0 0
+C1 C 0.23 0.14 0
+"""
+    a = analyse_text(cif, "lineare")
+    g = molecule_geometry(a.structure, a.cif)
+    angles = [x for x in g if x.kind == "angle" and x.atoms[1] == "Ni1"]
+    assert angles and max(x.value for x in angles) == pytest.approx(180)
+    for x in g:
+        if x.kind == "torsion":
+            m = a.structure.molecules[x.molecule]
+            p = m.pos[[pl[2] for pl in x.places]]
+            assert max(angle(p[:3]), angle(p[1:])) <= MAX_TORSION_ANGLE
+    assert not any(x.kind == "torsion" and "Ni1" in x.atoms[1:3] and x.atoms.count("S1") == 2 for x in g)
+
+
+def test_angoli_cis_e_trans_attorno_a_un_centro_di_inversione():
+    # Ni sul centro di inversione con S1 e N1 a 80° e le loro immagini: S1–Ni1–N1 (80°) e S1–Ni1–N1#1 (100°) hanno le
+    # stesse etichette ma valori diversi, e vanno riportati entrambi; S1–Ni1–S1#1 (180°) una volta sola
+    from pistak.core.analysis import analyse_text
+
+    x = 0.18
+    cif = f"""data_cis_trans
+_cell_length_a 12
+_cell_length_b 12
+_cell_length_c 12
+_cell_angle_alpha 90
+_cell_angle_beta 90
+_cell_angle_gamma 90
+loop_
+_symmetry_equiv_pos_as_xyz
+'x,y,z'
+'-x,-y,-z'
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+Ni1 Ni 0 0 0
+S1 S {x} 0 0
+N1 N {0.17 * math.cos(math.radians(80)):.6f} {0.17 * math.sin(math.radians(80)):.6f} 0
+"""
+    a = analyse_text(cif, "cis_trans")
+    g = molecule_geometry(a.structure, a.cif, kinds=("angle",))
+    sn = sorted(round(v.value, 3) for v in g if sorted(v.atoms) == ["N1", "Ni1", "S1"])
+    assert sn == pytest.approx([80.0, 100.0], abs=1e-3)
+    assert len([v for v in g if v.atoms == ("S1", "Ni1", "S1")]) == 1

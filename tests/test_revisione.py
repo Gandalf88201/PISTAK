@@ -236,3 +236,66 @@ def test_contenuto_della_cella_con_atomi_ripetuti():
         "O1 O 0 0 0 0.5",                                      # sul centro di inversione, mezzo occupato: 0,5 O
         ""])
     assert cell_contents(parse_cif(text, disorder="all")) == pytest.approx({"C": 2.0, "N": 2.0, "O": 0.5})
+
+
+def _cif_p1(atoms: list[tuple[str, str, tuple[float, float, float]]], a: float = 15.0) -> str:
+    rows = "\n".join(f"{lab} {el} {x / a:.6f} {y / a:.6f} {z / a:.6f}" for lab, el, (x, y, z) in atoms)
+    return (f"data_x\n_cell_length_a {a}\n_cell_length_b {a}\n_cell_length_c {a}\n_cell_angle_alpha 90\n"
+            f"_cell_angle_beta 90\n_cell_angle_gamma 90\nloop_\n_symmetry_equiv_pos_as_xyz\n'x,y,z'\nloop_\n"
+            f"_atom_site_label\n_atom_site_type_symbol\n_atom_site_fract_x\n_atom_site_fract_y\n_atom_site_fract_z\n{rows}\n")
+
+
+@pytest.mark.parametrize("name, atoms, expected", [
+    # C terminale con triplo legame a N o O: nessun idrogeno mancante
+    ("isonitrile", [("C1", "C", (7, 7, 7)), ("N1", "N", (8.42, 7, 7)), ("C2", "C", (9.58, 7, 7)),
+                    ("H1", "H", (6.64, 8.03, 7)), ("H2", "H", (6.64, 6.49, 7.89)), ("H3", "H", (6.64, 6.49, 6.11))], set()),
+    ("cianuro", [("C1", "C", (7, 7, 7)), ("N1", "N", (8.15, 7, 7))], set()),
+    ("carbonile", [("Cr1", "Cr", (7, 7, 7)), ("C1", "C", (8.91, 7, 7)), ("O1", "O", (10.05, 7, 7))], set()),
+    # una catena di C senza idrogeni: l'avviso resta
+    ("senza H", [("C1", "C", (7, 7, 7)), ("C2", "C", (8.5, 7, 7)), ("C3", "C", (9.25, 8.3, 7))], {"noHydrogens"}),
+])
+def test_idrogeni_mancanti_senza_falsi_positivi(name, atoms, expected):
+    from pistak.core.analysis import analyse_text
+    from pistak.core.validation import validate
+
+    a = analyse_text(_cif_p1(atoms), name)
+    assert {x.code for x in validate(a)} & {"noHydrogens", "missingH"} == expected
+
+
+def _benzene_p1(occ: float) -> str:
+    """Un benzene e la sua immagine per inversione, scritti in P1: la simmetria P-1 è mancata."""
+    import math
+
+    rows = []
+    for k in range(6):
+        t = 2 * math.pi * k / 6
+        x, y, z = 3 + 1.39 * math.cos(t), 3 + 1.39 * math.sin(t), 3.0
+        rows.append((f"C{k + 1}", (x / 12, y / 12, z / 12)))
+        rows.append((f"C{k + 7}", (1 - x / 12, 1 - y / 12, 1 - z / 12)))
+    atoms = "\n".join(f"{lab} C {f[0]:.6f} {f[1]:.6f} {f[2]:.6f} {occ}" for lab, f in rows)
+    return ("data_x\n_cell_length_a 12\n_cell_length_b 12\n_cell_length_c 12\n_cell_angle_alpha 90\n_cell_angle_beta 90\n"
+            "_cell_angle_gamma 90\nloop_\n_symmetry_equiv_pos_as_xyz\n'x,y,z'\nloop_\n_atom_site_label\n"
+            "_atom_site_type_symbol\n_atom_site_fract_x\n_atom_site_fract_y\n_atom_site_fract_z\n_atom_site_occupancy\n"
+            f"{atoms}\n")
+
+
+def test_addsym_lascia_fuori_gli_atomi_disordinati():
+    pytest.importorskip("spglib")
+    from pistak.core.analysis import analyse_text
+    from pistak.core.validation import validate
+
+    full = {x.code: x for x in validate(analyse_text(_benzene_p1(1.0), "ordinato"))}
+    assert full["missedSymmetry"].level == "A"  # spglib trova Immm: il benzene scritto così ha anche specchi
+    half = {x.code for x in validate(analyse_text(_benzene_p1(0.5), "disordinato"))}
+    assert "addsymDisorder" in half and "missedSymmetry" not in half
+
+
+def test_valori_mancanti_nel_cif():
+    # densità e Z sconosciuti («?»): nessun errore, la formula non si controlla
+    from pistak.core.analysis import analyse_text
+    from pistak.core.validation import validate
+
+    text = _benzene_p1(1.0).replace("_cell_angle_gamma 90\n", "_cell_angle_gamma 90\n_exptl_crystal_density_diffrn ?\n"
+                                    "_cell_formula_units_Z ?\n_chemical_formula_sum 'C6 H6'\n")
+    codes = {x.code for x in validate(analyse_text(text, "mancanti"))}
+    assert "formulaUnchecked" in codes and "density" not in codes and "checkFailed" not in codes
