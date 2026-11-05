@@ -4,7 +4,7 @@ viste vuote. Come per gli avvisi dei controlli, qui ci sono solo un codice stabi
 
 Codici, nell'ordine in cui si controllano:
 
-    extendedOnly       solo reti di legami estese (polimeri, solidi): nessuna molecola separata
+    extendedOnly       solo reti di legami estese (polimeri, solidi) senza anelli: nessun frammento π
     noContacts         ci sono nuclei π, ma nessuna coppia entro il contatto massimo
     noRings            nessun anello e molecola non planare nel complesso
     nonPlanarRings     anelli trovati, nessuno planare, e sono saturi (carboni con quattro legami)
@@ -50,8 +50,6 @@ def ring_planarity(analysis: Analysis) -> list[RingInfo]:
     out = []
     for mi in unique_molecules(s):
         m = s.molecules[mi]
-        if m.extended:
-            continue
         degree = np.bincount(m.bonds.ravel(), minlength=len(m)) if len(m.bonds) else np.zeros(len(m), dtype=int)
         has_h = "H" in m.el
         heavy = m.heavy
@@ -66,13 +64,13 @@ def why_no_pairs(analysis: Analysis) -> NoPairsReason | None:
     if analysis.pairs:
         return None
     s, lim = analysis.structure, analysis.limits
-    molecules = [m for m in s.molecules if not m.extended]
-    if not molecules:
-        return NoPairsReason("extendedOnly")
+    molecules = list(s.molecules)
     with_core = sum(c is not None for c in analysis.cores)
     if with_core:
         return NoPairsReason("noContacts", {"n": with_core, "limit": lim.contact_cutoff})
     rings = ring_planarity(analysis)
+    if not rings and all(m.extended for m in molecules):
+        return NoPairsReason("extendedOnly")
     if not rings:
         rms = min((float(fit_plane(m.pos[np.flatnonzero(m.heavy)]).rms) for m in molecules if m.heavy.sum() >= 4),
                   default=float("nan"))

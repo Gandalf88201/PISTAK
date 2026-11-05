@@ -46,6 +46,11 @@ class CifAtom:
     occ: float = 1.0
     #: Incertezze standard (s.u.) delle coordinate frazionarie, dalle cifre tra parentesi (0 se mancano).
     su: np.ndarray = field(default_factory=lambda: np.zeros(3))
+    #: Gruppo di disordine come nel CIF ('.' se l'atomo non è disordinato). Un gruppo negativo (convenzione SHELXL
+    #: PART −n) è disordinato su un elemento di simmetria: le sue immagini per simmetria sono l'altra orientazione.
+    group: str = "."
+    #: Assemblaggio di disordine ('.' se manca): con il gruppo identifica la parte disordinata.
+    assembly: str = "."
 
 
 @dataclass
@@ -320,8 +325,72 @@ def _symops(b: _Block, space_group: str) -> tuple[list[SymOp], str]:
     raise CifError("noSymops", space_group)
 
 
-def _disorder_keep(groups: list[str], assemblies: list[str], occs: list[float], policy: str) -> list[bool]:
-    """Quali atomi tenere secondo la regola di disordine.
+#: Distanza sotto la quale due atomi di gruppi di disordine diversi non possono esistere insieme (Å): nessun legame è
+#: così corto tra atomi pesanti, e due alternative dello stesso sito distano tipicamente 0,3–1 Å.
+ALTERNATIVE_DISTANCE = 1.0
+
+
+def _overlap(a: list[np.ndarray], b: list[np.ndarray], vectors: np.ndarray) -> bool:
+    """Vero se un atomo di `a` dista meno di `ALTERNATIVE_DISTANCE` da uno di `b` (immagine minima)."""
+    d = np.array(a)[:, None, :] - np.array(b)[None, :, :]
+    d -= np.round(d)
+    return bool((np.linalg.norm(d @ vectors, axis=2) < ALTERNATIVE_DISTANCE).any())
+
+
+def _merged_assemblies(groups: list[str], assemblies: list[str], fracs: list[np.ndarray], cell: Cell) -> list[str]:
+    """Gli assemblaggi di disordine, uniti quando i gruppi di due assemblaggi diversi si sovrappongono.
+
+    Gruppi che si sovrappongono non possono esistere insieme: sono alternative dello stesso sito anche se il CIF li
+    mette in assemblaggi diversi (COD 7208500: acetonitrile con le due orientazioni in A e in B, a 0,31 Å). Uniti gli
+    assemblaggi, la regola `major` ne tiene una sola."""
+    from pistak.core.structure import cell_vectors  # import qui: structure dipende da cif
+
+    vectors = cell_vectors(cell)
+    pos: dict[tuple[str, str], list[np.ndarray]] = {}
+    for g, a, f in zip(groups, assemblies, fracs):
+        if g not in (".", "?") and np.all(np.isfinite(f)):
+            pos.setdefault((a, g), []).append(f)
+    parent = {a: a for a, _g in pos}
+
+    def root(a: str) -> str:
+        while parent[a] != a:
+            a = parent[a]
+        return a
+
+    keys = sorted(pos)
+    for i, (a1, g1) in enumerate(keys):
+        for a2, g2 in keys[i + 1:]:
+            if a1 != a2 and root(a1) != root(a2) and _overlap(pos[a1, g1], pos[a2, g2], vectors):
+                r1, r2 = sorted((root(a1), root(a2)))
+                parent[r2] = r1
+    return [root(a) if a in parent else a for a in assemblies]
+
+
+def _signed_alternatives(groups: list[str], assemblies: list[str], fracs: list[np.ndarray], cell: Cell) -> set[tuple[str, str]]:
+    """(assemblaggio, gruppo) dei gruppi negativi −n che nello stesso assemblaggio sono l'alternativa del gruppo n.
+
+    Di norma −n è lo stesso gruppo n su un elemento di simmetria (SHELXL), e si tratta come n. Alcuni CIF però usano
+    n e −n come due alternative distinte (COD 4113834: 1 con occupanza 0,61, −1 con 0,39, atomi a 0,4 Å): lo si
+    riconosce perché i loro atomi si sovrappongono, e allora −n è un gruppo a sé."""
+    from pistak.core.structure import cell_vectors  # import qui: structure dipende da cif
+
+    vectors = cell_vectors(cell)
+    out = set()
+    pos: dict[tuple[str, str], list[np.ndarray]] = {}
+    for g, a, f in zip(groups, assemblies, fracs):
+        if g not in (".", "?") and np.all(np.isfinite(f)):
+            pos.setdefault((a, g), []).append(f)
+    for (a, g), fs in pos.items():
+        other = pos.get((a, g[1:])) if g.startswith("-") else None
+        if other and _overlap(fs, other, vectors):
+            out.add((a, g))
+    return out
+
+
+def _disorder_keep(groups: list[str], assemblies: list[str], occs: list[float], policy: str,
+                   split: set[tuple[str, str]] = frozenset()) -> list[bool]:
+    """Quali atomi tenere secondo la regola di disordine. `split`: gruppi negativi da non unire al gruppo positivo
+    (vedi `_signed_alternatives`).
 
     first   gruppi '.', '?', '1', '-1' (il comportamento del sito)
     major   per ogni assemblaggio, il gruppo con l'occupanza media più alta (a parità, il numero più basso)
@@ -333,23 +402,24 @@ def _disorder_keep(groups: list[str], assemblies: list[str], occs: list[float], 
         return [True] * len(groups)
     if policy == "first":
         return [g in (".", "?", "1", "-1") for g in groups]
+    keys = [g if (a, g) in split else g.lstrip("-") for g, a in zip(groups, assemblies)]
     if policy.isdigit():
-        return [no or g.lstrip("-") == policy for no, g in zip(none, groups)]
+        return [no or k == policy for no, k in zip(none, keys)]
     # major
     stats: dict[tuple[str, str], list[float]] = {}
-    for no, g, a, o in zip(none, groups, assemblies, occs):
+    for no, k, a, o in zip(none, keys, assemblies, occs):
         if not no:
-            stats.setdefault((a, g.lstrip("-")), []).append(o)
+            stats.setdefault((a, k), []).append(o)
 
     def order(item):
         (a, g), vals = item
-        num = int(g) if g.isdigit() else 10**6
-        return (-sum(vals) / len(vals), num, g)
+        num = int(g) if g.lstrip("-").isdigit() else 10**6
+        return (-sum(vals) / len(vals), abs(num), g)
 
     best: dict[str, str] = {}
     for (a, g), _vals in sorted(stats.items(), key=order):
         best.setdefault(a, g)
-    return [no or best.get(a) == g.lstrip("-") for no, g, a in zip(none, groups, assemblies)]
+    return [no or best.get(a) == k for no, k, a in zip(none, keys, assemblies)]
 
 
 def _cif_from_block(b: _Block, known: Callable[[str], bool], disorder: str) -> Cif:
@@ -384,11 +454,13 @@ def _cif_from_block(b: _Block, known: Callable[[str], bool], disorder: str) -> C
     occs = [o if np.isfinite(o) else 1.0 for o in occs]
     groups = [r[i_dis] if i_dis >= 0 else "." for r in rows]
     assemblies = [r[i_asm] if i_asm >= 0 else "." for r in rows]
-    keep = _disorder_keep(groups, assemblies, occs, disorder)
+    fracs = [np.array([cif_number(r[i_x]), cif_number(r[i_y]), cif_number(r[i_z])]) for r in rows]
+    merged = _merged_assemblies(groups, assemblies, fracs, cell)
+    keep = _disorder_keep(groups, merged, occs, disorder, _signed_alternatives(groups, merged, fracs, cell))
     atoms: list[CifAtom] = []
     omitted: list[CifAtom] = []
     skipped = 0
-    for row, ok, occ in zip(rows, keep, occs):
+    for row, ok, occ, group, assembly in zip(rows, keep, occs, groups, assemblies):
         label = row[i_label] if i_label >= 0 else f"X{len(atoms) + 1}"
         if not ok:
             skipped += 1
@@ -399,7 +471,7 @@ def _cif_from_block(b: _Block, known: Callable[[str], bool], disorder: str) -> C
         el = element_of(row[i_type] if i_type >= 0 else None, label, known)
         if not el:
             continue
-        (atoms if ok else omitted).append(CifAtom(label, el, frac, occ, su))
+        (atoms if ok else omitted).append(CifAtom(label, el, frac, occ, su, group, assembly))
     if not atoms:
         raise CifError("noAtoms")
     return Cif(b.name, space_group, cell, symops, atoms, skipped, dict(b.items), source, disorder, cell_su, omitted)

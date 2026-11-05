@@ -118,6 +118,9 @@ class Pair:
     #: Area comune dei contorni proiettati / area del contorno minore (0–1): la sovrapposizione del criterio
     #: `overlap_measure = "area"`. Si misura sempre, così cambiare criterio non richiede di rimisurare.
     overlap_area: float = math.nan
+    #: Vero se una delle due molecole è una rete estesa (polimero di coordinazione, catena covalente): i frammenti π
+    #: sono anelli della rete, il contatto è quello tra i due frammenti e la coppia non si esporta come dimero.
+    polymer: bool = False
 
     def get(self, key: str, default: float = float("nan")) -> float:
         """Valore di un parametro del registro per questa coppia."""
@@ -226,9 +229,10 @@ def remeasure(s: Structure, frags: Fragments, pair: Pair, limits: Limits) -> Pai
     delle incertezze, dove gli atomi si spostano di poco ma la topologia resta quella dell'analisi."""
     ca, cb0 = frags[pair.a][pair.fa], frags[pair.b][pair.fb]
     v = s.shift_vector(pair.shift)
-    contact = _fragment_distance(s, ca, cb0, pair.a, pair.b, v) if pair.intramolecular else _heavy_contact(s, pair.a, pair.b, v)
+    by_fragment = pair.intramolecular or pair.polymer
+    contact = _fragment_distance(s, ca, cb0, pair.a, pair.b, v) if by_fragment else _heavy_contact(s, pair.a, pair.b, v)
     q = _measure(s, ca, cb0, pair.a, pair.b, pair.shift, limits, contact, pair.fa, pair.fb, pair.fragmented)
-    q.index, q.count, q.members = pair.index, pair.count, pair.members
+    q.index, q.count, q.members, q.polymer = pair.index, pair.count, pair.members, pair.polymer
     return q
 
 
@@ -243,7 +247,7 @@ def shells_needed(s: Structure, cores: Sequence, limits: Limits) -> tuple[int, i
     if limits.pair_mode == "site":
         return (R, R, R)
     frags = as_fragments(cores)
-    ext = [m.extent for m, f in zip(s.molecules, frags) if f and not m.extended]
+    ext = [m.extent for m, f in zip(s.molecules, frags) if f]  # per una rete estesa: l'unità ripetuta
     if not ext:
         return (R, R, R)
     D = 2 * max(ext) + limits.contact_cutoff
@@ -279,13 +283,18 @@ def iter_neighbour_pairs(s: Structure, cores: Sequence, limits: Limits) -> Itera
     """Tutte le coppie di frammenti vicini, una per traslazione, senza raccogliere quelle equivalenti. Le molecole
     devono toccarsi (atomi pesanti entro `contact_cutoff`); oltre alla coppia dei frammenti principali (0–0) si
     misurano quelle di frammenti entro `contact_cutoff + FRAGMENT_MARGIN`. In modalità site ogni contatto compare nei
-    due versi, altrimenti in uno."""
+    due versi, altrimenti in uno.
+
+    Reti estese (polimeri): la molecola è l'unità ripetuta, srotolata, con gli anelli interi; ogni anello del cristallo
+    è un suo frammento più una traslazione. Due unità della stessa catena sono legate, quindi il contatto tra molecole
+    non dice nulla: si misurano le coppie di frammenti entro `contact_cutoff + FRAGMENT_MARGIN` (come i frammenti
+    secondari delle molecole), e il contatto è quello tra i due frammenti."""
     frags = as_fragments(cores)
     na, nb, nc = neighbour_shells(s, frags, limits)
     shifts = np.array(list(itertools.product(range(-na, na + 1), range(-nb, nb + 1), range(-nc, nc + 1))), dtype=int)
     shift_vec = shifts @ s.vectors
     extent = [m.extent for m in s.molecules]
-    usable = [i for i, m in enumerate(s.molecules) if frags[i] and not m.extended]
+    usable = [i for i, m in enumerate(s.molecules) if frags[i]]
     one_way = limits.pair_mode != "site"
     reach = limits.contact_cutoff + FRAGMENT_MARGIN
     for a in usable:
@@ -303,6 +312,14 @@ def iter_neighbour_pairs(s: Structure, cores: Sequence, limits: Limits) -> Itera
                 if one_way and _canon(a, b, sh) != (a, b, sh):
                     continue
                 v = s.shift_vector(sh)
+                if s.molecules[a].extended or s.molecules[b].extended:
+                    for fa, fb in itertools.product(range(len(frags[a])), range(len(frags[b]))):
+                        dist = _fragment_distance(s, frags[a][fa], frags[b][fb], a, b, v)
+                        if dist <= reach:  # come i frammenti secondari delle molecole: contact_cutoff + FRAGMENT_MARGIN
+                            p = _measure(s, frags[a][fa], frags[b][fb], a, b, sh, limits, dist, fa, fb, fragmented)
+                            p.polymer = True
+                            yield p
+                    continue
                 contact = _heavy_contact(s, a, b, v)
                 if contact > limits.contact_cutoff:
                     continue
@@ -318,7 +335,9 @@ def iter_neighbour_pairs(s: Structure, cores: Sequence, limits: Limits) -> Itera
                 continue
             dist = _fragment_distance(s, frags[a][fa], frags[a][fb], a, a, zero)
             if dist <= reach:
-                yield _measure(s, frags[a][fa], frags[a][fb], a, a, (0, 0, 0), limits, dist, fa, fb, True)
+                p = _measure(s, frags[a][fa], frags[a][fb], a, a, (0, 0, 0), limits, dist, fa, fb, True)
+                p.polymer = s.molecules[a].extended
+                yield p
 
 
 StackEdge = tuple[int, int, Shift, Pair]
@@ -338,7 +357,8 @@ def contact_keys(s: Structure, frags: Fragments, contacts: list[Pair], limits: L
     if limits.pair_mode == "site":
         return None
     fmaps = fragment_maps(s, frags) if any(len(f) > 1 for f in frags) else None
-    return [symmetry_key(s, p.a, p.b, p.shift, p.fa, p.fb, fmaps) for p in contacts]
+    fimgs = fragment_images(s, frags) if any(p.polymer for p in contacts) else None
+    return [symmetry_key(s, p.a, p.b, p.shift, p.fa, p.fb, fmaps, fimgs) for p in contacts]
 
 
 def group_pairs(contacts: list[Pair], keys: list[Member] | None, limits: Limits) -> tuple[list[Pair], list[StackEdge]]:
@@ -389,12 +409,71 @@ def fragment_maps(s: Structure, frags: Fragments) -> list[list[list[int | None] 
     return out
 
 
+FragmentImage = tuple[int, int, Shift]  # (molecola, frammento, traslazione in celle)
+
+
+def fragment_images(s: Structure, frags: Fragments, tol: float = 0.3) -> list[list[list[FragmentImage | None]]]:
+    """Per ogni operazione, molecola e frammento: in quale frammento di quale molecola va, e con quale traslazione.
+
+    Serve alle reti estese: una catena infinita non ha un'immagine come molecola intera (l'unità ripetuta è un taglio
+    arbitrario della catena), ma ogni frammento π è locale e va in un frammento più una traslazione."""
+    owner: dict[int, tuple[int, int]] = {}  # atomo della cella → (molecola, posizione nella molecola)
+    for mi, m in enumerate(s.molecules):
+        for p, ci in enumerate(m.cell_index):
+            owner[int(ci)] = (mi, p)
+    in_frag: list[dict[int, int]] = [{int(i): f for f, c in enumerate(fs) for i in c.atoms} for fs in frags]
+    by_el = {e: np.array([i for i, x in enumerate(s.cell_el) if x == e]) for e in set(s.cell_el)}
+    out = []
+    for op in s.symops:
+        row = []
+        for m, fs in zip(s.molecules, frags):
+            imgs: list[FragmentImage | None] = []
+            for c in fs:
+                idx = np.asarray(c.atoms)
+                src = s.cell_frac[m.cell_index[idx]] + m.cell_shift[idx]
+                img = src @ op.r.T + op.t
+                cand = by_el[m.el[int(idx[0])]]
+                d = img[0] - s.cell_frac[cand]
+                d -= np.round(d)
+                k = int(np.argmin(np.linalg.norm(d @ s.vectors, axis=1)))
+                j = int(cand[k])
+                hit = owner.get(j)
+                f2 = in_frag[hit[0]].get(hit[1]) if hit else None
+                if hit is None or f2 is None:
+                    imgs.append(None)
+                    continue
+                m2 = s.molecules[hit[0]]
+                t = np.rint(img[0] - s.cell_frac[j] - m2.cell_shift[hit[1]]).astype(int)
+                t2 = np.asarray(frags[hit[0]][f2].atoms)
+                tgt = s.cell_frac[m2.cell_index[t2]] + m2.cell_shift[t2] + t
+                dist = np.linalg.norm((img[:, None, :] - tgt[None, :, :]) @ s.vectors, axis=2)
+                ok = len(t2) == len(idx) and (dist.min(axis=1) < tol).all()
+                imgs.append((hit[0], f2, (int(t[0]), int(t[1]), int(t[2]))) if ok else None)
+            row.append(imgs)
+        out.append(row)
+    return out
+
+
 def symmetry_key(s: Structure, a: int, b: int, sh: Shift, fa: int = 0, fb: int = 0,
-                 fmaps: list[list[list[int | None] | None]] | None = None) -> Member:
+                 fmaps: list[list[list[int | None] | None]] | None = None,
+                 fimgs: list[list[list[FragmentImage | None]]] | None = None) -> Member:
     """Rappresentante dell'orbita del contatto sotto il gruppo spaziale: la più piccola delle sue immagini (scritte
     con `_canon5`). Due contatti sono equivalenti per simmetria se e solo se hanno la stessa chiave; le operazioni che
-    non mappano molecole e frammenti non si usano, così non si uniscono mai contatti diversi."""
+    non mappano molecole e frammenti non si usano, così non si uniscono mai contatti diversi. Con `fimgs` (reti
+    estese) le immagini si prendono frammento per frammento (`fragment_images`)."""
     best = _canon5(a, b, sh, fa, fb)
+    if fimgs is not None and (s.molecules[a].extended or s.molecules[b].extended):
+        for k, row in enumerate(fimgs):
+            ia, ib = row[a][fa], row[b][fb]
+            if ia is None or ib is None:
+                continue
+            (a2, fa2, ta), (b2, fb2, tb) = ia, ib
+            rs = s.rotation(k) @ np.array(sh)
+            new = (tb[0] + int(rs[0]) - ta[0], tb[1] + int(rs[1]) - ta[1], tb[2] + int(rs[2]) - ta[2])
+            if a2 == b2 and new == (0, 0, 0) and fa2 == fb2:
+                continue
+            best = min(best, _canon5(a2, b2, new, fa2, fb2))
+        return best
     for k, row in enumerate(s.molecule_images()):
         ia, ib = row[a], row[b]
         if ia is None or ib is None:

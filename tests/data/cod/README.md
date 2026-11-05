@@ -13,3 +13,4 @@ Rispetto ai file scaricati sono stati tolti solo i campi di testo `_shelx_res_fi
 | 2100417 | rubrene ortorombico | Cmca, Z′ = ¼ | 293 K | simbolo nella notazione vecchia (Cmca = Cmce); molecola su un sito di simmetria mm |
 | 4500022 | C₁₄H₁₂N₆ · 2 H₂O | P2₁/n, Z′ = 3 | 100 K | tre molecole indipendenti, acqua, legami H; tabelle `_geom_` complete con le s.u. |
 | 1550133 | C₂₄H₃₂O₈ | P2₁, Z′ = 1 | 100 K | anelli tutti saturi: nessun nucleo π, nessuna coppia |
+| 7024607 | [Mn₂(C₁₄H₁₃N₅O₉)]ₙ | P1̄, rete 3D | 293 K | polimero di coordinazione: le coppie π si cercano tra frammenti dell'unità ripetuta; una piridina restava spezzata tra due celle (registro, voce 47) |

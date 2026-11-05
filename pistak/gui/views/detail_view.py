@@ -30,7 +30,7 @@ from pistak.gui import theme
 from pistak.gui.session import Session
 from pistak.gui.views.base import PairView
 from pistak.i18n import tf, tr
-from pistak.labels import ALERT_LEVELS, alert_text, no_pairs_text, rank_name, relation
+from pistak.labels import ALERT_LEVELS, EXTENDED_NOTE, alert_text, no_pairs_text, rank_name, relation
 from pistak.params import load_errors, specs, structure_specs
 
 #: Tipi di misura della scheda Geometria: chiave → (titolo, unità, decimali).
@@ -225,7 +225,7 @@ class DetailView(PairView):
             html += "</li>"
         html += "</ul>"
         if a.has_extended:
-            html += tr("<p><i>La rete di legami non si chiude (polimero o solido esteso): quelle parti sono escluse.</i></p>")
+            html += tr(EXTENDED_NOTE)
         if a.cif.skipped_disorder:
             html += "<p><i>" + tf("{n} atomi di componenti disordinate secondarie ignorati.", n=a.cif.skipped_disorder) + "</i></p>"
         html += self._structure_html()

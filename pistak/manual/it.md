@@ -448,8 +448,13 @@ confronto le analizza tutte («file.cif [blocco]»), `analyze --block NOME` ne s
 Hermann–Mauguin (tabella dei gruppi più comuni; tutti con il pacchetto facoltativo `gemmi`). L'export JSON dice da dove
 vengono (`symops_source`).
 
-**Molecole estese.** Se la rete di legami non si chiude (polimeri, MOF, solidi ionici estesi) quelle parti sono
-escluse dall'analisi e segnalate in **Dettaglio ▸ Struttura**.
+**Reti estese (polimeri di coordinazione, MOF).** Se la rete di legami non si chiude non ci sono molecole separate:
+PISTAK ricompone l'unità ripetuta tenendo interi gli anelli e i leganti e cerca le coppie π tra i suoi frammenti π e
+quelli delle unità vicine. Queste coppie sono segnate **polimero** (in tabella per esempio «polimero · [0 1 0] · π2–π2»; nel JSON
+`"polymer": true`): la distanza di contatto è quella tra i due frammenti, non tra le unità, e non si esportano come
+dimeri per la chimica quantistica. Le coppie equivalenti per simmetria si uniscono anche quando un'operazione porta
+l'unità in un altro taglio della catena. **Dettaglio ▸ Struttura** lo segnala; la geometria intramolecolare e i gruppi
+di molecole non comprendono le reti estese. Gli anelli con un metallo (chelati, metallacicli) non sono frammenti π.
 
 ## 10. Colonne di stack
 
@@ -780,7 +785,7 @@ altre viste delle coppie compare il motivo, con i numeri (lo ripetono la cima di
   `ring_rms`) e hanno carboni con quattro legami, quindi niente elettroni π. È il caso di molti prodotti naturali e
   zuccheri: PISTAK non ha nulla da misurare, ed è giusto così;
 * *anelli insaturi o quasi planari*: forse aromatici distorti; alza `ring_rms` (e se serve `molecule_rms`);
-* *nessun anello* e molecola non planare; *rete di legami estesa* (polimero o solido, nessuna molecola separata);
+* *nessun anello* e molecola non planare; *rete di legami estesa senza anelli* (solido inorganico: nessun frammento π);
 * *nuclei π troppo lontani*: ci sono, ma nessuna coppia entro `contact_cutoff`.
 
 In ogni caso restano disponibili **Dettaglio ▸ Struttura, Geometria e Controlli** e i comandi `check` e `geom`.

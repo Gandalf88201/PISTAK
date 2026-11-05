@@ -1,0 +1,162 @@
+{
+ "alerts": [
+  [
+   "C",
+   "formulaH",
+   {
+    "cif": "C14 H13 Mn2 N5 O9",
+    "diff": "H 9.00/13",
+    "model": "C14 H9 Mn2 N5 O9"
+   }
+  ],
+  [
+   "C",
+   "highR1",
+   {
+    "value": 0.0841
+   }
+  ],
+  [
+   "C",
+   "highWR2",
+   {
+    "value": 0.2139
+   }
+  ],
+  [
+   "C",
+   "missingH",
+   {
+    "atoms": "C14",
+    "n": 1
+   }
+  ],
+  [
+   "G",
+   "vdwDefault",
+   {
+    "elements": "Mn",
+    "r": 1.9
+   }
+  ]
+ ],
+ "cell_atoms": 78,
+ "geometry": {
+  "contacts": [
+   {
+    "atoms": [
+     "C14",
+     "H5"
+    ],
+    "codes": [
+     "",
+     "x-1,y,z"
+    ],
+    "d": 2.442613363,
+    "vdw": 2.8
+   },
+   {
+    "atoms": [
+     "C14",
+     "C5"
+    ],
+    "codes": [
+     "",
+     "x-1,y,z"
+    ],
+    "d": 3.316767709,
+    "vdw": 3.4
+   }
+  ],
+  "counts": {
+   "angle": 82,
+   "bond": 46,
+   "contact": 2,
+   "torsion": 136
+  }
+ },
+ "molecules": [
+  {
+   "atoms": 74,
+   "bonds": 82,
+   "centroid": [
+    -0.2147831122,
+    3.738573566,
+    1.848312467
+   ],
+   "core": {
+    "atoms": [
+     8,
+     20,
+     21,
+     36,
+     38,
+     55
+    ],
+    "centroid": [
+     -0.1290965536,
+     2.395107053,
+     -1.06260121
+    ],
+    "kind": "rings",
+    "long": [
+     -0.1829790624,
+     0.9557400501,
+     0.230390146
+    ],
+    "normal": [
+     -0.6282040626,
+     -0.2939288224,
+     0.7203926035
+    ],
+    "rms": 0.006987054574
+   },
+   "extended": true,
+   "formula": "C26H18Mn4N10O16"
+  },
+  {
+   "atoms": 2,
+   "bonds": 1,
+   "centroid": [
+    -1.644055219,
+    2.54447718,
+    8.734742307
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C1O1"
+  },
+  {
+   "atoms": 2,
+   "bonds": 1,
+   "centroid": [
+    6.575125038,
+    1.210168382,
+    0.6980247632
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C1O1"
+  }
+ ],
+ "pairs": [],
+ "skipped_disorder": 0,
+ "space_group": "P -1",
+ "stacks": [],
+ "structure": {
+  "alerts_a": 0.0,
+  "alerts_b": 0.0,
+  "alerts_c": 4.0,
+  "density_calc": 1.789166275,
+  "density_cif": 1.804,
+  "goof": 1.127,
+  "r1": 0.0841,
+  "rho_max": 1.144,
+  "rho_min": -0.767,
+  "temperature": 293.0,
+  "volume": 930.2015521,
+  "wr2": 0.2139,
+  "z": 2.0,
+  "z_prime": 1.0
+ }
+}

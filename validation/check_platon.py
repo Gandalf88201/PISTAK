@@ -7,7 +7,8 @@ abbinata si confrontano Cg–Cg, α, β, γ, le due distanze perpendicolari e lo
 Corrispondenze: PLATON CgJ_Perp (Cg(J) sul piano I) = PISTAK perp_a; CgI_Perp = perp_b; slippage = proiezione di
 Cg(J) sul piano I, come in PISTAK.
 
-    .venv/bin/python validation/check_platon.py
+    .venv/bin/python validation/check_platon.py                    # 20 strutture molecolari (sezioni 4–5)
+    .venv/bin/python validation/check_platon.py platon_polimeri    # 26 polimeri di coordinazione (reti estese)
 """
 from __future__ import annotations
 
@@ -27,6 +28,11 @@ from pistak.core.ringpairs import ring_pairs  # noqa: E402
 DIR = HERE / "platon"
 NUM = re.compile(r"-?\d+\.\d+(?:\(\d+\))?")
 ROW = re.compile(r"^Cg(\d+)\s+\[\s*\d+\]\s+->\s+Cg(\d+)\s+\[\s*(\d+)\.(\d+)\](.*)$")
+
+
+def norm(label: str) -> str:
+    """Etichetta come la scrive PLATON: senza parentesi («C(18)» → «C18»)."""
+    return label.replace("(", "").replace(")", "")
 
 
 def platon_rings(text: str) -> dict[int, frozenset[str]]:
@@ -66,12 +72,14 @@ def compare(stem: str) -> dict:
     an = analyse_file(DIR / f"{stem}.cif", Limits())
     mine = []
     for p in an.pairs:
-        if p.intramolecular:
+        # nei polimeri l'unità ripetuta contiene più copie per simmetria dei leganti: le coppie «nella stessa unità»
+        # per PLATON sono tra copie diverse, quindi si confrontano anche quelle
+        if p.intramolecular and not p.polymer:
             continue
         ctx = an.pair_context(p)
         for rp in ring_pairs(ctx):
-            la = frozenset(ctx.A.labels[i] for i in rp.atoms_a)
-            lb = frozenset(ctx.B.labels[i] for i in rp.atoms_b)
+            la = frozenset(norm(ctx.A.labels[i]) for i in rp.atoms_a)
+            lb = frozenset(norm(ctx.B.labels[i]) for i in rp.atoms_b)
             mine.append((la, lb, rp))
     diffs: dict[str, list[float]] = {k: [] for k in ("cg", "alpha", "beta", "gamma", "perp_a", "perp_b", "slip")}
     matched_ref = set()
@@ -147,4 +155,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:  # un'altra cartella di validation/ con i suoi CIF, .lis ed elenco.txt
+        DIR = HERE / sys.argv[1]
     main()

@@ -203,7 +203,8 @@ class PairContext:
 
 
 def _fragments(structure: Structure, limits: Limits) -> list[list[Core]]:
-    return [[] if m.extended else apply_axis(m, pi_fragments(m, limits), limits.long_axis_atoms) for m in structure.molecules]
+    # anche le reti estese (polimeri): la molecola è l'unità ripetuta, con gli anelli interi
+    return [apply_axis(m, pi_fragments(m, limits), limits.long_axis_atoms) for m in structure.molecules]
 
 
 def _contacts(structure: Structure, fragments: list[list[Core]], limits: Limits, text: str | None,

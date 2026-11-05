@@ -11,6 +11,7 @@ verifica chiusa; sotto la tabella, per ogni voce, l'oracolo usato e il risultato
 .venv/bin/python validation/check_cif.py                 # sezione 1: lettura, s.u., elementi, disordine
 .venv/bin/python validation/check_struttura.py           # sezioni 1–3: cella, formule, cella obliqua, anelli, raggi
 .venv/bin/python validation/check_platon.py              # sezioni 4–5: coppie di anelli contro PLATON CALC ALL
+.venv/bin/python validation/check_platon.py platon_polimeri   # voce 47: le stesse coppie nei polimeri
 .venv/bin/python validation/check_incertezze.py          # sezione 6: Monte Carlo, geometria contro le tabelle _geom_
 .venv/bin/python validation/check_export.py              # sezione 7: file per ORCA/Psi4/Gaussian e codici periodici
 .venv/bin/python validation/check_snapshot.py            # sezione 8: istantanee COD rifatte con numpy
@@ -37,10 +38,10 @@ conti a mano.
 | 11 | core/spacegroups.py | **Nuovo.** Il suffisso dell'impostazione (`:1`, `:2`, `:R`) veniva scartato: `R -3 :R` riceveva le operazioni esagonali, `F d d d :1` e `I 41/a :1` l'origine 2; senza suffisso la tabella sceglieva l'origine 2 e gemmi la 1 | P1 (solo CIF senza operazioni elencate) | **Corretto** | Suffissi rispettati; senza suffisso sempre origine 2 (convenzione dichiarata); test |
 | 12 | core/cif.py | **Nuovo.** `element_of`: `BR2` senza type_symbol diventava boro, `CL1` carbonio; centroidi `Cg1` letti come carbonio, picchi `Q1` tenuti come atomi; `_atom_site_calc_flag dum` ignorato | P2 | **Corretto** | CL, BR a due lettere; Cg, Q e dum scartati; altre etichette maiuscole (CA, CD, HG) a una lettera |
 | 13 | core/validation.py | **Nuovo.** Operazioni elencate e simbolo del gruppo incoerenti: vincevano le operazioni, senza avviso | P2 | **Corretto** | Avviso C `symopsMismatch`; nessun falso positivo sui 200 CIF COD |
-| 14 | core/cif.py | Disordine su un elemento di simmetria (gruppi negativi): le immagini simmetriche del gruppo si sovrappongono alle posizioni originali | P1 | **Aperto** | Oggi lo segnala l'avviso A `overlap` (COD 4113834: C32A···C32B 0,38 Å); serve togliere le immagini che coincidono con l'altra parte |
+| 14 | core/cif.py, core/structure.py | Gruppi di disordine negativi: due casi diversi. (a) 1 e −1 usati come due alternative (COD 4113834: 0,61/0,39, C32A···C32B 0,38 Å): la regola `major` toglieva il segno e li teneva entrambi. (b) Gruppo −n davvero su un elemento di simmetria (4064128, 7042307): le sue immagini sono l'altra orientazione e venivano tenute tutte | P1 | **Corretto** | (a) −n separato da n se i loro atomi distano < 1 Å (`_signed_alternatives`); (b) per ogni gruppo negativo si tiene una copia per sito, scartando intera ogni copia che si sovrappone a una già tenuta (`special_disorder_copies`). Su 200 CIF cambiano solo i 3 interessati: spariscono gli avvisi `overlap` di 4113834 e 7042307, e in 4064128 il CH₂Cl₂ torna di 5 atomi (prima 10, con un falso anello e 4 coppie inclinate fittizie). Test |
 | 15 | core/crystal.py | **Nuovo.** `cell_contents` contava una volta sola una posizione occupata da due atomi diversi del CIF: un CIF che scrive anche le immagini per simmetria con occupanza ½ (COD 2100449) dava metà del contenuto della cella, e densità e formula sbagliate negli avvisi | P2 (avvisi, non coppie) | **Corretto** | Occupanze di atomi diversi sommate fino a 1; immagini dello stesso atomo (posizioni speciali) una volta; test |
 | 16 | core/elements.py | Raggi diversi dalle tabelle di gemmi: covalente C 0,76 (sp³, dichiarato) contro 0,73; Lu 1,87 e Hf 1,75 scambiati rispetto a gemmi; vdW H 1,10 (Rowland e Taylor) mentre il commento cita Bondi (1,20) | P1 (H: contatti vdW) | **Corretto** (commento) | Valori giusti: i 96 covalenti uguali alla tabella di Cordero 2008 (le differenze erano di gemmi); i vdW uguali alla tab. 12 di Mantina 2009 per i gruppi principali (H 1,10 di Rowland e Taylor 1996), Br 1,85 e metalli di transizione di Bondi 1964. Corretti il commento in `elements.py` e il manuale, che citavano solo Bondi |
-| 17 | core/structure.py | Formule ricostruite diverse da `_chemical_formula_moiety` non spiegate: 7208500 (due acetonitrili in un'unica "molecola"), 2201728 (un CH₃ in più) | P2 | **Aperto** | Da esaminare a mano |
+| 17 | core/structure.py | Formule ricostruite diverse da `_chemical_formula_moiety` non spiegate: 7208500 (due acetonitrili in un'unica "molecola"), 2201728 (un CH₃ in più) | P2 | **Corretto** | 2201728: errore dell'oracolo, non di PISTAK (il lettore della formula ignorava il «2» di `(C H3)2`; corretto, ora coincide). 7208500: l'acetonitrile disordinato aveva le due orientazioni in assemblaggi diversi (A gruppo 1, 0,65; B gruppo 2, 0,35); `major` sceglieva per assemblaggio e le teneva entrambe, sovrapposte a 0,31 Å e legate in un falso C₄H₆N₂. Ora gli assemblaggi i cui gruppi si sovrappongono (< 1 Å) si uniscono prima della scelta (`_merged_assemblies`, decisione dell'autore). Stesso difetto, ora corretto, in 7025278 (BF₄⁻ su 3 orientazioni), 7034397, 7232723 (due molecole intere raddoppiate, 12 sovrapposizioni) e 7051759 (Yb su due siti a 0,79 Å). Formule contro `_chemical_formula_moiety`: 79 uguali su 114. Test |
 | 10 | core/cif.py | **Nuovo.** `tokenize` va in ciclo infinito (memoria che cresce senza limite) su un carattere di spaziatura diverso da spazio e tab: NBSP, form feed, tab verticale, U+2003… | P2 | **Corretto** | `if ch.isspace()` al posto di `if ch in " \t"`; test con 5 caratteri in un processo separato |
 | 18 | core/intramolecular.py | **Nuovo.** Torsioni riportate anche attraverso tre atomi allineati (X–M–X su un centro di inversione, angolo 180°): valore indefinito, che dipende dagli arrotondamenti | P2 | **Corretto** | Torsioni con un angolo di legame oltre 175° non riportate (`MAX_TORSION_ANGLE`); test, manuale |
 | 19 | core/intramolecular.py | **Nuovo.** Misure con le stesse etichette considerate uguali per simmetria: L1–M–L2 e L1–M–L2′ (θ e 180° − θ attorno a un centro di inversione), torsioni cis e trans dello stesso frammento, ne restava una | P1 (geometria riportata) | **Corretto** | Uguali solo se legate da un'operazione del cristallo (posizioni relative, simmetria del sito del primo atomo); 2100417: una torsione in più; misure CIF senza corrispondente da 539 a 27 |
@@ -51,7 +52,7 @@ conti a mano.
 | 24 | io/qc.py | Molteplicità del dimero fissata all'accoppiamento ad alto spin: per due radicali l'energia dipende dalla scelta singoletto/tripletto | P1 (energie di radicali) | **Corretto** | Opzione `dimer_multiplicity` (API, `--dimer-mult`, finestra), controllata contro gli spin dei monomeri; il predefinito resta l'alto spin, scritto nel file |
 | 25 | io/qc.py | `%maxcore` ORCA = memoria totale / processi, senza margine (ORCA a volte lo supera) | P2 | **Corretto** | 75 % della memoria per processo, come consigliano i centri di calcolo; MB per processo verificato |
 | 26 | io/qc.py, io/periodic.py | Nei file non era scritto che i monomeri sono molecole intere, quanti H restano come nel CIF, che `ecutrho` = 8 × presuppone pseudopotenziali ultrasoft/PAW, che punti k, cutoff e Γ di CP2K sono valori di comodo | P2 | **Corretto** | Righe di commento in ogni file (CRYSTAL: nel `.notes.txt`); manuale |
-| 27 | io/qc.py, io/periodic.py | Esecuzione reale con ORCA, Psi4, Gaussian, VASP, QE, CP2K, CRYSTAL | P1 | **Aperto** | I programmi non sono installati qui; servono una prova per programma (dimero di benzene, cella del naftalene) e il confronto CP ORCA contro Psi4 |
+| 27 | io/qc.py, io/periodic.py | Esecuzione reale con ORCA, Psi4, Gaussian, VASP, QE, CP2K, CRYSTAL | P1 | **Rinviato** (decisione dell'autore, 5 novembre 2026: le prove le farà l'autore) | I programmi non sono installati qui; servono una prova per programma (dimero di benzene, cella del naftalene) e il confronto CP ORCA contro Psi4 |
 | 28 | tests/ | Tolleranze larghe (`abs=1e-3` Å, 0,5° e 0,01°) su cristalli sintetici costruiti a mano | P1 | **Corretto** | Scarti reali misurati: ≤ 5·10⁻⁶ Å e 5·10⁻⁵°; tolleranze portate a 10⁻⁴ Å e 10⁻³° (16 asserzioni in 5 file); quelle contro i CIF (densità, tabelle `_geom_`) restano legate alle cifre del CIF |
 | 29 | tests/snapshots | Istantanee COD scritte dal programma stesso | P1 | **Verificato** | Le 95 coppie intermolecolari delle 5 istantanee rifatte con numpy: scarti ≤ 5·10⁻⁹ Å e 2·10⁻⁶° (precisione delle istantanee) |
 | 30 | validation | Invarianza cristallografica | P1 | **Verificato** | Cella obliqua equivalente e origine spostata di (0,137; 0,291; 0,443): 40/40 strutture con le stesse coppie entro 10⁻⁶ Å (prima la verifica arrotondava a 3 decimali e segnalava differenze di arrotondamento) |
@@ -71,6 +72,8 @@ conti a mano.
 | 44 | core/pairs.py | Sezione 10, passo 5: sensibilità dei risultati alle soglie | P1 | **Verificato** | `check_sensibilita.py` su 200 CIF COD: `max_dihedral` è la scelta che pesa (±5° → ±6 % di stack, ±10° → −18/+15 %); `max_interplanar` ±0,2 Å → ≤ 2 %; le altre soglie ≤ 2 %, tranne `min_fragment_atoms` = 6 (−5 %: frammenti di 5 atomi). Da riportare nel paper |
 | 45 | repository | Sezione 10, passo 8: versione per il paper (tag attuali v0.0.1, v0.0.2); istantanee da rigenerare e congelare | P1 | **Aperto** | Decisione dell'autore: quando chiudere le voci aperte e creare il tag v1.0.0 |
 | 46 | core/ringpairs.py, core/intramolecular.py, core/validation.py, core/pairs.py, params/extra.py | **Nuovo** (dalla prima CI su Linux). L'ordine di elementi equivalenti per simmetria dipendeva dall'ultima cifra del calcolo, diversa tra macOS e Linux: coppie di anelli alla stessa Cg···Cg, contatti H1···H8/H2···H7, i 4 contatti mostrati nell'avviso `shortContact` (nell'ordine della ricerca dei vicini). Il diedro da `arccos` vicino a 0° (10⁻⁶° contro 0) e `slip_direction` −180 contro +180 (zero con segno) | P2 (riproducibilità) | **Corretto** | Ordinamenti con spareggio sugli indici/etichette; avviso con i 4 contatti più corti; diedro da atan2(|a×b|, |a·b|); `slip_direction` in (−180, 180]. Istantanee rigenerate: confrontate con le vecchie a meno dell'ordine, cambiano solo 10 diedri ~10⁻⁶° → 0 e 2 direzioni −180 → 180 |
+| 47 | core/structure.py, core/pairs.py, core/analysis.py, core/diagnosis.py, io/qc.py, io/export.py, labels.py | **Nuovo** (dalla prova dell'autore su COD 7109544, un polimero di Cu₂ senza nessuna coppia). Le reti di legami estese (polimeri di coordinazione, MOF) erano escluse: nessuna coppia π. Nella ricostruzione dell'unità ripetuta, inoltre, la visita in ampiezza poteva lasciare un anello spezzato tra due celle (7024607: una piridina su due senza frammento π) | P1 | **Corretto** | L'unità ripetuta si ricompone unendo prima i legami degli anelli di non metalli, poi quelli dei leganti, poi quelli con i metalli: anelli e leganti restano interi. Coppie tra frammenti dell'unità e delle unità vicine entro `contact_cutoff` + 1 Å, segnate `polymer` (contatto tra i frammenti, escluse dall'export QC); simmetria per immagini di frammenti. Contro PLATON su 20 polimeri: 217 coppie di anelli, scarti entro la stampa di PLATON (sotto). Su 200 CIF COD nessuna struttura non polimerica cambia |
+| 48 | params/extra.py | **Nuovo**. Nelle coppie intramolecolari (frammenti della stessa molecola) `cc_contact` e `n_vdw_contacts` si misuravano tra la molecola e sé stessa: 0 Å e centinaia di contatti | P2 | **Corretto** | Si misurano tra gli atomi dei due frammenti (anche per le coppie di polimero). Istantanee: in 2100417 e 4500022 cambiano solo queste due colonne delle coppie intramolecolari |
 
 ## 1. `beta_b` etichettato γ
 
@@ -247,6 +250,9 @@ Suite completa: 376 test superati, 3 saltati (servono i CIF di `DATI_REALI/`).
 | 1 | Chiavi `beta`, `gamma` | Cambiano le intestazioni dei CSV; i valori no |
 | 8 | Licenza MIT | Nessuno |
 | 7 | X–H da Allen & Bruno 2010, C per ibridazione | Solo gli input per ORCA, Psi4, Gaussian e i file periodici |
+| 17 | Gruppi di disordine che si sovrappongono sono alternative anche se il CIF li mette in assemblaggi diversi (5 novembre 2026) | Su 200 CIF COD cambiano 8 strutture, tutte con alternative tenute insieme per errore: spariscono 19 sovrapposizioni e le molecole raddoppiate; nessuno stack cambia |
+| Monte Carlo | N = 500 campioni per i risultati del paper (5 novembre 2026) | Errore relativo sulla σ ≈ 1/√(2·499) ≈ 3 % (sezione 6) |
+| 27 | Esecuzione reale degli input QC e periodici rinviata: la farà l'autore (5 novembre 2026) | Nessuno sui numeri dell'analisi |
 
 ## Sezione 1: lettura CIF e simmetria (3 novembre 2026)
 
@@ -284,7 +290,7 @@ i valori dichiarati nei CIF, networkx (`minimum_cycle_basis`), una cella obliqua
 | Atomi della cella (`fill_cell`) contro gemmi, CIF senza occupanze parziali | 132/132 uguali, elemento per elemento |
 | Contenuto della cella pesato con l'occupanza (`cell_contents`) contro gemmi | prima 192/200, dopo la correzione 15 197/200; nei 3 rimasti 2 volte PISTAK coincide con Z × formula e gemmi no, 1 (4117065, Br disordinati a meno di 0,5 Å) nessuno dei due |
 | Densità contro `_exptl_crystal_density_diffrn` (182 CIF) | scarto mediano 0,021 %; 21 oltre 0,5 %, tutti con contenuto della cella uguale a gemmi: solvente tolto con SQUEEZE ma dichiarato, formula o Z del CIF diversi dal modello |
-| Molecole ricostruite contro `_chemical_formula_moiety` (114 CIF) | 74 uguali, 4 diverse solo negli H; delle 36 diverse, quasi tutte per convenzione del CIF (formula per unità asimmetrica o per coppia di ioni, controione tenuto separato da PISTAK) o per reti estese (polimeri di coordinazione); da disordine non risolto 4064128 (gruppi negativi, voce 14), 7036933 e 4330346 (disordine senza gruppi nel CIF: solo l'avviso `partialOccupancy`); voce 17 aperta |
+| Molecole ricostruite contro `_chemical_formula_moiety` (114 CIF) | 74 uguali, 4 diverse solo negli H; delle 36 diverse (rifatto il 5 novembre dopo le voci 14 e 17: 79 uguali, 3 solo negli H, 32 diverse), quasi tutte per convenzione del CIF (formula per unità asimmetrica o per coppia di ioni, controione tenuto separato da PISTAK) o per reti estese (polimeri di coordinazione); da disordine non risolto 4064128 (gruppi negativi, voce 14), 7036933 e 4330346 (disordine senza gruppi nel CIF: solo l'avviso `partialOccupancy`); voce 17 aperta |
 | Cella obliqua equivalente (a' = a, b' = b + 2a, c' = c + a + b), 40 strutture | 39 identiche; in 1514883 due coppie differiscono di 0,001 Å (arrotondamento al terzo decimale). Nessun legame perso: la ricerca a ±1 cella regge anche celle non ridotte di questo tipo |
 | `small_rings` contro la base minima dei cicli (287 molecole distinte) | trovati tutti gli anelli della base tranne 2 anelli da 5 in un cluster Ag–Pt (anelli i cui legami stanno tutti in cicli da 3 col metallo); gli anelli in più sono cicli più corti di qualche legame, quasi tutti triangoli tra i Br disordinati di 4117065 |
 
@@ -562,3 +568,30 @@ l'algoritmo degli anelli) e su quelli di RDKit (si prova la catena intera).
   B···F a ponte). Cambiano gli anelli solo in 2 (4063970 Si, 7025278 B₃F₁₁), nessuno aromatico.
 - Conclusione: per le molecole organiche gli anelli planari, quelli che contano per l'analisi, coincidono con RDKit.
 
+## Reti estese: coppie π nei polimeri contro PLATON (5 novembre 2026)
+
+Voce 47. Oracolo: PLATON V-200626, `CALC ALL` predefinito, sui 26 CIF del campione COD con una rete di legami estesa e
+anelli (`validation/platon_polimeri/`, con `LEGGIMI.md` e il confronto completo in `confronto.txt`). PLATON non ne legge
+6; restano 20 strutture.
+
+| Grandezza | Coppie abbinate | Scarto massimo PISTAK − PLATON (senza 7117874) | Mediano |
+| --- | --- | --- | --- |
+| Cg···Cg | 217 | 0,0013 Å | 0,0002 Å |
+| α | 217 | 0,10° | 0,005° |
+| β, γ | 217 | 0,07° | 0,02–0,03° |
+| distanze perpendicolari | 217 | 0,0013 Å | 0,0001 Å |
+| slippage | 103 | 0,0021 Å | 0,0003 Å |
+
+- **7117874**: per una coppia PLATON stampa valori incompatibili tra loro (α 54,1°, β 34,2°, γ 0,0°, normale trasformata
+  non unitaria). Ricalcolata con numpy dalle coordinate del CIF: α 88,1°, β 34,2°, γ 61,6°, come PISTAK. Difetto di
+  PLATON con l'operazione esagonale −x+y, 1−x, z.
+- **Coppie di PLATON che PISTAK non elenca**: 114 classi, tutte con un anello non planare per PISTAK o con un metallo
+  (chelati, metallacicli), che non sono frammenti π.
+- **Difetto trovato e corretto** (7024607): la visita in ampiezza che ricompone l'unità ripetuta arrivava a una piridina
+  da due lati in celle diverse e la lasciava spezzata; la coppia N5···N5′ (−x, −y, −z, Cg···Cg 5,247 Å, β 58,0°)
+  mancava. Ora l'unità tiene interi anelli e leganti; il test `test_polimero_anelli_interi_nell_unita_ripetuta` (CIF in
+  `tests/data/cod/`) ritrova le cinque coppie di PLATON e fallisce con la vecchia ricostruzione.
+- **Campione COD (200 CIF)**: nessuna struttura non polimerica cambia (celle, coppie, stack). Delle 39 reti estese, 27
+  hanno ora coppie π (32 stack in queste strutture); le altre 12 non hanno frammenti π abbastanza vicini.
+- Test sintetici: catena di poli(p-fenilene) con stack noto a 3,6 Å (trovato, segnato polimero, non esportato) e asse
+  2₁ lungo la catena (le due coppie equivalenti diventano una ×2 solo con le immagini dei frammenti).

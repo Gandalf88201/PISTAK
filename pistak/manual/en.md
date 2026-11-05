@@ -446,8 +446,13 @@ the comparison analyses all of them ("file.cif [block]"), `analyze --block NAME`
 Hermann–Mauguin symbol (table of the most common groups; all of them with the optional `gemmi` package). The JSON
 export says where they come from (`symops_source`).
 
-**Extended molecules.** If the bond network does not close (polymers, MOFs, extended ionic solids) those parts are
-excluded from the analysis and reported in **Detail ▸ Structure**.
+**Extended networks (coordination polymers, MOFs).** If the bond network does not close there are no separate
+molecules: PISTAK rebuilds the repeat unit keeping rings and ligands whole and searches π pairs between its π
+fragments and those of neighbouring units. These pairs are marked **polymer** (in the table e.g. “polymer · [0 1 0] · π2–π2”;
+in the JSON `"polymer": true`): the contact distance is the one between the two fragments, not between units, and they
+are not exported as dimers for quantum chemistry. Symmetry-equivalent pairs are merged even when an operation maps the
+unit onto a different cut of the chain. **Detail ▸ Structure** reports it; intramolecular geometry and molecule groups
+leave extended networks out. Rings containing a metal (chelates, metallacycles) are not π fragments.
 
 ## 10. Stack columns
 
@@ -778,7 +783,7 @@ reason appears, with the numbers (repeated at the top of **Detail ▸ Structure*
   above `ring_rms`) and they have carbons with four bonds, hence no π electrons. This is the case of many natural
   products and sugars: PISTAK has nothing to measure, and rightly so;
 * *unsaturated or nearly planar rings*: perhaps distorted aromatics; raise `ring_rms` (and `molecule_rms` if needed);
-* *no rings* and a non-planar molecule; *extended bond network* (polymer or solid, no separate molecules);
+* *no rings* and a non-planar molecule; *extended bond network without rings* (inorganic solid: no π fragment);
 * *π cores too far apart*: they exist, but no pair within `contact_cutoff`.
 
 In every case **Detail ▸ Structure, Geometry and Checks** and the `check` and `geom` commands remain available.

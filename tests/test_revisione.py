@@ -354,3 +354,115 @@ def test_raggio_vdw_non_tabulato_si_segnala():
     alerts = {x.code: x for x in validate(analyse_text(cif, "ferro"))}
     assert alerts["vdwDefault"].values == {"elements": "Fe", "r": DEFAULT_VDW}
     assert "vdwDefault" not in {x.code for x in validate(api.analyse_file(EX / "demo_naphthalene.cif"))}
+
+
+# ---- voce 14: disordine con gruppi negativi --------------------------------------------------------------------
+def _disorder_cif(symops: list[str], rows: list[str]) -> str:
+    return "\n".join(["data_dis", "_cell_length_a 10", "_cell_length_b 10", "_cell_length_c 10", "_cell_angle_alpha 90",
+                      "_cell_angle_beta 90", "_cell_angle_gamma 90", "loop_", "_symmetry_equiv_pos_as_xyz",
+                      *[f"'{s}'" for s in symops], "loop_", "_atom_site_label", "_atom_site_type_symbol",
+                      "_atom_site_fract_x", "_atom_site_fract_y", "_atom_site_fract_z", "_atom_site_occupancy",
+                      "_atom_site_disorder_assembly", "_atom_site_disorder_group", *rows, ""])
+
+
+def test_gruppi_1_e_meno_1_alternativi_si_separano():
+    """COD 4113834: 1 (0,61) e −1 (0,39) sono due alternative dello stesso sito, non lo stesso gruppo su un elemento
+    di simmetria: la regola `major` tiene solo la parte 1 (prima le teneva entrambe, atomi a 0,4 Å)."""
+    from pistak.core.cif import parse_cif
+
+    cif = parse_cif(_disorder_cif(["x, y, z"], [
+        "C1 C 0.50 0.50 0.50 1 . .",
+        "C2A C 0.60 0.50 0.50 0.61 A 1", "C2B C 0.64 0.50 0.50 0.39 A -1",
+    ]), disorder="major")
+    assert [a.label for a in cif.atoms] == ["C1", "C2A"]
+
+
+def test_gruppo_negativo_su_un_centro_di_inversione_una_orientazione():
+    """Un gruppo −1 su un centro di inversione (occupanza 0,5): la sua immagine è l'altra orientazione. Nella cella ne
+    resta una sola; un frammento ordinato sullo stesso centro conserva invece entrambe le metà."""
+    from pistak.core.cif import parse_cif
+    from pistak.core.structure import build_structure
+
+    p1bar = ["x, y, z", "-x, -y, -z"]
+    disordered = build_structure(parse_cif(_disorder_cif(p1bar, [
+        "C1 C 0.03 0.00 0.00 0.5 . -1", "C2 C 0.03 0.15 0.00 0.5 . -1",  # immagine di C1 a 0,6 Å: altra orientazione
+    ]), disorder="major"))
+    assert sorted(disordered.cell_labels) == ["C1", "C2"]
+    ordered = build_structure(parse_cif(_disorder_cif(p1bar, [
+        "C1 C 0.07 0.00 0.00 1 . .",  # C1···C1' 1,4 Å attraverso il centro: una molecola intera
+    ]), disorder="major"))
+    assert sorted(ordered.cell_labels) == ["C1", "C1"]
+
+
+def test_alternative_in_assemblaggi_diversi_se_ne_tiene_una():
+    """COD 7208500: le due orientazioni di un acetonitrile in assemblaggi diversi (A 0,65, B 0,35) si sovrappongono:
+    sono alternative, si tiene la maggiore. Gruppi di assemblaggi diversi lontani tra loro restano invece entrambi."""
+    from pistak.core.cif import parse_cif
+
+    cif = parse_cif(_disorder_cif(["x, y, z"], [
+        "C1 C 0.50 0.50 0.50 1 . .",
+        "C2 C 0.60 0.50 0.50 0.65 A 1", "C3 C 0.63 0.50 0.50 0.35 B 2",  # 0,3 Å: alternative
+        "C4 C 0.10 0.10 0.10 0.70 C 1", "C5 C 0.30 0.30 0.30 0.60 D 1",  # lontani: disordini indipendenti
+    ]), disorder="major")
+    assert [a.label for a in cif.atoms] == ["C1", "C2", "C4", "C5"]
+
+
+# ---- reti estese: coppie π nei polimeri --------------------------------------------------------------------------
+def _polyphenylene(symops: list[str], centre: tuple[float, float, float], rings_per_cell: int = 1) -> str:
+    """Catene di poli(p-fenilene) lungo a (legame para C–C 1,48 Å tra anelli), anelli nel piano xz impilati lungo b
+    ogni 3,6 Å: una catena infinita, con π-stack noti tra catene vicine."""
+    a, b, c = 4.28 * rings_per_cell, 3.6, 10.0
+    ring = [(1.4, 0, 0), (-1.4, 0, 0), (0.7, 0, 1.2124), (-0.7, 0, 1.2124), (0.7, 0, -1.2124), (-0.7, 0, -1.2124)]
+    rows = [f"C{k + 1} C {centre[0] + x / a:.6f} {centre[1] + y / b:.6f} {centre[2] + z / c:.6f}" for k, (x, y, z) in enumerate(ring)]
+    return "\n".join(["data_ppp", f"_cell_length_a {a}", f"_cell_length_b {b}", f"_cell_length_c {c}",
+                      "_cell_angle_alpha 90", "_cell_angle_beta 90", "_cell_angle_gamma 90", "loop_",
+                      "_symmetry_equiv_pos_as_xyz", *[f"'{s}'" for s in symops], "loop_", "_atom_site_label",
+                      "_atom_site_type_symbol", "_atom_site_fract_x", "_atom_site_fract_y", "_atom_site_fract_z", *rows, ""])
+
+
+def test_polimero_coppie_pi_tra_catene():
+    """Una catena infinita non ha molecole separate, ma i suoi anelli formano π-stack con le catene vicine: la coppia
+    a 3,6 Å lungo b si trova, è segnata come coppia di polimero e non si esporta come dimero."""
+    from pistak.core.diagnosis import why_no_pairs
+    from pistak.io import qc
+
+    a = analyse_text(_polyphenylene(["x, y, z"], (0.5, 0.5, 0.5)), "ppp")
+    assert a.structure.molecules[0].extended
+    stacks = [p for p in a.pairs if p.kind == "stack"]
+    assert len(stacks) == 1 and stacks[0].polymer and stacks[0].shift in ((0, 1, 0), (0, -1, 0))
+    assert abs(stacks[0].interplanar - 3.6) < 1e-4 and abs(stacks[0].dihedral) < 1e-4
+    assert abs(stacks[0].contact - 3.6) < 1e-4  # tra i due anelli, non tra unità legate della catena
+    assert why_no_pairs(a) is None and qc.exportable(a.pairs, None) == []
+
+
+def test_polimero_coppie_equivalenti_per_simmetria_unite(monkeypatch):
+    """Asse 2₁ lungo la catena (due anelli per cella): porta il primo anello nel secondo, e l'unità ripetuta in un
+    altro taglio della stessa catena, quindi la catena non ha un'immagine come molecola intera. Con le immagini dei
+    frammenti i due π-stack equivalenti diventano una coppia sola, ×2; senza, restano due coppie."""
+    import pistak.core.pairs as pairs_module
+
+    text = _polyphenylene(["x, y, z", "x+1/2, -y, -z"], (0.25, 0.0, 0.5), rings_per_cell=2)
+    stacks = [p for p in analyse_text(text, "ppp").pairs if p.kind == "stack"]
+    assert len(stacks) == 1 and stacks[0].count == 2 and abs(stacks[0].interplanar - 3.6) < 1e-4
+    monkeypatch.setattr(pairs_module, "fragment_images", lambda *_a, **_k: None)  # l'oracolo: senza, non si uniscono
+    assert len([p for p in analyse_text(text, "ppp").pairs if p.kind == "stack"]) == 2
+
+
+def test_polimero_anelli_interi_nell_unita_ripetuta():
+    """COD 7024607 (rete 3D di Mn(II)): la visita in ampiezza raggiungeva una delle due piridine N5 da due lati in celle
+    diverse e la lasciava spezzata, quindi senza frammento π. Ora l'unità ripetuta tiene interi anelli e leganti: i
+    frammenti sono quattro e le coppie di anelli sono le cinque di PLATON (CALC ALL, `validation/platon_polimeri/`),
+    compresa N5···N5′ (−x, −y, −z) a 5,247 Å, β 58,0°."""
+    from pistak.core.ringpairs import ring_pairs
+
+    a = api.analyse_file(ROOT / "tests" / "data" / "cod" / "7024607.cif", Limits())
+    m = a.structure.molecules[0]
+    assert m.extended and len(a.fragments[0]) == 4
+    for f in a.fragments[0]:  # anelli interi: i sei atomi a meno di 3 Å l'uno dall'altro
+        p = m.pos[list(f.atoms)]
+        assert np.linalg.norm(p[:, None] - p[None], axis=2).max() < 3.0
+    platon = [4.453, 4.717, 5.247, 5.630, 5.954]
+    mine = sorted(rp.cg_distance for p in a.pairs for rp in ring_pairs(a.pair_context(p)))
+    assert len(mine) == len(platon) and all(abs(x - y) < 1e-3 for x, y in zip(mine, platon))
+    self_pair = [rp for p in a.pairs for rp in ring_pairs(a.pair_context(p)) if abs(rp.cg_distance - 5.247) < 1e-3]
+    assert abs(self_pair[0].alpha) < 0.1 and abs(self_pair[0].beta - 58.0) < 0.1

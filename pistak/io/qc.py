@@ -318,8 +318,9 @@ def write_dimer_input(analysis: Analysis, pair: Pair, path: str | Path, options:
 
 
 def exportable(pairs: list[Pair], kind: str | None = "stack") -> list[Pair]:
-    """Le coppie che si possono esportare (non intramolecolari), di un tipo o tutte."""
-    return [p for p in pairs if not p.intramolecular and (kind is None or p.kind == kind)]
+    """Le coppie che si possono esportare (non intramolecolari, non di polimeri: un'unità di una rete estesa non è
+    una molecola da calcolare da sola), di un tipo o tutte."""
+    return [p for p in pairs if not p.intramolecular and not p.polymer and (kind is None or p.kind == kind)]
 
 
 __all__ = ["QCOptions", "QCError", "Dimer", "Monomer", "dimer", "dimer_input", "write_dimer_input", "suggested_name",

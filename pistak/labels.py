@@ -12,8 +12,14 @@ from pistak.i18n import tr
 
 def relation(pair: Pair) -> str:
     """Come la seconda molecola è legata alla prima: «stessa [0 1 0]» o «molecola 2 [1 0 0]»; con più frammenti π
-    anche quali («· π1–π2»), e per le coppie nella stessa molecola «intramolecolare · π1–π3»."""
+    anche quali («· π1–π2»), e per le coppie nella stessa molecola «intramolecolare · π1–π3». Nei polimeri (reti
+    estese) la «molecola» è l'unità ripetuta: «polimero · stessa unità · π1–π5» o «polimero · [0 1 0] · π2–π2»."""
     frag = f"π{pair.fa + 1}–π{pair.fb + 1}"
+    if pair.polymer:
+        t = "[" + " ".join(map(str, pair.shift)) + "]"
+        where = (tr("stessa unità") if pair.intramolecular else t if pair.a == pair.b
+                 else f"{tr('unità')} {pair.b + 1} {t}")
+        return f"{tr('polimero')} · {where} · {frag}"
     if pair.intramolecular:
         return f"{tr('intramolecolare')} · {frag}"
     t = "[" + " ".join(map(str, pair.shift)) + "]"
@@ -64,8 +70,8 @@ ALERT_TEXT = {
 }
 #: Perché un'analisi non ha coppie (`pistak.core.diagnosis`), in italiano: si traducono al momento dell'uso.
 NO_PAIRS_TEXT = {
-    "extendedOnly": "La struttura è una rete di legami estesa (polimero o solido), senza molecole separate: PISTAK "
-                    "misura le coppie tra molecole.",
+    "extendedOnly": "La struttura è una rete di legami estesa (polimero o solido) senza anelli: non c'è nessun "
+                    "frammento π da misurare.",
     "noContacts": "{n} molecole hanno un nucleo π, ma nessuna coppia di nuclei ha atomi pesanti più vicini di {limit} Å "
                   "(Soglie ▸ Contatto massimo tra atomi pesanti).",
     "noRings": "Le molecole non hanno anelli (fino a {size} atomi) e non sono planari nel complesso (scarto dal piano "
@@ -80,6 +86,10 @@ NO_PAIRS_TEXT = {
 }
 #: Che cosa resta da guardare quando non ci sono coppie.
 NO_PAIRS_HINT = "Restano disponibili, nel Dettaglio, le schede Struttura, Geometria e Controlli."
+#: Nel Dettaglio ▸ Struttura, quando c'è una rete di legami estesa.
+EXTENDED_NOTE = ("<p><i>La rete di legami non si chiude (polimero o solido esteso): non ci sono molecole separate. "
+                 "Le coppie π si cercano tra i frammenti dell'unità ripetuta (segnate «polimero»); la geometria "
+                 "intramolecolare e i gruppi di molecole non la comprendono.</i></p>")
 
 
 def no_pairs_text(reason) -> str:

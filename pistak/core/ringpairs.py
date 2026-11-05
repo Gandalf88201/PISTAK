@@ -42,13 +42,21 @@ HEADERS = {
 
 
 def ring_pairs(ctx: PairContext, max_cg: float | None = None) -> list[RingPair]:
-    """Tutte le coppie di anelli planari (uno per molecola) con Cg···Cg entro `max_cg`, dalla più vicina."""
+    """Tutte le coppie di anelli planari (uno per molecola) con Cg···Cg entro `max_cg`, dalla più vicina. Nei polimeri
+    la «molecola» è l'unità ripetuta, con molti anelli: si guardano solo quelli dei due frammenti π della coppia
+    (la numerazione degli anelli resta quella dell'unità)."""
     max_cg = max_cg if max_cg is not None else ctx.limits.ring_pair_max_distance
     ra = planar_rings(ctx.A, ctx.limits)
     rb = planar_rings(ctx.B, ctx.limits)
+    only_a = set(int(i) for i in ctx.core_a.atoms) if ctx.pair.polymer else None
+    only_b = set(int(i) for i in ctx.core_b.atoms) if ctx.pair.polymer else None
     out: list[RingPair] = []
     for ia, (atoms_a, pa) in enumerate(ra):
+        if only_a is not None and not set(int(i) for i in atoms_a) <= only_a:
+            continue
         for ib, (atoms_b, pb) in enumerate(rb):
+            if only_b is not None and not set(int(i) for i in atoms_b) <= only_b:
+                continue
             d = (pb.centroid + ctx.shift_vector) - pa.centroid
             cg = float(np.linalg.norm(d))
             if cg > max_cg or cg == 0:

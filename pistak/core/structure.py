@@ -12,9 +12,9 @@ from dataclasses import dataclass, field
 import numpy as np
 from scipy.spatial import cKDTree
 
-from pistak.core.cif import Cell, Cif, SymOp
+from pistak.core.cif import ALTERNATIVE_DISTANCE, Cell, Cif, SymOp
 from pistak.core.config import Limits
-from pistak.core.elements import covalent_radius
+from pistak.core.elements import NONMETALS, covalent_radius
 from pistak.core.errors import StructureError
 
 
@@ -126,16 +126,51 @@ def _wrap(x: np.ndarray) -> np.ndarray:
     return x - np.floor(x + 1e-9)
 
 
+def special_disorder_copies(cif: Cif, vectors: np.ndarray, limits: Limits) -> dict[tuple[str, str], set[int]]:
+    """Per ogni gruppo di disordine negativo (disordinato su un elemento di simmetria), le operazioni di simmetria le
+    cui copie del gruppo si tengono.
+
+    Il gruppo nel CIF ha occupanza parziale e la sua immagine per l'elemento di simmetria è l'altra orientazione: in un
+    sito del cristallo ce n'è una sola. Si scorrono le operazioni in ordine e si scarta intera ogni copia del gruppo
+    con un atomo a meno di `ALTERNATIVE_DISTANCE` (ma oltre `same_site`, che è lo stesso atomo) da una copia già
+    tenuta: così un sito ha un'orientazione sola e le orientazioni non si mescolano."""
+    groups: dict[tuple[str, str], list[int]] = {}
+    for ia, at in enumerate(cif.atoms):
+        if at.group.startswith("-"):
+            groups.setdefault((at.assembly, at.group), []).append(ia)
+    out: dict[tuple[str, str], set[int]] = {}
+    for key, idx in groups.items():
+        frac = np.array([cif.atoms[i].frac for i in idx])
+        kept: list[np.ndarray] = []
+        out[key] = set()
+        for k, op in enumerate(cif.symops):
+            f = _wrap(frac @ op.r.T + op.t)
+            if kept:
+                d = f[:, None, :] - np.vstack(kept)[None, :, :]
+                d -= np.round(d)
+                dist = np.linalg.norm(d @ vectors, axis=2)
+                if ((dist >= limits.same_site) & (dist < ALTERNATIVE_DISTANCE)).any():
+                    continue
+            kept.append(f)
+            out[key].add(k)
+    return out
+
+
 def fill_cell(cif: Cif, vectors: np.ndarray, limits: Limits,
               origins: list[tuple[int, int]] | None = None) -> tuple[list[str], list[str], np.ndarray]:
     """Tutti gli atomi della cella: ogni operazione di simmetria applicata a ogni atomo, senza doppioni. Se si passa
-    `origins`, vi si aggiunge per ogni atomo della cella (indice in `cif.atoms`, indice dell'operazione)."""
+    `origins`, vi si aggiunge per ogni atomo della cella (indice in `cif.atoms`, indice dell'operazione). Dei gruppi
+    di disordine su un elemento di simmetria si tiene un'orientazione per sito (`special_disorder_copies`)."""
+    special = special_disorder_copies(cif, vectors, limits)
     els: list[str] = []
     labels: list[str] = []
     buf = np.zeros((16, 3))  # posizioni frazionarie accettate finora (cresce al bisogno)
     by_el: dict[str, list[int]] = {}
     for ia, at in enumerate(cif.atoms):
+        allowed = special.get((at.assembly, at.group))
         for k, op in enumerate(cif.symops):
+            if allowed is not None and k not in allowed:
+                continue  # l'altra orientazione di un gruppo disordinato su un elemento di simmetria
             f = _wrap(op.apply(at.frac))
             idx = by_el.get(at.el)
             if idx:
@@ -190,6 +225,95 @@ def cell_bonds(els: list[str], pos: np.ndarray, vectors: np.ndarray, limits: Lim
     return edges
 
 
+#: Gli anelli fino a questa taglia (di soli non metalli) restano interi nell'unità ripetuta di una rete estesa.
+UNIT_RING_SIZE = 10
+
+Shift = tuple[int, int, int]
+
+
+def _add(a: Shift, b: Shift) -> Shift:
+    return a[0] + b[0], a[1] + b[1], a[2] + b[2]
+
+
+def _ring_bond(i: int, j: int, s: Shift, edges, organic: set[int]) -> bool:
+    """Il legame i→j (j nella cella s) chiude un anello di non metalli di al massimo `UNIT_RING_SIZE` atomi: da j si
+    torna a i nella stessa cella senza ripassare per questo legame. Un giro che torna a i in un'altra cella non è un
+    anello ma la periodicità della rete."""
+    frontier = [(j, s)]
+    seen = {(j, s)}
+    for step in range(UNIT_RING_SIZE - 1):  # un anello di n atomi: n − 1 passi da j a i
+        nxt = []
+        for a, sa in frontier:
+            for b, es in edges[a]:
+                sb = _add(sa, es)
+                if b not in organic or (step == 0 and b == i and sb == (0, 0, 0)):  # non lo stesso legame all'indietro
+                    continue
+                if b == i and sb == (0, 0, 0):
+                    return True
+                if (b, sb) not in seen:
+                    seen.add((b, sb))
+                    nxt.append((b, sb))
+        frontier = nxt
+    return False
+
+
+def _extended_unit(members: list[tuple[int, Shift]], edges, els: list[str]
+                   ) -> tuple[list[tuple[int, Shift]], list[tuple[int, int]]]:
+    """L'unità ripetuta di una rete estesa, con gli anelli e i leganti interi.
+
+    La visita in ampiezza mette ogni atomo nella cella da cui lo raggiunge per prima: se arriva a un anello da due lati
+    lungo cammini che differiscono di una traslazione, l'anello resta spezzato e i suoi frammenti π non si trovano.
+    Qui le celle si riassegnano unendo i legami per livelli (union-find con le traslazioni): prima i legami degli
+    anelli di non metalli, poi gli altri legami tra non metalli (i leganti), infine quelli con i metalli. Un legame che
+    chiude un giro con una traslazione diversa da zero è la periodicità della rete e si scarta; quelli dei livelli
+    precedenti sono già tutti coerenti, così anelli e leganti finiti restano interi. Il primo atomo resta nella cella
+    (0, 0, 0)."""
+    atoms = [i for i, _ in members]
+    inside = set(atoms)
+    organic = {i for i in atoms if els[i] in NONMETALS}
+    ranked = []
+    for i in atoms:
+        for j, es in edges[i]:
+            if j not in inside or j < i or (j == i and es < (0, 0, 0)):  # ogni legame una volta sola
+                continue
+            if i in organic and j in organic:
+                level = 0 if _ring_bond(i, j, es, edges, organic) else 1
+            else:
+                level = 2
+            ranked.append((level, i, j, es))
+    ranked.sort()
+    parent = {i: i for i in atoms}
+    off: dict[int, Shift] = {i: (0, 0, 0) for i in atoms}  # cella di i rispetto al suo genitore
+
+    def find(i: int) -> tuple[int, Shift]:
+        path = []
+        while parent[i] != i:
+            path.append(i)
+            i = parent[i]
+        root, acc = i, (0, 0, 0)
+        for k in reversed(path):  # compressione: ognuno punta alla radice con la traslazione accumulata
+            acc = _add(off[k], acc)
+            parent[k], off[k] = root, acc
+        return root, acc
+
+    for _level, i, j, es in ranked:
+        ri, oi = find(i)
+        rj, oj = find(j)
+        if ri != rj:  # cella di j = cella di i + es
+            parent[rj] = ri
+            want = _add(oi, es)
+            off[rj] = (want[0] - oj[0], want[1] - oj[1], want[2] - oj[2])
+    _, o0 = find(atoms[0])
+    cell = {}
+    for i in atoms:
+        _, oi = find(i)
+        cell[i] = (oi[0] - o0[0], oi[1] - o0[1], oi[2] - o0[2])
+    index = {i: k for k, i in enumerate(atoms)}
+    bonds = [(k, index[j]) for k, i in enumerate(atoms) for j, es in edges[i]
+             if index[j] > k and cell[j] == _add(cell[i], es)]
+    return [(i, cell[i]) for i in atoms], bonds
+
+
 def build_structure(cif: Cif, limits: Limits | None = None) -> Structure:
     """Ricompone le molecole intere partendo dagli atomi della cella e dai loro legami."""
     limits = limits or Limits()
@@ -225,6 +349,8 @@ def build_structure(cif: Cif, limits: Limits | None = None) -> Structure:
                 elif index[j] > k:
                     bonds.append((k, index[j]))
             k += 1
+        if extended:  # la visita in ampiezza può spezzare un anello tra due celle: si ricolloca l'unità ripetuta
+            members, bonds = _extended_unit(members, edges, els)
         ci = np.array([m[0] for m in members])
         cs = np.array([m[1] for m in members], dtype=int)
         pos = to_cart(vectors, frac[ci] + cs)

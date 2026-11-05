@@ -74,6 +74,11 @@ DEFAULT_COLOR = (255, 192, 203)
 # Il carbonio della seconda molecola: ciano, come nella vista 3D del sito ("cyanCarbon").
 CYAN_CARBON = (64, 208, 224)
 
+#: Non metalli e semimetalli: i legami tra loro sono quelli dei leganti organici. Nelle reti estese l'unità ripetuta
+#: tiene interi prima gli anelli, poi i leganti, e solo dopo segue i legami con i metalli (`structure.build_structure`).
+NONMETALS = frozenset({"H", "D", "B", "C", "N", "O", "F", "Si", "P", "S", "Cl", "Ge", "As", "Se", "Br", "Sb", "Te", "I",
+                       "He", "Ne", "Ar", "Kr", "Xe", "Rn", "At"})
+
 #: Mai usato per gli atomi analizzati: il lettore CIF scarta gli elementi fuori da `COVALENT_RADII`.
 DEFAULT_COVALENT = 1.5
 #: Per gli elementi senza raggio in `VDW_RADII`: un valore medio, segnalato dall'avviso G `vdwDefault`.

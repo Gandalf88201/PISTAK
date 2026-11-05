@@ -205,6 +205,9 @@ TEXT: dict[str, str] = {
     "Contatto (Å)": "Contact (Å)",
     "Coppia migliore": "Best pair",
     "Doppio clic: seleziona la coppia di frammenti migliore di quel contatto": "Double click: select the best fragment pair of that contact",
+    "polimero": "polymer",
+    "stessa unità": "same unit",
+    "unità": "unit",
     "intramolecolare": "intramolecular",
     "{a} (interna)": "{a} (internal)",
     "{n} frammenti π per molecola": "{n} π fragments per molecule",
@@ -308,8 +311,8 @@ TEXT: dict[str, str] = {
     "Coppia {n}: {kind}": "Pair {n}: {kind}",
     "{n} con nucleo π": "{n} with π core",
     "{n} direzioni": "{n} directions",
-    "<p><i>La rete di legami non si chiude (polimero o solido esteso): quelle parti sono escluse.</i></p>":
-        "<p><i>The bond network does not close (polymer or extended solid): those parts are excluded.</i></p>",
+    "<p><i>La rete di legami non si chiude (polimero o solido esteso): non ci sono molecole separate. Le coppie π si cercano tra i frammenti dell'unità ripetuta (segnate «polimero»); la geometria intramolecolare e i gruppi di molecole non la comprendono.</i></p>":
+        "<p><i>The bond network does not close (polymer or extended solid): there are no separate molecules. π pairs are searched between fragments of the repeat unit (marked “polymer”); intramolecular geometry and molecule groups leave it out.</i></p>",
     "{n} atomi di componenti disordinate secondarie ignorati.": "{n} atoms of secondary disordered components ignored.",
     "<b>Plugin {n}</b> non caricato:": "<b>Plugin {n}</b> failed to load:",
     "<b>Parametro {k}</b> ha dato errori:": "<b>Parameter {k}</b> raised errors:",
@@ -467,10 +470,10 @@ TEXT: dict[str, str] = {
     "Contatto più corto tra i nuclei": "Shortest contact between cores",
     "Distanza minima tra atomi dei due nuclei π.": "Minimum distance between atoms of the two π cores.",
     "Contatto C···C più corto": "Shortest C···C contact",
-    "Distanza minima tra due atomi di carbonio delle due molecole (NaN se mancano).": "Minimum distance between two carbon atoms of the two molecules (NaN if there are none).",
+    "Distanza minima tra due atomi di carbonio delle due molecole (NaN se mancano; nella stessa molecola o in un polimero, tra i due frammenti π).": "Minimum distance between two carbon atoms of the two molecules (NaN if there are none; within one molecule or in a polymer, between the two π fragments).",
     "Contatti sotto vdW": "Contacts below vdW",
-    "Numero di coppie di atomi pesanti, uno per molecola, più vicine della somma dei raggi di van der Waals.":
-        "Number of heavy-atom pairs, one per molecule, closer than the sum of the van der Waals radii.",
+    "Numero di coppie di atomi pesanti, uno per molecola, più vicine della somma dei raggi di van der Waals (nella stessa molecola o in un polimero, tra i due frammenti π).":
+        "Number of heavy-atom pairs, one per molecule, closer than the sum of the van der Waals radii (within one molecule or in a polymer, between the two π fragments).",
     "Area di sovrapposizione": "Overlap area",
     "Area dell'intersezione dei contorni dei due nuclei, proiettati sul piano medio.": "Area of the intersection of the outlines of the two cores, projected on the mean plane.",
     "Sovrapposizione / nucleo minore": "Overlap / smaller core",
@@ -692,8 +695,8 @@ TEXT: dict[str, str] = {
     "Nessuna coppia di nuclei π da mostrare": "No π-core pairs to show",
     "Restano disponibili, nel Dettaglio, le schede Struttura, Geometria e Controlli.":
         "The Structure, Geometry and Checks tabs of the Detail view are still available.",
-    "La struttura è una rete di legami estesa (polimero o solido), senza molecole separate: PISTAK misura le coppie tra molecole.":
-        "The structure is an extended bond network (polymer or solid) with no separate molecules: PISTAK measures pairs between molecules.",
+    "La struttura è una rete di legami estesa (polimero o solido) senza anelli: non c'è nessun frammento π da misurare.":
+        "The structure is an extended bond network (polymer or solid) with no rings: there is no π fragment to measure.",
     "{n} molecole hanno un nucleo π, ma nessuna coppia di nuclei ha atomi pesanti più vicini di {limit} Å (Soglie ▸ Contatto massimo tra atomi pesanti).":
         "{n} molecules have a π core, but no pair of cores has heavy atoms closer than {limit} Å (Thresholds ▸ Maximum contact between heavy atoms).",
     "Le molecole non hanno anelli (fino a {size} atomi) e non sono planari nel complesso (scarto dal piano medio {rms} Å, soglia {limit} Å): non c'è un nucleo π.":

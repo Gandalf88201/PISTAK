@@ -1,0 +1,35 @@
+== coppie di anelli: PISTAK contro PLATON CALC ALL ==
+  1505468: PISTAK 17 coppie di anelli, abbinate 6; PLATON 8 intermolecolari, classi non trovate da PISTAK 0; scarto max cg 0.0013, alpha 0.0456, beta 0.0580, gamma 0.0560, perp_a 0.0012, perp_b 0.0005, slip 0.0000
+  1521307: PLATON senza anelli (CIF non letto?)
+  1538535: PLATON senza anelli (CIF non letto?)
+  1540198: PLATON senza anelli (CIF non letto?)
+  1547968: PISTAK 1 coppie di anelli, abbinate 0; PLATON 0 intermolecolari, classi non trovate da PISTAK 0; scarto max cg 0.0000, alpha 0.0000, beta 0.0000, gamma 0.0000, perp_a 0.0000, perp_b 0.0000, slip 0.0000
+  2108013: PLATON senza anelli (CIF non letto?)
+  4308247: PISTAK 69 coppie di anelli, abbinate 49; PLATON 83 intermolecolari, classi non trovate da PISTAK 4; scarto max cg 0.0013, alpha 0.0527, beta 0.0505, gamma 0.0705, perp_a 0.0013, perp_b 0.0009, slip 0.0021
+  4326269: PISTAK 23 coppie di anelli, abbinate 23; PLATON 18 intermolecolari, classi non trovate da PISTAK 0; scarto max cg 0.0008, alpha 0.0495, beta 0.0468, gamma 0.0361, perp_a 0.0005, perp_b 0.0006, slip 0.0000
+  4326811: PLATON senza anelli (CIF non letto?)
+  4339142: PISTAK 121 coppie di anelli, abbinate 0; PLATON 4 intermolecolari, classi non trovate da PISTAK 3; scarto max cg 0.0000, alpha 0.0000, beta 0.0000, gamma 0.0000, perp_a 0.0000, perp_b 0.0000, slip 0.0000
+  7004350: PISTAK 49 coppie di anelli, abbinate 48; PLATON 31 intermolecolari, classi non trovate da PISTAK 6; scarto max cg 0.0005, alpha 0.0048, beta 0.0499, gamma 0.0472, perp_a 0.0001, perp_b 0.0001, slip 0.0006
+  7022074: PLATON senza anelli (CIF non letto?)
+  7024607: PISTAK 5 coppie di anelli, abbinate 5; PLATON 5 intermolecolari, classi non trovate da PISTAK 0; scarto max cg 0.0007, alpha 0.0312, beta 0.0468, gamma 0.0571, perp_a 0.0012, perp_b 0.0007, slip 0.0008
+  7027871: PISTAK 3 coppie di anelli, abbinate 2; PLATON 3 intermolecolari, classi non trovate da PISTAK 0; scarto max cg 0.0001, alpha 0.0048, beta 0.0347, gamma 0.0227, perp_a 0.0001, perp_b 0.0001, slip 0.0000
+  7033853: PISTAK 16 coppie di anelli, abbinate 6; PLATON 17 intermolecolari, classi non trovate da PISTAK 3; scarto max cg 0.0001, alpha 0.0035, beta 0.0428, gamma 0.0473, perp_a 0.0002, perp_b 0.0001, slip 0.0006
+  7042499: PISTAK 4 coppie di anelli, abbinate 3; PLATON 4 intermolecolari, classi non trovate da PISTAK 0; scarto max cg 0.0001, alpha 0.0300, beta 0.0442, gamma 0.0442, perp_a 0.0000, perp_b 0.0000, slip 0.0000
+  7049421: PISTAK 31 coppie di anelli, abbinate 25; PLATON 51 intermolecolari, classi non trovate da PISTAK 9; scarto max cg 0.0005, alpha 0.0505, beta 0.0469, gamma 0.0469, perp_a 0.0002, perp_b 0.0002, slip 0.0004
+  7101986: PISTAK 2 coppie di anelli, abbinate 1; PLATON 2 intermolecolari, classi non trovate da PISTAK 0; scarto max cg 0.0001, alpha 0.0168, beta 0.0337, gamma 0.0344, perp_a 0.0001, perp_b 0.0004, slip 0.0000
+  7102228: PISTAK 128 coppie di anelli, abbinate 8; PLATON 69 intermolecolari, classi non trovate da PISTAK 47; scarto max cg 0.0010, alpha 0.0441, beta 0.0495, gamma 0.0495, perp_a 0.0009, perp_b 0.0011, slip 0.0012
+  7109544: PISTAK 10 coppie di anelli, abbinate 2; PLATON 23 intermolecolari, classi non trovate da PISTAK 14; scarto max cg 0.0004, alpha 0.0542, beta 0.0217, gamma 0.0246, perp_a 0.0002, perp_b 0.0003, slip 0.0000
+  7117874: PISTAK 2 coppie di anelli, abbinate 2; PLATON 2 intermolecolari, classi non trovate da PISTAK 1; scarto max cg 0.0006, alpha 34.0007, beta 27.4135, gamma 34.2263, perp_a 1.9190, perp_b 0.3084, slip 0.0000
+  7205341: PISTAK 19 coppie di anelli, abbinate 19; PLATON 20 intermolecolari, classi non trovate da PISTAK 0; scarto max cg 0.0005, alpha 0.0300, beta 0.0489, gamma 0.0489, perp_a 0.0001, perp_b 0.0001, slip 0.0005
+  7211811: PISTAK 2 coppie di anelli, abbinate 2; PLATON 4 intermolecolari, classi non trovate da PISTAK 0; scarto max cg 0.0002, alpha 0.0388, beta 0.0340, gamma 0.0368, perp_a 0.0002, perp_b 0.0003, slip 0.0005
+  7213949: PISTAK 12 coppie di anelli, abbinate 7; PLATON 40 intermolecolari, classi non trovate da PISTAK 19; scarto max cg 0.0005, alpha 0.0165, beta 0.0462, gamma 0.0516, perp_a 0.0001, perp_b 0.0001, slip 0.0002
+  7232475: PISTAK 7 coppie di anelli, abbinate 7; PLATON 17 intermolecolari, classi non trovate da PISTAK 3; scarto max cg 0.0008, alpha 0.1000, beta 0.0283, gamma 0.0466, perp_a 0.0006, perp_b 0.0007, slip 0.0008
+  7232723: PISTAK 11 coppie di anelli, abbinate 2; PLATON 10 intermolecolari, classi non trovate da PISTAK 6; scarto max cg 0.0009, alpha 0.0262, beta 0.0291, gamma 0.0291, perp_a 0.0003, perp_b 0.0005, slip 0.0000
+  totale, scarto massimo e mediano (PISTAK − PLATON):
+    cg      n =  217  max 0.0013  mediana 0.0002
+    alpha   n =  217  max 34.0007  mediana 0.0048
+    beta    n =  217  max 27.4135  mediana 0.0265
+    gamma   n =  217  max 34.2263  mediana 0.0209
+    perp_a  n =  217  max 1.9190  mediana 0.0001
+    perp_b  n =  217  max 0.3084  mediana 0.0001
+    slip    n =  103  max 0.0021  mediana 0.0003

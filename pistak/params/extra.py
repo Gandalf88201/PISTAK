@@ -79,16 +79,26 @@ def core_contact(ctx):
     return float(cdist(pa, pb).min())
 
 
-@parameter("cc_contact", "Contatto C···C più corto", "Å", "Distanza minima tra due atomi di carbonio delle due molecole (NaN se mancano).", 2, "contatti")
+def _contact_atoms(ctx, which: str) -> list[int]:
+    """Gli atomi tra cui cercare i contatti: tutta la molecola, o solo il frammento π se le due «molecole» sono
+    legate tra loro (coppia nella stessa molecola, o unità di una rete estesa), dove gli altri atomi sono legami."""
+    mol, core = (ctx.A, ctx.core_a) if which == "a" else (ctx.B, ctx.core_b)
+    if ctx.pair.intramolecular or ctx.pair.polymer:
+        return [int(i) for i in core.atoms]
+    return list(range(len(mol.el)))
+
+
+@parameter("cc_contact", "Contatto C···C più corto", "Å", "Distanza minima tra due atomi di carbonio delle due molecole (NaN se mancano; nella stessa molecola o in un polimero, tra i due frammenti π).", 2, "contatti")
 def cc_contact(ctx):
-    ia = [i for i, e in enumerate(ctx.A.el) if e == "C"]
-    ib = [i for i, e in enumerate(ctx.B.el) if e == "C"]
+    ia = [i for i in _contact_atoms(ctx, "a") if ctx.A.el[i] == "C"]
+    ib = [i for i in _contact_atoms(ctx, "b") if ctx.B.el[i] == "C"]
     return float(cdist(ctx.pos_a[ia], ctx.pos_b[ib]).min()) if ia and ib else float("nan")
 
 
-@parameter("n_vdw_contacts", "Contatti sotto vdW", "", "Numero di coppie di atomi pesanti, uno per molecola, più vicine della somma dei raggi di van der Waals.", 0, "contatti")
+@parameter("n_vdw_contacts", "Contatti sotto vdW", "", "Numero di coppie di atomi pesanti, uno per molecola, più vicine della somma dei raggi di van der Waals (nella stessa molecola o in un polimero, tra i due frammenti π).", 0, "contatti")
 def n_vdw_contacts(ctx):
-    ha, hb = np.flatnonzero(ctx.A.heavy), np.flatnonzero(ctx.B.heavy)
+    ha = np.array([i for i in _contact_atoms(ctx, "a") if ctx.A.el[i] != "H"], dtype=int)
+    hb = np.array([i for i in _contact_atoms(ctx, "b") if ctx.B.el[i] != "H"], dtype=int)
     ra = np.array([vdw_radius(ctx.A.el[i]) for i in ha])
     rb = np.array([vdw_radius(ctx.B.el[i]) for i in hb])
     d = cdist(ctx.pos_a[ha], ctx.pos_b[hb])

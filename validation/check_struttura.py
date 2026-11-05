@@ -71,6 +71,19 @@ def check_cell() -> None:
 _CHARGE = re.compile(r"^\d*[+-]\d*$")
 
 
+def _with_groups(text: str) -> Counter:
+    """Formula con gruppi tra parentesi e moltiplicatore: '[Sn (C6 H5) (C H3)2]' → Sn C8 H11 (i due metili contano due
+    volte; `parse_formula` di PISTAK legge solo _chemical_formula_sum, che le parentesi non le ha)."""
+    total: Counter = Counter()
+    for inner, mult in re.findall(r"\(([^()]*)\)\s*(\d*)", text):
+        for e, n in parse_formula(inner).items():
+            total[e] += n * (int(mult) if mult else 1)
+    rest = re.sub(r"\(([^()]*)\)\s*\d*", " ", text).replace("[", " ").replace("]", " ")
+    for e, n in parse_formula(rest).items():
+        total[e] += n
+    return total
+
+
 def moiety_formulas(text: str) -> list[tuple[int, Counter]]:
     """'C20 H24 N4 2+, 2(Cl -), 0.5(C H2 Cl2)' → [(1, C20H24N4), (2, Cl), (0.5, CH2Cl2)] (senza cariche)."""
     out = []
@@ -82,7 +95,7 @@ def moiety_formulas(text: str) -> list[tuple[int, Counter]]:
             mult = float(m.group(1)) if m.group(1) else 1.0
             part = m.group(2)
         tokens = [t for t in part.split() if not _CHARGE.match(t)]
-        counts = Counter({e: n for e, n in parse_formula(" ".join(tokens)).items()})
+        counts = _with_groups(" ".join(tokens))
         if counts:
             out.append((mult, counts))
     return out
