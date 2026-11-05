@@ -366,5 +366,5 @@ def vdw_contacts(s: Structure, cif: Cif, molecules: list[int] | None = None, inc
                 places = ((mi, (0, 0, 0), a), (mj, tuple(int(x) for x in sh - cs), ij))
                 out.append(GeometryItem("contact", mi, (m.labels[a], s.cell_labels[j]), d, prop(distance, p, cells),
                                         codes, lim, places))
-    out.sort(key=lambda g: (g.delta, g.atoms))
+    out.sort(key=lambda g: (round(g.delta, 6), g.atoms))  # contatti equivalenti: decidono le etichette, su ogni macchina
     return out

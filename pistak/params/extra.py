@@ -36,7 +36,8 @@ def lat_slip_signed(ctx):
 
 @parameter("slip_direction", "Direzione dello slittamento con segno", "°", "Angolo di s nel piano, da L verso W (−180…180°): distingue i quattro quadranti che «Direzione dello slittamento» confonde.", 1, G)
 def slip_direction(ctx):
-    return float(np.degrees(np.arctan2(ctx.slip_vector @ ctx.frame.W, ctx.slip_vector @ ctx.frame.L)))
+    a = float(np.degrees(np.arctan2(ctx.slip_vector @ ctx.frame.W, ctx.slip_vector @ ctx.frame.L)))
+    return a + 360.0 if a <= -180.0 + 1e-6 else a  # in (−180, 180]: lo zero con segno non decide tra −180 e 180
 
 
 @parameter("beta", "β (Cg→normale A)", "°", "Angolo tra il vettore tra i centroidi e la normale del nucleo A (β di PLATON e Janiak).", 1, G)

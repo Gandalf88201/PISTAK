@@ -183,7 +183,9 @@ def _measure(s: Structure, ca: Core, cb0: Core, a: int, b: int, shift: Shift, li
     d = cb.centroid - ca.centroid
     z = float(np.dot(d, f.n))
     sv = d - f.n * z
-    dihedral = float(np.degrees(np.arccos(min(1.0, abs(np.dot(ca.normal, cb.normal))))))
+    # atan2(|a×b|, |a·b|) invece di arccos(|a·b|): stessa grandezza, ma precisa anche vicino a 0° (arccos lì perde
+    # metà delle cifre: 1e-6° su una macchina, 0 su un'altra)
+    dihedral = float(np.degrees(np.arctan2(np.linalg.norm(np.cross(ca.normal, cb.normal)), abs(np.dot(ca.normal, cb.normal)))))
     qa = f.project(pa[ca.atoms])[:, :2]
     qb = f.project(pb[cb.atoms])[:, :2]
     hull_a, hull_b = convex_hull(qa), convex_hull(qb)

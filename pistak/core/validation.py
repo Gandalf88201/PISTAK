@@ -243,9 +243,12 @@ def _contacts(a: Analysis) -> list[Alert]:
         if rule is None or d >= rule[0] or key in seen:
             continue
         seen.add(key)
-        found.setdefault(pair, []).append(f"{key[0]}···{key[1]} {d:.2f}")  # type: ignore[arg-type]
-    return [Alert("shortContact", SHORT_CONTACTS[p][1], {"pair": f"{p[0]}···{p[1]}", "limit": SHORT_CONTACTS[p][0],
-                                                         "n": len(v), "contacts": _labels(v, 4)}) for p, v in found.items()]
+        found.setdefault(pair, []).append(key)  # type: ignore[arg-type]
+    # dal più corto, poi per etichette: l'ordine della ricerca dei vicini cambia da una macchina all'altra
+    return [Alert("shortContact", SHORT_CONTACTS[p][1], {
+        "pair": f"{p[0]}···{p[1]}", "limit": SHORT_CONTACTS[p][0], "n": len(v),
+        "contacts": _labels([f"{x}···{y} {d:.2f}" for x, y, d in sorted(v, key=lambda k: (k[2], k[0], k[1]))], 4),
+    }) for p, v in sorted(found.items())]
 
 
 def _vdw_contacts(a: Analysis, margin: float) -> list[Alert]:

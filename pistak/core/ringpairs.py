@@ -61,4 +61,6 @@ def ring_pairs(ctx: PairContext, max_cg: float | None = None) -> list[RingPair]:
                 acute_angle_deg(pa.normal, pb.normal), acute_angle_deg(d, pa.normal), acute_angle_deg(d, pb.normal),
                 perp_a, perp_b, float(np.sqrt(max(0.0, cg ** 2 - perp_a ** 2))), closest,
             ))
-    return sorted(out, key=lambda r: r.cg_distance)
+    # a parità di Cg···Cg (anelli equivalenti per simmetria) decidono gli indici, non l'ultima cifra del calcolo:
+    # stesso ordine su ogni macchina
+    return sorted(out, key=lambda r: (round(r.cg_distance, 6), r.ring_a, r.ring_b))

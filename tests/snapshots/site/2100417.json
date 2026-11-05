@@ -376,7 +376,7 @@
     "core_size_a": 18.0,
     "core_size_b": 18.0,
     "count": 16.0,
-    "dihedral": 0.0,
+    "dihedral": 8.399712315e-15,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
     "gamma": 82.31016961,
@@ -495,7 +495,7 @@
     "core_size_a": 18.0,
     "core_size_b": 18.0,
     "count": 8.0,
-    "dihedral": 1.20741827e-06,
+    "dihedral": 0.0,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
     "gamma": 58.85007508,
@@ -513,7 +513,7 @@
     "overlap_ratio": 0.3267132553,
     "slip": 6.155889351,
     "slip_angle": 1.632306166e-15,
-    "slip_direction": -180.0
+    "slip_direction": 180.0
    },
    "ring_pairs": [
     {
@@ -875,7 +875,7 @@
      "closest": 3.681623408,
      "gamma": 64.09134751,
      "rings": [
-      6,
+      5,
       2
      ],
      "sizes": [
@@ -891,7 +891,7 @@
      "closest": 3.681623408,
      "gamma": 64.09134751,
      "rings": [
-      5,
+      6,
       2
      ],
      "sizes": [

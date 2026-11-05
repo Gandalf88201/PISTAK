@@ -4,7 +4,7 @@
    "C",
    "shortContact",
    {
-    "contacts": "C3···C4 2.91, C2···C4 2.47, C1···C4 2.34, C1···C3 2.77 (+9)",
+    "contacts": "C1···C4 2.34, C2···C5 2.34, C3···C6 2.34, C3···C5 2.42 (+9)",
     "limit": 3.0,
     "n": 13,
     "pair": "C···C"
@@ -637,7 +637,7 @@
     "core_size_a": 14.0,
     "core_size_b": 14.0,
     "count": 4.0,
-    "dihedral": 1.20741827e-06,
+    "dihedral": 0.0,
     "fragment_a": 1.0,
     "fragment_b": 1.0,
     "gamma": 67.47716653,
