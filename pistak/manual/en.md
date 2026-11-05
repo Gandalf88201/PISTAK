@@ -551,7 +551,12 @@ dimer of the selected pair, to compute its interaction energy.
   with ghost atoms; Psi4: `bsse_type='cp'`; Gaussian: `Counterpoise=2` with fragments (Gaussian has no D4).
 * **SAPT** (Psi4 only, default SAPT0/jun-cc-pVDZ): the energy split into electrostatics, exchange, induction and
   dispersion, useful to understand *why* a stack is stable.
-* Charges and multiplicities of the monomers, processors and memory go into the program headers.
+* Charges and multiplicities of the monomers, processors and memory go into the program headers. The dimer
+  multiplicity is high-spin by default (m_A + m_B − 1): for a radical pair choose it (`--dimer-mult`, "Dimer
+  multiplicity"; for two doublets 1 = singlet, 3 = triplet), because the interaction energy depends on it. For ORCA
+  `%maxcore` is 75 % of the memory per process (ORCA sometimes exceeds it).
+* The monomers are the **whole molecules**, also for a pair between π fragments of larger molecules: say so next
+  to every energy you report.
 
 The file starts with a comment saying where it comes from (CIF, block, pair, distances, moved hydrogens) and is pure
 ASCII; like the other exports, comments and file name are in English in every language
@@ -563,13 +568,13 @@ ASCII; like the other exports, comments and file name are in English in every la
 # interplanar 3.914 A, slip L 3.869 A, W 0.804 A, angle 0.0 deg, contact 3.922 A
 # X-H distances set to neutron values (20 hydrogens moved)
 # experimental crystal geometry, not optimised
+# monomers are the two whole molecules of the pair
+# charge 0, multiplicity 1
 # DFT-D with counterpoise correction (Boys-Bernardi): E_int = E(AB) - E(A in AB basis) - E(B in AB basis)
 # --- dimer AB
 ! B3LYP D3BJ def2-TZVP TightSCF DefGrid2
 %pal nprocs 4 end
-%maxcore 1000
-* xyz 0 1
-C          -0.93338175     0.74220151     0.73344970
+%maxcore 750
 ```
 
 On the command line, for example all the stacks of a file as SAPT inputs for Psi4:

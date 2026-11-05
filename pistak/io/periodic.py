@@ -110,7 +110,7 @@ def periodic_cell(analysis: Analysis, options: PeriodicOptions | None = None) ->
     notes = [
         f"PISTAK: {analysis.name} [{analysis.cif.name}] space group {analysis.cif.space_group or '?'}, written in P1",
         f"cell a={c.a:.4f} b={c.b:.4f} c={c.c:.4f} alpha={c.alpha:.3f} beta={c.beta:.3f} gamma={c.gamma:.3f}, {len(el)} atoms",
-        f"X-H distances set to neutron values ({moved} hydrogens moved)" if options.normalize_h
+        f"X-H distances set to neutron values ({moved} hydrogens moved, as for the dimers)" if options.normalize_h
         else "X-H distances as in the CIF (X-ray: usually too short)",
         "experimental crystal geometry, not optimised",
     ]
@@ -146,6 +146,8 @@ def _vasp(cell: PeriodicCell, o: PeriodicOptions, name: str) -> dict[str, str]:
         incar.append(f"IVDW = {_VASP_IVDW[o.dispersion]}")
     if o.task != "scf":
         incar += ["IBRION = 2", f"ISIF = {3 if o.task == 'vc-relax' else 2}", "NSW = 200", "EDIFFG = -0.01"]
+    incar.append(f"# KPOINTS from a length of {o.kpoint_length:g} A and ENCUT {o.cutoff or 600:g} eV: convenience "
+                 "defaults for molecular insulators, not convergence tests")
     incar.append("# POTCAR: concatenate the PAW potentials in the order of POSCAR line 6 (" + " ".join(e for e, _ in counts) + ")")
     k = cell.kpoints(o.kpoint_length)
     kpoints = [f"Gamma-centred grid from k-point length {o.kpoint_length:g} A", "0", "Gamma", " ".join(map(str, k)), "0 0 0"]
@@ -168,7 +170,11 @@ def _qe(cell: PeriodicCell, o: PeriodicOptions, prefix: str) -> str:
         lines += ["&CELL", "  cell_dofree = 'all'", "/"]
     # i commenti stanno tra le schede (pw.x salta le righe che iniziano con #), non prima delle namelist
     lines += [f"# {n}" for n in cell.notes]
-    lines += ["# pseudopotentials: set the file names below (e.g. from the SSSP library) and pseudo_dir"]
+    lines += ["# pseudopotentials: set the file names below (e.g. from the SSSP library) and pseudo_dir",
+              "# ecutrho = 8 x ecutwfc assumes ultrasoft/PAW pseudopotentials; with norm-conserving ones use 4 x "
+              "(the pw.x default)",
+              f"# k-point grid from a length of {o.kpoint_length:g} A: a convenience default for molecular insulators, "
+              "not a convergence test"]
     lines += ["ATOMIC_SPECIES"] + [f"  {e:<3} {atomic_mass(e):9.4f}  {e}.UPF" for e in cell.species()]
     lines += ["CELL_PARAMETERS angstrom"] + [_vec(v) for v in cell.vectors]
     lines += ["ATOMIC_POSITIONS crystal"] + [f"  {e:<3} {_vec(f)}" for e, f in zip(cell.el, cell.frac)]
@@ -180,6 +186,7 @@ def _cp2k(cell: PeriodicCell, o: PeriodicOptions, prefix: str) -> str:
     run = {"scf": "ENERGY", "relax": "GEO_OPT", "vc-relax": "CELL_OPT"}[o.task]
     lines = [f"# {n}" for n in cell.notes]
     short = [n for n, x in zip("ABC", cell.lengths) if x < o.kpoint_length / 2]
+    lines.append("# CUTOFF 600 Ry / REL_CUTOFF 60 Ry and Gamma-only sampling are convenience defaults, not convergence tests")
     lines.append("# Gamma point only" + (f": cell edge(s) {', '.join(short)} shorter than {o.kpoint_length / 2:g} A, "
                                           "consider a supercell" if short else ""))
     lines += ["&GLOBAL", f"  PROJECT {prefix}", f"  RUN_TYPE {run}", "  PRINT_LEVEL LOW", "&END GLOBAL", "&FORCE_EVAL",
@@ -224,6 +231,7 @@ def _crystal(cell: PeriodicCell, o: PeriodicOptions, analysis: Analysis) -> tupl
     k = max(cell.kpoints(o.kpoint_length))
     lines += ["SHRINK", f"{k} {2 * k}", "TOLDEE", "8", "END"]
     head = [f"# {n}" for n in cell.notes]  # CRYSTAL non legge commenti: le note vanno in un file a parte
+    head.append(f"# SHRINK {k} from a k-point length of {o.kpoint_length:g} A: a convenience default, not a convergence test")
     return "\n".join(lines) + "\n", "\n".join(head) + "\n"
 
 

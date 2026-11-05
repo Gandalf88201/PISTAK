@@ -345,7 +345,8 @@ def cmd_qc(args) -> int:
         if len(charges) != 2 or len(mults) != 2:
             raise ValueError("--charges/--mult: due valori, A,B")
         options = qc.QCOptions(args.program, args.method, args.functional, args.dispersion, args.basis or "",
-                               args.sapt_level, not args.no_cp, not args.raw_h, charges, mults, args.nprocs, args.mem)
+                               args.sapt_level, not args.no_cp, not args.raw_h, charges, mults, args.nprocs, args.mem,
+                               args.dimer_mult)
         options.check()
         if args.pair:
             pairs = [a.pairs[n - 1] for n in _pair_list(args.pair) if 1 <= n <= len(a.pairs)]
@@ -483,6 +484,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--raw-h", action="store_true", help=tr("lascia le distanze X–H del CIF (non normalizzate)"))
     p.add_argument("--charges", default="0,0", help=tr("cariche dei monomeri A,B"))
     p.add_argument("--mult", default="1,1", help=tr("molteplicità dei monomeri A,B"))
+    p.add_argument("--dimer-mult", type=int, default=0,
+                   help=tr("molteplicità del dimero (0: alto spin; per due radicali 1 = singoletto, 3 = tripletto)"))
     p.add_argument("--nprocs", type=int, default=4)
     p.add_argument("--mem", type=int, default=4, help=tr("memoria in GB"))
     p.add_argument("-o", "--output", help=tr("file (una coppia) o cartella (più coppie); senza: su stdout"))

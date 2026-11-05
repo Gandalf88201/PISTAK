@@ -145,3 +145,24 @@ def test_commenti_in_inglese_in_ogni_lingua(herring):
         texts.append(qc.dimer_input(a, p, qc.QCOptions("orca")))
     i18n.set_language("it")
     assert texts[0] == texts[1] and "# PISTAK: herringbone_anthracene.cif [herringbone] pair 1 (stack)" in texts[0]
+
+
+def test_molteplicita_del_dimero(herring):
+    a, p = herring
+    # due doppietti: alto spin (tripletto) per impostazione, singoletto se richiesto; la nota lo dice
+    hs = qc.dimer_input(a, p, qc.QCOptions("orca", multiplicities=(2, 2)))
+    assert "* xyz 0 3" in hs and "high-spin coupling" in hs
+    singlet = qc.dimer_input(a, p, qc.QCOptions("orca", multiplicities=(2, 2), dimer_multiplicity=1))
+    assert "* xyz 0 1" in singlet and "* xyz 0 2" in singlet and "high-spin" not in singlet
+    g = qc.dimer_input(a, p, qc.QCOptions("gaussian", multiplicities=(2, 2), dimer_multiplicity=1))
+    assert "\n0 1 0 2 0 2\n" in g
+    for bad in (2, 5):  # due doppietti: solo 1 o 3
+        with pytest.raises(qc.QCError):
+            qc.dimer_input(a, p, qc.QCOptions("orca", multiplicities=(2, 2), dimer_multiplicity=bad))
+
+
+def test_maxcore_con_margine(herring):
+    a, p = herring
+    text = qc.dimer_input(a, p, qc.QCOptions("orca", nprocs=4, memory_gb=8))
+    assert "%maxcore 1500" in text  # 8 GB / 4 processi = 2000 MB, il 75 %
+    assert "monomers are the two whole molecules" in text

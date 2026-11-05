@@ -66,6 +66,10 @@ class QCDialog(QDialog):
         self.normalize_h.setChecked(o.normalize_h)
         charges, self.qa, self.qb = _pair(-9, o.charges)
         mults, self.ma, self.mb = _pair(1, o.multiplicities)
+        self.dimer_mult = QSpinBox()
+        self.dimer_mult.setRange(0, 9)
+        self.dimer_mult.setSpecialValueText(tr("alto spin"))
+        self.dimer_mult.setValue(o.dimer_multiplicity)
         self.nprocs = QSpinBox()
         self.nprocs.setRange(1, 256)
         self.nprocs.setValue(o.nprocs)
@@ -86,6 +90,7 @@ class QCDialog(QDialog):
         form.addRow("", self.normalize_h)
         form.addRow(tr("Cariche"), charges)
         form.addRow(tr("Molteplicità"), mults)
+        form.addRow(tr("Molteplicità del dimero"), self.dimer_mult)
         form.addRow(tr("Processori"), self.nprocs)
         form.addRow(tr("Memoria"), self.memory)
         note = QLabel(tr("I monomeri sono le due molecole intere della coppia, nella geometria del cristallo. "
@@ -124,4 +129,4 @@ class QCDialog(QDialog):
             dispersion=self.dispersion.currentData(), basis=self.basis.text().strip(), sapt_level=self.sapt_level.currentData(),
             counterpoise=self.counterpoise.isChecked(), normalize_h=self.normalize_h.isChecked(),
             charges=(self.qa.value(), self.qb.value()), multiplicities=(self.ma.value(), self.mb.value()),
-            nprocs=self.nprocs.value(), memory_gb=self.memory.value())
+            nprocs=self.nprocs.value(), memory_gb=self.memory.value(), dimer_multiplicity=self.dimer_mult.value())

@@ -12,6 +12,7 @@ verifica chiusa; sotto la tabella, per ogni voce, l'oracolo usato e il risultato
 .venv/bin/python validation/check_struttura.py           # sezioni 1–3: cella, formule, cella obliqua, anelli, raggi
 .venv/bin/python validation/check_platon.py              # sezioni 4–5: coppie di anelli contro PLATON CALC ALL
 .venv/bin/python validation/check_incertezze.py          # sezione 6: Monte Carlo, geometria contro le tabelle _geom_
+.venv/bin/python validation/check_export.py              # sezione 7: file per ORCA/Psi4/Gaussian e codici periodici
 ```
 
 Gli oracoli non usano `pistak.core`: geometria ricalcolata con numpy, topologia nota dei policicli, tensore metrico,
@@ -42,6 +43,10 @@ conti a mano.
 | 21 | core/validation.py | ADDSYM su strutture disordinate: la componente tenuta da `major` aveva più simmetria del modello, avviso A falso (COD 1530955, 1531236; PLATON non trova nulla) | P2 | **Corretto** | Come PLATON, atomi con occupanza parziale esclusi; oltre metà esclusi, avviso G `addsymDisorder` |
 | 22 | manuale, README | «pre-checkCIF» e livelli A/B/C/G fanno pensare agli alert ufficiali IUCr | P2 | **Corretto** | Detto nel manuale (it, en) e nei README che soglie e controlli sono di PISTAK |
 | 23 | core/validation.py | `TRIPLE_CX` = 1,18 Å e `SP_ANGLE` = 150°: valori motivati (C≡N, C≡O 1,13–1,17 Å; C=O da 1,19 Å; sp 180°, sp² 120°) ma senza una tabella citata | P3 | **Aperto** | Controllare sulle tabelle di Allen et al. 1987 |
+| 24 | io/qc.py | Molteplicità del dimero fissata all'accoppiamento ad alto spin: per due radicali l'energia dipende dalla scelta singoletto/tripletto | P1 (energie di radicali) | **Corretto** | Opzione `dimer_multiplicity` (API, `--dimer-mult`, finestra), controllata contro gli spin dei monomeri; il predefinito resta l'alto spin, scritto nel file |
+| 25 | io/qc.py | `%maxcore` ORCA = memoria totale / processi, senza margine (ORCA a volte lo supera) | P2 | **Corretto** | 75 % della memoria per processo, come consigliano i centri di calcolo; MB per processo verificato |
+| 26 | io/qc.py, io/periodic.py | Nei file non era scritto che i monomeri sono molecole intere, quanti H restano come nel CIF, che `ecutrho` = 8 × presuppone pseudopotenziali ultrasoft/PAW, che punti k, cutoff e Γ di CP2K sono valori di comodo | P2 | **Corretto** | Righe di commento in ogni file (CRYSTAL: nel `.notes.txt`); manuale |
+| 27 | io/qc.py, io/periodic.py | Esecuzione reale con ORCA, Psi4, Gaussian, VASP, QE, CP2K, CRYSTAL | P1 | **Aperto** | I programmi non sono installati qui; servono una prova per programma (dimero di benzene, cella del naftalene) e il confronto CP ORCA contro Psi4 |
 
 ## 1. `beta_b` etichettato γ
 
@@ -379,4 +384,33 @@ di raffinamento considera tale e PISTAK no (Cu–Cl a 3,0 Å, Na–O, Ag–O, un
   C2/c): PISTAK e PLATON ritrovano lo stesso gruppo in tutti e sei i casi. Sui 200 CIF originali PISTAK dava due
   avvisi A in strutture disordinate dove PLATON non trova nulla; corretto (voce 21).
 * **Valori mancanti** (`?` per densità e Z): nessun errore, la formula non si controlla (avviso G); test.
+
+## Sezione 7: export per chimica quantistica e celle periodiche (5 novembre 2026)
+
+Script: `validation/check_export.py`. I programmi non sono installati su questa macchina: si è verificato che i file
+descrivano la struttura giusta (parser propri, confronto con la cella espansa da gemmi) e che le parole chiave
+corrispondano ai manuali; resta da farli girare (voce 27).
+
+### Geometria nei file
+
+| Verifica | Risultato |
+| --- | --- |
+| POSCAR, pw.x, CP2K, CRYSTAL contro la cella del CIF espansa da gemmi (7 strutture COD, 68–592 atomi, H come nel CIF) | stessa composizione, ogni sito del CIF a meno di 5·10⁻¹⁵ Å da un atomo del file, volume uguale (10⁻¹⁰ relativo) |
+| Con gli H normalizzati (POSCAR) | atomi pesanti fermi; C–H 1,085 (aromatico) e 1,095 Å (sp³), O–H 0,989 Å, come `XH_NEUTRON` |
+| Dimero ORCA (8 strutture) | ogni atomo è un sito del cristallo (operazione + traslazione intera) entro 10⁻⁸ Å |
+
+### Parole chiave contro i manuali
+
+| Programma | Verificato |
+| --- | --- |
+| ORCA 6.1 | atomi fantasma `C :` (manuale, sezione Counterpoise Corrections: spazio e due punti, come scrive PISTAK); `%maxcore` in MB per processo |
+| Psi4 | `energy('…-d3bj', bsse_type='cp')`, SAPT con `--` tra i monomeri (già nei test) |
+| Gaussian 16 | `Counterpoise=2`, riga carica/molteplicità totale e per frammento, `(Fragment=n)`; D4 non disponibile: errore `qcUnsupported` esplicito |
+| Quantum ESPRESSO | `vdw_corr = 'grimme-d3'`, `dftd3_version` 3 = D3 zero, 4 = D3(BJ) (INPUT_PW); `ecutrho` predefinito 4 × ecutwfc, 8–12 × per ultrasoft |
+| VASP | `IVDW` 11 = D3 zero, 12 = D3(BJ), 13 = D4 |
+| CRYSTAL23 | `BASISSET` dopo la fine della geometria, `DFTD3`/`VERSION`/`4`/`END` dopo `DFT … END`: stesso ordine dell'esempio del manuale (urea, cap. 5.1); `END` e `ENDG` equivalenti (contano i primi tre caratteri); `OPTGEOM` ultima parola chiave della geometria |
+
+La normalizzazione degli H è la stessa per dimeri e celle periodiche (`normalize_hydrogens`), e il file lo dice.
+Il dimero esporta sempre le molecole intere: per un macrociclo (COD 4032966, 260 atomi per molecola) il dimero ha 520
+atomi, come deve.
 

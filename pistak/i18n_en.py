@@ -154,6 +154,10 @@ TEXT: dict[str, str] = {
     "livello SAPT di Psi4: sapt0, ssapt0, sapt2, sapt2+, sapt2+(3)…": "Psi4 SAPT level: sapt0, ssapt0, sapt2, sapt2+, sapt2+(3)…",
     "memoria in GB": "memory in GB",
     "molteplicità dei monomeri A,B": "multiplicities of monomers A,B",
+    "molteplicità del dimero (0: alto spin; per due radicali 1 = singoletto, 3 = tripletto)":
+        "dimer multiplicity (0: high spin; for two radicals 1 = singlet, 3 = triplet)",
+    "alto spin": "high spin",
+    "Molteplicità del dimero": "Dimer multiplicity",
     "nessuna coppia da esportare": "no pairs to export",
     "opzione non valida:": "invalid option:",
     "senza --pair: esporta tutte le coppie di questo tipo (stack)": "without --pair: export all pairs of this type (stack)",

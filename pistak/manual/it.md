@@ -552,7 +552,12 @@ n,kind,molecule_a,molecule_b,shift,interplanar,long_slip,lat_slip,slip,dihedral,
   atomi fantasma; Psi4: `bsse_type='cp'`; Gaussian: `Counterpoise=2` con i frammenti (Gaussian non ha D4).
 * **SAPT** (solo Psi4, predefinito SAPT0/jun-cc-pVDZ): energia scomposta in elettrostatica, scambio, induzione e
   dispersione, utile per capire *perché* uno stack è stabile.
-* Cariche e molteplicità dei monomeri, processori e memoria vanno nelle intestazioni del programma.
+* Cariche e molteplicità dei monomeri, processori e memoria vanno nelle intestazioni del programma. La molteplicità
+  del dimero è per impostazione quella ad alto spin (m_A + m_B − 1): per una coppia di radicali va scelta
+  (`--dimer-mult`, «Molteplicità del dimero»; per due doppietti 1 = singoletto, 3 = tripletto), perché l'energia
+  d'interazione ne dipende. Per ORCA `%maxcore` è il 75 % della memoria per processo (ORCA a volte lo supera).
+* I monomeri sono le **molecole intere**, anche per una coppia tra frammenti π di molecole più grandi: va detto
+  accanto a ogni energia riportata.
 
 Il file inizia con un commento che dice da dove viene (CIF, blocco, coppia, distanze, idrogeni spostati) ed è tutto
 ASCII; come gli altri export, commenti e nome del file sono in inglese in ogni lingua (`herringbone_anthracene_pair1_dftd.inp`).
@@ -564,13 +569,13 @@ Esempio (ORCA, prime righe):
 # interplanar 3.914 A, slip L 3.869 A, W 0.804 A, angle 0.0 deg, contact 3.922 A
 # X-H distances set to neutron values (20 hydrogens moved)
 # experimental crystal geometry, not optimised
+# monomers are the two whole molecules of the pair
+# charge 0, multiplicity 1
 # DFT-D with counterpoise correction (Boys-Bernardi): E_int = E(AB) - E(A in AB basis) - E(B in AB basis)
 # --- dimer AB
 ! B3LYP D3BJ def2-TZVP TightSCF DefGrid2
 %pal nprocs 4 end
-%maxcore 1000
-* xyz 0 1
-C          -0.93338175     0.74220151     0.73344970
+%maxcore 750
 ```
 
 Da terminale, per esempio tutti gli stack di un file come input SAPT per Psi4:

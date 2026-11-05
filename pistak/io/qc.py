@@ -79,6 +79,13 @@ class QCOptions:
     multiplicities: tuple[int, int] = (1, 1)
     nprocs: int = 4
     memory_gb: int = 4
+    #: Molteplicità del dimero: 0 = accoppiamento ad alto spin dei monomeri (m_A + m_B − 1). Per una coppia di radicali
+    #: va scelta (singoletto o tripletto per due doppietti): l'energia d'interazione dipende da questa scelta.
+    dimer_multiplicity: int = 0
+
+    def total_multiplicity(self) -> int:
+        ma, mb = self.multiplicities
+        return self.dimer_multiplicity or ma + mb - 1
 
     def resolved_basis(self) -> str:
         return self.basis or ("jun-cc-pVDZ" if self.method == "sapt" else "def2-TZVP")
@@ -96,6 +103,11 @@ class QCOptions:
             raise QCError("qcUnsupported", f"{self.dispersion}: {self.program}")
         if any(m < 1 for m in self.multiplicities):
             raise QCError("qcOptions", f"multiplicities={self.multiplicities}")
+        ma, mb = self.multiplicities
+        m = self.dimer_multiplicity
+        # spin totale da |S_A − S_B| a S_A + S_B a passi di 1: molteplicità da |m_A − m_B| + 1 a m_A + m_B − 1, di 2 in 2
+        if m and not (abs(ma - mb) + 1 <= m <= ma + mb - 1 and (m - abs(ma - mb) - 1) % 2 == 0):
+            raise QCError("qcOptions", f"dimer_multiplicity={m} (monomers {ma},{mb})")
 
 
 @dataclass
@@ -113,11 +125,14 @@ class Dimer:
     b: Monomer
     #: Righe di provenienza e avvertenze, da mettere in testa all'input come commenti.
     notes: list[str] = field(default_factory=list)
+    #: Molteplicità del dimero (0 = alto spin).
+    multiplicity: int = 0
 
 
 def normalize_hydrogens(el: list[str], pos: np.ndarray, bonds: np.ndarray) -> tuple[np.ndarray, int]:
     """Sposta ogni H legato a un solo atomo X lungo la direzione X–H fino alla distanza da neutroni. Ritorna le nuove
-    posizioni e quanti idrogeni sono stati spostati."""
+    posizioni e quanti idrogeni sono stati spostati. Restano dove sono gli H a ponte o senza vicini e quelli legati a un
+    atomo senza distanza da neutroni (P, metalli): `unmoved_hydrogens` li conta."""
     out = pos.copy()
     moved = 0
     neighbours: dict[int, list[int]] = {}
@@ -138,6 +153,10 @@ def normalize_hydrogens(el: list[str], pos: np.ndarray, bonds: np.ndarray) -> tu
     return out, moved
 
 
+def unmoved_hydrogens(el: list[str], moved: int) -> int:
+    return sum(e == "H" for e in el) - moved
+
+
 def dimer(analysis: Analysis, pair: Pair, options: QCOptions | None = None) -> Dimer:
     """Le due molecole della coppia, pronte per l'input (B traslata, idrogeni normalizzati se richiesto)."""
     options = options or QCOptions()
@@ -156,16 +175,24 @@ def dimer(analysis: Analysis, pair: Pair, options: QCOptions | None = None) -> D
     if options.normalize_h:
         pos_a, na = normalize_hydrogens(A.el, pos_a, A.bonds)
         pos_b, nb = normalize_hydrogens(B.el, pos_b, B.bonds)
-        notes.append(f"X-H distances set to neutron values ({na + nb} hydrogens moved)")
+        left = unmoved_hydrogens(A.el, na) + unmoved_hydrogens(B.el, nb)
+        notes.append(f"X-H distances set to neutron values ({na + nb} hydrogens moved"
+                     + (f"; {left} left as in the CIF: bridging, unbonded or bonded to P/metals)" if left else ")"))
     else:
         notes.append("X-H distances as in the CIF (X-ray: usually too short)")
     for name, m in (("A", A), ("B", B)):
         if "H" not in m.el:
             notes.append(f"WARNING: molecule {name} has no hydrogens in the CIF: add them before the calculation")
     notes.append("experimental crystal geometry, not optimised")
+    notes.append("monomers are the two whole molecules of the pair" + (" (the pair is between pi fragments of them)"
+                                                                        if pair.fragmented else ""))
     qa, qb = options.charges
     ma, mb = options.multiplicities
-    return Dimer(Monomer(list(A.el), pos_a, list(A.labels), qa, ma), Monomer(list(B.el), pos_b, list(B.labels), qb, mb), notes)
+    m = options.total_multiplicity()
+    notes.append(f"charge {qa + qb}, multiplicity {m}" + (" (high-spin coupling of the monomers: set it explicitly for "
+                                                        "radical pairs)" if not options.dimer_multiplicity and m > 1 else ""))
+    return Dimer(Monomer(list(A.el), pos_a, list(A.labels), qa, ma), Monomer(list(B.el), pos_b, list(B.labels), qb, mb),
+                 notes, m)
 
 
 # ---- scrittori ---------------------------------------------------------------------------------------------
@@ -174,8 +201,8 @@ def _xyz(el: str, p: np.ndarray, prefix: str = "", suffix: str = "") -> str:
 
 
 def _total(d: Dimer) -> tuple[int, int]:
-    """Carica e molteplicità del dimero (accoppiamento ad alto spin degli spin dei monomeri)."""
-    return d.a.charge + d.b.charge, d.a.multiplicity + d.b.multiplicity - 1
+    """Carica e molteplicità del dimero (per impostazione accoppiamento ad alto spin degli spin dei monomeri)."""
+    return d.a.charge + d.b.charge, d.multiplicity or d.a.multiplicity + d.b.multiplicity - 1
 
 
 def _orca(d: Dimer, o: QCOptions) -> str:
@@ -183,7 +210,9 @@ def _orca(d: Dimer, o: QCOptions) -> str:
     keys = " ".join(x for x in (o.functional, disp, o.resolved_basis(), "TightSCF", "DefGrid2") if x)
     cp = "# DFT-D with counterpoise correction (Boys-Bernardi): E_int = E(AB) - E(A in AB basis) - E(B in AB basis)"
     head = [f"# {n}" for n in d.notes] + [cp if o.counterpoise else "# DFT-D without counterpoise correction"]
-    block = [f"%pal nprocs {o.nprocs} end", f"%maxcore {o.memory_gb * 1000 // max(1, o.nprocs)}"]
+    # %maxcore è in MB per processo e ORCA a volte lo supera: il 75 % della memoria per processo, come consigliano i
+    # centri di calcolo
+    block = [f"%pal nprocs {o.nprocs} end", f"%maxcore {o.memory_gb * 750 // max(1, o.nprocs)}"]
 
     def job(title: str, charge: int, mult: int, real_a: bool, real_b: bool, ghosts: bool) -> list[str]:
         lines = [f"# --- {title}", f"! {keys}", *block, f"* xyz {charge} {mult}"]
