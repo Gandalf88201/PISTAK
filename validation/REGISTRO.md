@@ -5,7 +5,7 @@ verifica chiusa; sotto la tabella, per ogni voce, l'oracolo usato e il risultato
 
 ```bash
 .venv/bin/python validation/check_registro.py            # voci del registro: cell rings beta height unit shells cutoff
-.venv/bin/python -m pip install -r validation/requirements.txt   # gemmi, per la sezione 1
+.venv/bin/python -m pip install -r validation/requirements.txt   # gemmi, networkx, RDKit, …: gli oracoli
 .venv/bin/python validation/check_simmetria.py           # sezione 1: simboli di Hall e H-M contro gemmi
 .venv/bin/python validation/scarica_cod.py               # sezione 1: i 200 CIF COD di cod_sample.txt in cod_cache/
 .venv/bin/python validation/check_cif.py                 # sezione 1: lettura, s.u., elementi, disordine
@@ -15,6 +15,7 @@ verifica chiusa; sotto la tabella, per ogni voce, l'oracolo usato e il risultato
 .venv/bin/python validation/check_export.py              # sezione 7: file per ORCA/Psi4/Gaussian e codici periodici
 .venv/bin/python validation/check_snapshot.py            # sezione 8: istantanee COD rifatte con numpy
 .venv/bin/python validation/check_struttura.py oblique origin   # sezione 8: invarianza per cella e origine
+.venv/bin/python validation/check_struttura.py rdkit    # sezione 10: legami e anelli contro RDKit
 .venv/bin/python validation/check_riproducibilita.py    # sezione 9: batch 1 contro 4 processi, seme del Monte Carlo
 .venv/bin/python validation/check_sensibilita.py        # sezione 10: sensibilità alle soglie (200 CIF, ~2 min)
 ```
@@ -65,8 +66,8 @@ conti a mano.
 | 39 | requirements | Solo versioni minime (`>=`), nessun file di versioni bloccate: i numeri del paper non sono legati a un ambiente | P2 | **Corretto** (documentato) | `validation/ambiente.txt`: versioni esatte con cui girano test e controlli. Batch e Monte Carlo deterministici (`check_riproducibilita.py`) |
 | 40 | pistak/ | Leggibilità: ruff pulito (nessun import o variabile inutilizzati; 11 argomenti non usati, tutti segnature di slot Qt). vulture non installato; il mypy di sistema (1.19) non legge le stub di numpy 2.5 | P3 | **Aperto** | Installare mypy e vulture nel venv (insieme alla voce 32) |
 | 41 | paper | Dichiarazione sull'uso dell'IA | P1 (paper) | **Bozza** | `validation/dichiarazione_ia.md`: fatti dal repository (29 commit con Claude co-autore), testo IT/EN, parti da completare dall'autore |
-| 42 | repository | Sezione 10, passo 1: nessuna CI (`.github/workflows` assente); pytest gira solo in locale | P2 | **Corretto** (da confermare sul primo run) | `.github/workflows/test.yml`: job `calcolo` (Python 3.11–3.13, solo numpy/scipy/spglib: ruff e `pytest -m "not gui"`) e job `gui` (Qt offscreen). Simulato in locale bloccando i pacchetti grafici: trovato `test_manual` che importava la finestra del manuale senza PySide6, ora si salta |
-| 43 | core/cores.py | Sezione 10, passo 4: anelli confrontati con la topologia nota e con PLATON, non con RDKit (non installato) | P2 | **Aperto** | Installare RDKit nel venv e confrontare gli anelli minimi sui CIF COD |
+| 42 | repository | Sezione 10, passo 1: nessuna CI (`.github/workflows` assente); pytest gira solo in locale | P2 | **Corretto** (run 42055379324: 4 job verdi) | `.github/workflows/test.yml`: job `calcolo` (Python 3.11–3.13, solo numpy/scipy/spglib: ruff e `pytest -m "not gui"`) e job `gui` (Qt offscreen). Simulato in locale bloccando i pacchetti grafici: trovato `test_manual` che importava la finestra del manuale senza PySide6, ora si salta |
+| 43 | core/cores.py | Sezione 10, passo 4: anelli contro RDKit | P2 | **Verificato** | `check_struttura.py rdkit` (RDKit 2025.09): su 204 molecole organiche distinte del campione COD, legami rifatti da RDKit dalle sole coordinate uguali in 193; anelli (SSSR simmetrizzata, ≤ 8) uguali in 200. Le 4 diverse: 3 polibromuri (triangoli Br₃ in più, non π) e 4112371, un anello a 6 in più in un sistema 4+6 fuso (rms 0,31 Å, mai un nucleo π). Nessun anello planare diverso |
 | 44 | core/pairs.py | Sezione 10, passo 5: sensibilità dei risultati alle soglie | P1 | **Verificato** | `check_sensibilita.py` su 200 CIF COD: `max_dihedral` è la scelta che pesa (±5° → ±6 % di stack, ±10° → −18/+15 %); `max_interplanar` ±0,2 Å → ≤ 2 %; le altre soglie ≤ 2 %, tranne `min_fragment_atoms` = 6 (−5 %: frammenti di 5 atomi). Da riportare nel paper |
 | 45 | repository | Sezione 10, passo 8: versione per il paper (tag attuali v0.0.1, v0.0.2); istantanee da rigenerare e congelare | P1 | **Aperto** | Decisione dell'autore: quando chiudere le voci aperte e creare il tag v1.0.0 |
 | 46 | core/ringpairs.py, core/intramolecular.py, core/validation.py, core/pairs.py, params/extra.py | **Nuovo** (dalla prima CI su Linux). L'ordine di elementi equivalenti per simmetria dipendeva dall'ultima cifra del calcolo, diversa tra macOS e Linux: coppie di anelli alla stessa Cg···Cg, contatti H1···H8/H2···H7, i 4 contatti mostrati nell'avviso `shortContact` (nell'ordine della ricerca dei vicini). Il diedro da `arccos` vicino a 0° (10⁻⁶° contro 0) e `slip_direction` −180 contro +180 (zero con segno) | P2 (riproducibilità) | **Corretto** | Ordinamenti con spareggio sugli indici/etichette; avviso con i 4 contatti più corti; diedro da atan2(|a×b|, |a·b|); `slip_direction` in (−180, 180]. Istantanee rigenerate: confrontate con le vecchie a meno dell'ordine, cambiano solo 10 diedri ~10⁻⁶° → 0 e 2 direzioni −180 → 180 |
@@ -542,4 +543,22 @@ Lettura:
 - **`min_fragment_atoms` = 6** toglie 6 stack in 4 strutture: frammenti di 5 atomi (anelli a cinque, eteroaromatici).
   Il predefinito 5 li tiene; va detto nel paper.
 - `max_ring_size` 6–10 non cambia nulla in questo campione.
+
+## Sezione 10: legami e anelli contro RDKit (5 novembre 2026)
+
+RDKit è indipendente da PISTAK in entrambi i passi: rifà i legami dalle sole coordinate (`DetermineConnectivity`, raggi
+propri) e trova gli anelli con la SSSR simmetrizzata. Il confronto si fa due volte, sui legami di PISTAK (si prova solo
+l'algoritmo degli anelli) e su quelli di RDKit (si prova la catena intera).
+
+| Gruppo | Molecole | Legami uguali | Anelli uguali (legami di PISTAK) | Anelli uguali (legami di RDKit) |
+| --- | --- | --- | --- | --- |
+| organiche (solo non metalli) | 204 | 193 | 200 | 198 |
+| con metalli | 83 | 71 | 76 | 72 |
+
+- **Algoritmo**: dove le molecole differiscono, `small_rings` dà anelli *in più* (tutti i cicli più corti per legame,
+  non una base): migliaia di triangoli nei cluster di metalli e nei polibromuri, e in 4112371 un anello a 6 di un
+  sistema 4+6 fuso, rms 0,31 Å contro la soglia di 0,10 Å. Nessuno di questi è planare, quindi nessuno diventa un nucleo π.
+- **Legami**: le 11 molecole organiche con legami diversi hanno contatti lunghi che RDKit unisce e PISTAK no (Si···N,
+  B···F a ponte). Cambiano gli anelli solo in 2 (4063970 Si, 7025278 B₃F₁₁), nessuno aromatico.
+- Conclusione: per le molecole organiche gli anelli planari, quelli che contano per l'analisi, coincidono con RDKit.
 

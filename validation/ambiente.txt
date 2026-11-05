@@ -37,6 +37,7 @@ pyvista==0.49.1
 pyvista-validation==0.2.2
 pyvistaqt==0.13.1
 QtPy==2.4.3
+rdkit==2025.9.3
 reportlab==5.1.0
 requests==2.34.2
 rich==15.0.0

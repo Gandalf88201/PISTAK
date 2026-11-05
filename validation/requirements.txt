@@ -1,6 +1,7 @@
 # Dipendenze delle verifiche in validation/ (non del programma): oracoli esterni.
 gemmi>=0.7
 networkx>=3.2
+rdkit>=2024.3      # legami e anelli (check_struttura.py rdkit)
 reportlab>=4.0      # rapporto PDF del confronto con PLATON
 matplotlib>=3.8
 pypdf>=4.0

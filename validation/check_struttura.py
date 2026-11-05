@@ -4,9 +4,11 @@
     moiety    formule delle molecole ricostruite contro _chemical_formula_moiety
     oblique   la stessa struttura in una cella obliqua equivalente (det = 1): stesse molecole, stesse coppie
     rings     anelli di `small_rings` contro una base minima dei cicli (networkx)
+    rdkit     legami e anelli contro RDKit: legami rifatti dalle sole coordinate (DetermineConnectivity), anelli dalla
+              SSSR simmetrizzata, sia sui legami di PISTAK sia su quelli di RDKit
     radii     raggi covalenti e di van der Waals contro le tabelle di gemmi (confronto, non oracolo: fonti non dichiarate)
 
-    .venv/bin/python validation/check_struttura.py [cell moiety oblique rings radii]
+    .venv/bin/python validation/check_struttura.py [cell moiety oblique rings rdkit radii]
 """
 from __future__ import annotations
 
@@ -241,6 +243,87 @@ def check_rings(n: int = 200) -> None:
         print(f"    {x[0]} {x[1]}: mancano anelli di {x[2]} atomi")
 
 
+def check_rdkit(n: int = 200) -> None:
+    """Oracolo indipendente per legami e anelli: RDKit non usa né i raggi né i legami di PISTAK."""
+    from rdkit import Chem, RDLogger
+    from rdkit.Chem import rdDetermineBonds
+    from rdkit.Geometry import Point3D
+
+    from pistak.core.cores import small_rings
+
+    RDLogger.DisableLog("rdApp.*")
+    print("\n== legami e anelli contro RDKit (molecole distinte; anelli fino a 8 atomi, solo atomi pesanti) ==")
+    mols = organic = failed = 0
+    bonds = Counter()  # (gruppo, uguali/diversi)
+    rings = Counter()  # (gruppo, confronto, esito): confronto «algoritmo» = SSSR di RDKit sui legami di PISTAK,
+    #                   «catena» = SSSR di RDKit sui legami rifatti da RDKit; tutti contro small_rings di PISTAK
+    examples: list[str] = []
+
+    def rdkit_mol(m, bonds=None):
+        rw = Chem.RWMol()
+        for e in m.el:
+            rw.AddAtom(Chem.Atom(e))
+        if bonds is not None:
+            for p, q in bonds:
+                rw.AddBond(int(p), int(q), Chem.BondType.SINGLE)
+        conf = Chem.Conformer(len(m.el))
+        for i, x in enumerate(m.pos):
+            conf.SetAtomPosition(i, Point3D(*map(float, x)))
+        rw.AddConformer(conf, assignId=True)
+        return rw
+
+    def rings_of(mol, heavy):
+        mol.UpdatePropertyCache(strict=False)
+        Chem.FastFindRings(mol)
+        return {frozenset(r) for r in Chem.GetSymmSSSR(mol) if len(r) <= 8 and all(heavy[i] for i in r)}
+
+    for f in FILES[:n]:
+        s = build_structure(parse_cif(text_of(f), disorder="major"), Limits())
+        seen = set()
+        for m in s.molecules:
+            key = key_of(Counter(dict(m.formula())))
+            if m.extended or key in seen:
+                continue
+            seen.add(key)
+            mols += 1
+            heavy = m.heavy
+            is_organic = set(m.el) <= {"C", "H", "N", "O", "F", "S", "Cl", "Br", "I", "P", "B", "Si", "Se"}
+            organic += is_organic
+            mine_bonds = {frozenset((int(p), int(q))) for p, q in m.bonds}
+            try:
+                ref = rdkit_mol(m)
+                rdDetermineBonds.DetermineConnectivity(ref)
+            except Exception:  # noqa: BLE001  (RDKit rifiuta la molecola: contata a parte)
+                failed += 1
+                continue
+            ref_bonds = {frozenset((b.GetBeginAtomIdx(), b.GetEndAtomIdx())) for b in ref.GetBonds()}
+            same = mine_bonds == ref_bonds
+            group = "organiche" if is_organic else "con metalli"
+            bonds[group, same] += 1
+            mine = {frozenset(r) for r in small_rings(len(m), m.bonds, lambda i, h=heavy: h[i], 8)}
+            algo = rings_of(rdkit_mol(m, m.bonds), heavy)
+            full = rings_of(ref, heavy)
+            for name, ref_rings in (("algoritmo", algo), ("catena", full)):
+                rings[group, name, "uguali"] += mine == ref_rings
+                rings[group, name, "solo RDKit"] += len(ref_rings - mine)
+                rings[group, name, "solo PISTAK"] += len(mine - ref_rings)
+                if mine != ref_rings and is_organic:
+                    extra = sorted(len(r) for r in mine - ref_rings)
+                    lost = sorted(len(r) for r in ref_rings - mine)
+                    bond_note = "" if same else (f"; legami solo PISTAK {len(mine_bonds - ref_bonds)}, "
+                                                 f"solo RDKit {len(ref_bonds - mine_bonds)}")
+                    examples.append(f"{f.stem} {key} [{name}]: anelli solo PISTAK {extra}, solo RDKit {lost}{bond_note}")
+    print(f"  {mols} molecole distinte ({organic} organiche, solo non metalli), {failed} rifiutate da RDKit")
+    for group, n_group in (("organiche", organic), ("con metalli", mols - failed - organic)):
+        print(f"  {group} ({n_group}): legami uguali in {bonds[group, True]}, diversi in {bonds[group, False]}")
+        for name, what in (("algoritmo", "sui legami di PISTAK"), ("catena", "sui legami di RDKit")):
+            print(f"    anelli {what}: molecole uguali {rings[group, name, 'uguali']}; anelli solo RDKit "
+                  f"{rings[group, name, 'solo RDKit']}, solo PISTAK {rings[group, name, 'solo PISTAK']}")
+    print("  differenze nelle organiche:")
+    for x in examples:
+        print("    " + x)
+
+
 def check_radii() -> None:
     import gemmi
 
@@ -254,7 +337,7 @@ def check_radii() -> None:
 
 
 CHECKS = {"cell": check_cell, "moiety": check_moiety, "oblique": check_oblique,
-          "origin": lambda: check_oblique(shift=np.array([0.137, 0.291, 0.443])), "rings": check_rings, "radii": check_radii}
+          "origin": lambda: check_oblique(shift=np.array([0.137, 0.291, 0.443])), "rings": check_rings, "rdkit": check_rdkit, "radii": check_radii}
 
 if __name__ == "__main__":
     for name in sys.argv[1:] or CHECKS:
