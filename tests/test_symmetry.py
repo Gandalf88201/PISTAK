@@ -96,8 +96,8 @@ def test_celle_adattive_trovano_lo_stack_lontano_in_celle():
     assert neighbour_shells(canon.structure, canon.cores, canon.limits)[0] >= 3
     assert not any(p.kind == "stack" for p in site.pairs)  # ±2 celle non bastano
     stack = [p for p in canon.pairs if p.kind == "stack"]
-    assert len(stack) == 1 and stack[0].interplanar == pytest.approx(3.8, abs=1e-3)
-    assert stack[0].slip == pytest.approx(0.5, abs=1e-3) and tuple(abs(x) for x in stack[0].shift) == (3, 1, 0)
+    assert len(stack) == 1 and stack[0].interplanar == pytest.approx(3.8, abs=1e-4)
+    assert stack[0].slip == pytest.approx(0.5, abs=1e-4) and tuple(abs(x) for x in stack[0].shift) == (3, 1, 0)
 
 
 # ---- più blocchi data_ ----------------------------------------------------------------------------------

@@ -83,7 +83,7 @@ def test_coppie_frammento_frammento(crystal):
     # lo stack naftalene–naftalene lungo a c'è in entrambi i modi, con gli stessi valori
     n_full = next(p for p in full.pairs if (p.fa, p.fb) == (0, 0) and p.kind == "stack")
     n_big = next(p for p in largest.pairs if p.kind == "stack")
-    assert n_full.interplanar == pytest.approx(n_big.interplanar) == pytest.approx(3.5, abs=1e-3)
+    assert n_full.interplanar == pytest.approx(n_big.interplanar) == pytest.approx(3.5, abs=1e-4)
     # fenile–fenile lungo a: piani paralleli (stessa molecola traslata)
     ph = next(p for p in full.pairs if (p.fa, p.fb) == (1, 1) and p.dihedral < 1)
     assert ph.get("fragment_a") == 2 and ph.get("fragment_b") == 2 and "π2–π2" in relation(ph)
@@ -97,7 +97,7 @@ def test_coppie_intramolecolari(crystal):
     assert len(intra) == 1  # π1–π2 nella stessa molecola; le due molecole della cella sono equivalenti
     p = intra[0]
     assert (p.fa, p.fb) == (0, 1) and p.count == 2 and p.kind == "tilted"
-    assert p.dihedral == pytest.approx(50.0, abs=0.5) and relation(p).startswith("intramolecolare · π1–π2")
+    assert p.dihedral == pytest.approx(50.0, abs=1e-3) and relation(p).startswith("intramolecolare · π1–π2")
 
 
 def test_riepilogo_per_molecola(crystal):
@@ -153,7 +153,7 @@ def test_asse_lungo_dagli_atomi():
     p0, p1 = auto.pairs[0], turned.pairs[0]
     assert p0.kind == p1.kind == "stack" and p1.interplanar == pytest.approx(p0.interplanar)
     # l'asse «lungo» ora è quello corto: i due slittamenti si scambiano
-    assert p1.long_slip == pytest.approx(p0.lat_slip, abs=1e-3) and p1.lat_slip == pytest.approx(p0.long_slip, abs=1e-3)
+    assert p1.long_slip == pytest.approx(p0.lat_slip, abs=1e-4) and p1.lat_slip == pytest.approx(p0.long_slip, abs=1e-4)
     # etichette che non esistono: si resta sull'asse automatico
     assert all(c.axis_source == "pca" for c in analyse_file(cif, Limits(long_axis_atoms="X98,X99")).cores)
 

@@ -127,9 +127,11 @@ def _frac_str(x: Fraction) -> str:
     return str(x.numerator) if x.denominator == 1 else f"{x.numerator}/{x.denominator}"
 
 
-def transformed_cif(text: str, T: np.ndarray) -> str:
-    """Lo stesso cristallo nella cella a' = T·a (righe di T: nuovi vettori in funzione dei vecchi, det = 1). Coordinate
-    f' = f·T⁻¹, operazioni R' = T⁻ᵀ R Tᵀ, t' = T⁻ᵀ t. Si scrive un CIF minimo: cella, operazioni, atomi con s.u. tolte."""
+def transformed_cif(text: str, T: np.ndarray, shift: np.ndarray | None = None) -> str:
+    """Lo stesso cristallo nella cella a' = T·a (righe di T: nuovi vettori in funzione dei vecchi, det = 1) e con
+    l'origine spostata di −`shift` (coordinate nuove). Coordinate f' = f·T⁻¹ + s, operazioni R' = T⁻ᵀ R Tᵀ,
+    t' = T⁻ᵀ t + (I − R') s. Si scrive un CIF minimo: cella, operazioni, atomi con s.u. tolte."""
+    origin = np.zeros(3) if shift is None else np.asarray(shift, float)
     cif = parse_cif(text, disorder="major")
     from pistak.core.structure import cell_vectors
 
@@ -142,14 +144,14 @@ def transformed_cif(text: str, T: np.ndarray) -> str:
     ops = []
     for op in cif.symops:
         R = np.rint(TiT @ op.r @ T.T).astype(int)
-        t = TiT @ op.t
+        t = TiT @ op.t + (np.eye(3) - R) @ origin
         comps = []
         for row, ti in zip(R, t):
             s = "".join(f"{'+' if v > 0 else '-'}{abs(v) if abs(v) != 1 else ''}{x}" for v, x in zip(row, "xyz") if v)
-            f = Fraction(float(ti)).limit_denominator(24)
+            f = Fraction(float(ti) % 1.0 if abs(ti) > 1e-9 else 0.0).limit_denominator(1000000)
             comps.append((s.lstrip("+") or "0") + (f"+{_frac_str(f)}" if f > 0 else f"-{_frac_str(-f)}" if f < 0 else ""))
         ops.append("'" + ",".join(comps) + "'")
-    atoms = [f"{at.label} {at.el} {x:.8f} {y:.8f} {z:.8f} {at.occ:g}" for at in cif.atoms for x, y, z in [at.frac @ Ti]]
+    atoms = [f"{at.label} {at.el} {x:.8f} {y:.8f} {z:.8f} {at.occ:g}" for at in cif.atoms for x, y, z in [at.frac @ Ti + origin]]
     return "\n".join([
         "data_obliqua", f"_cell_length_a {a:.8f}", f"_cell_length_b {b:.8f}", f"_cell_length_c {c:.8f}",
         f"_cell_angle_alpha {ang(M2[1], M2[2]):.8f}", f"_cell_angle_beta {ang(M2[0], M2[2]):.8f}",
@@ -160,13 +162,31 @@ def transformed_cif(text: str, T: np.ndarray) -> str:
 
 def summary(an) -> tuple:
     mols = Counter(key_of(Counter(dict(m.formula()))) for m in an.structure.molecules if not m.extended)
-    pairs = Counter((p.kind, round(p.interplanar, 3), round(p.slip, 3), round(p.contact, 3), p.count) for p in an.pairs)
+    pairs = sorted((p.kind, p.count, p.interplanar, p.slip, p.contact) for p in an.pairs)
     return mols, pairs
 
 
-def check_oblique(n: int = 40) -> None:
-    print("\n== stessa struttura in una cella obliqua equivalente (a' = a, b' = b + 2a, c' = c + a + b) ==")
-    T = np.array([[1, 0, 0], [2, 1, 0], [1, 1, 1]])
+def same_pairs(p0: list, p1: list, tol: float = 1e-6) -> bool:
+    """Stesse coppie: tipo e molteplicità uguali, distanze entro `tol` (l'arrotondamento non conta)."""
+    if len(p0) != len(p1):
+        return False
+    free = list(p1)
+    for x in p0:  # abbinamento uno a uno: coppie quasi uguali possono scambiarsi di posto nell'ordinamento
+        hit = next((k for k, y in enumerate(free)
+                    if x[:2] == y[:2] and max(abs(u - v) for u, v in zip(x[2:], y[2:])) < tol), None)
+        if hit is None:
+            return False
+        free.pop(hit)
+    return True
+
+
+def check_oblique(n: int = 40, shift: np.ndarray | None = None) -> None:
+    if shift is None:
+        print("\n== stessa struttura in una cella obliqua equivalente (a' = a, b' = b + 2a, c' = c + a + b) ==")
+        T = np.array([[1, 0, 0], [2, 1, 0], [1, 1, 1]])
+    else:
+        print(f"\n== stessa struttura con l'origine spostata (coordinate + {shift.tolist()}) ==")
+        T = np.eye(3, dtype=int)
     same = diff = 0
     for f in FILES[:n]:
         text = text_of(f)
@@ -176,9 +196,9 @@ def check_oblique(n: int = 40) -> None:
         except Exception as e:  # noqa: BLE001
             print(f"  {f.stem}: non analizzabile ({type(e).__name__})")
             continue
-        obl = analyse_text(transformed_cif(text, T), f.stem, lim)
+        obl = analyse_text(transformed_cif(text, T, shift), f.stem, lim)
         (m0, p0), (m1, p1) = summary(base), summary(obl)
-        if m0 == m1 and p0 == p1:
+        if m0 == m1 and same_pairs(p0, p1):
             same += 1
         else:
             diff += 1
@@ -233,7 +253,8 @@ def check_radii() -> None:
         print(f"  {name}: {len(d)} elementi, {len(off)} diversi: {off}")
 
 
-CHECKS = {"cell": check_cell, "moiety": check_moiety, "oblique": check_oblique, "rings": check_rings, "radii": check_radii}
+CHECKS = {"cell": check_cell, "moiety": check_moiety, "oblique": check_oblique,
+          "origin": lambda: check_oblique(shift=np.array([0.137, 0.291, 0.443])), "rings": check_rings, "radii": check_radii}
 
 if __name__ == "__main__":
     for name in sys.argv[1:] or CHECKS:

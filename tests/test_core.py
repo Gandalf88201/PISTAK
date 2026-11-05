@@ -143,10 +143,10 @@ class TestDemo:
     def test_distanza_interplanare_e_slittamenti(self, result):
         _, a = result
         stack = next(p for p in a.pairs if p.kind == "stack")
-        assert stack.interplanar == pytest.approx(DEMO_STACK["interplanar"], abs=1e-3)
-        assert stack.long_slip == pytest.approx(DEMO_STACK["long_slip"], abs=1e-3)
-        assert stack.lat_slip == pytest.approx(DEMO_STACK["lat_slip"], abs=1e-3)
-        assert stack.dihedral == pytest.approx(0, abs=1e-3)
+        assert stack.interplanar == pytest.approx(DEMO_STACK["interplanar"], abs=1e-4)
+        assert stack.long_slip == pytest.approx(DEMO_STACK["long_slip"], abs=1e-4)
+        assert stack.lat_slip == pytest.approx(DEMO_STACK["lat_slip"], abs=1e-4)
+        assert stack.dihedral == pytest.approx(0, abs=1e-4)
         assert stack.overlap > 0
 
     def test_il_vicino_nello_stesso_piano_non_e_uno_stack(self, result):

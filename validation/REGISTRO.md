@@ -13,6 +13,8 @@ verifica chiusa; sotto la tabella, per ogni voce, l'oracolo usato e il risultato
 .venv/bin/python validation/check_platon.py              # sezioni 4–5: coppie di anelli contro PLATON CALC ALL
 .venv/bin/python validation/check_incertezze.py          # sezione 6: Monte Carlo, geometria contro le tabelle _geom_
 .venv/bin/python validation/check_export.py              # sezione 7: file per ORCA/Psi4/Gaussian e codici periodici
+.venv/bin/python validation/check_snapshot.py            # sezione 8: istantanee COD rifatte con numpy
+.venv/bin/python validation/check_struttura.py oblique origin   # sezione 8: invarianza per cella e origine
 ```
 
 Gli oracoli non usano `pistak.core`: geometria ricalcolata con numpy, topologia nota dei policicli, tensore metrico,
@@ -47,6 +49,12 @@ conti a mano.
 | 25 | io/qc.py | `%maxcore` ORCA = memoria totale / processi, senza margine (ORCA a volte lo supera) | P2 | **Corretto** | 75 % della memoria per processo, come consigliano i centri di calcolo; MB per processo verificato |
 | 26 | io/qc.py, io/periodic.py | Nei file non era scritto che i monomeri sono molecole intere, quanti H restano come nel CIF, che `ecutrho` = 8 × presuppone pseudopotenziali ultrasoft/PAW, che punti k, cutoff e Γ di CP2K sono valori di comodo | P2 | **Corretto** | Righe di commento in ogni file (CRYSTAL: nel `.notes.txt`); manuale |
 | 27 | io/qc.py, io/periodic.py | Esecuzione reale con ORCA, Psi4, Gaussian, VASP, QE, CP2K, CRYSTAL | P1 | **Aperto** | I programmi non sono installati qui; servono una prova per programma (dimero di benzene, cella del naftalene) e il confronto CP ORCA contro Psi4 |
+| 28 | tests/ | Tolleranze larghe (`abs=1e-3` Å, 0,5° e 0,01°) su cristalli sintetici costruiti a mano | P1 | **Corretto** | Scarti reali misurati: ≤ 5·10⁻⁶ Å e 5·10⁻⁵°; tolleranze portate a 10⁻⁴ Å e 10⁻³° (16 asserzioni in 5 file); quelle contro i CIF (densità, tabelle `_geom_`) restano legate alle cifre del CIF |
+| 29 | tests/snapshots | Istantanee COD scritte dal programma stesso | P1 | **Verificato** | Le 95 coppie intermolecolari delle 5 istantanee rifatte con numpy: scarti ≤ 5·10⁻⁹ Å e 2·10⁻⁶° (precisione delle istantanee) |
+| 30 | validation | Invarianza cristallografica | P1 | **Verificato** | Cella obliqua equivalente e origine spostata di (0,137; 0,291; 0,443): 40/40 strutture con le stesse coppie entro 10⁻⁶ Å (prima la verifica arrotondava a 3 decimali e segnalava differenze di arrotondamento) |
+| 31 | configurazione utente | **Nuovo.** `analyse_file` senza soglie usa il file dell'utente (`user.toml`): su questa macchina `contact_cutoff` = 4,0 (il vecchio predefinito, salvato prima della voce 6), `max_dihedral` = 5, `overlap_measure` = area, `contact_check` = vdw. I test sono isolati (`PISTAK_CONFIG_DIR` temporanea), le analisi dell'utente no | P1 (risultati dell'utente) | **Aperto** | Decidere se aggiornare `user.toml` e se avvisare quando un valore salvato coincide con un vecchio predefinito |
+| 32 | tests/ | Copertura (`pytest --cov`) e test basati su proprietà (hypothesis) | P2 | **Aperto** | Servono `pytest-cov` e `hypothesis`, non installati |
+| 33 | tests/ | Nomi dei test in italiano | P3 | Aperto | Da decidere: docstring in inglese o traduzione |
 
 ## 1. `beta_b` etichettato γ
 
@@ -413,4 +421,31 @@ corrispondano ai manuali; resta da farli girare (voce 27).
 La normalizzazione degli H è la stessa per dimeri e celle periodiche (`normalize_hydrogens`), e il file lo dice.
 Il dimero esporta sempre le molecole intere: per un macrociclo (COD 4032966, 260 atomi per molecola) il dimero ha 520
 atomi, come deve.
+
+## Sezione 8: i test (5 novembre 2026)
+
+### Che cosa prova ogni file
+
+| Tipo di oracolo | File | Basta per il paper? |
+| --- | --- | --- |
+| Valori impostati a mano su cristalli sintetici (`cifgen`, verificato nella voce 9) | test_core (parte nuova), test_symmetry, test_fragments, test_stacks, test_uncertainty, test_geometry (casi sintetici) | Sì: oracolo indipendente; tolleranze ora 10⁻⁴ Å (voce 28) |
+| Riferimento esterno | test_geometry (tabelle `_geom_` dei CIF COD), test_revisione (topologia dei policicli, PLATON, gemmi, conti a mano), test_checks (densità e Z dichiarati nei CIF) | Sì |
+| Coerenza interna, invarianti | test_stages (analisi a stadi = analisi da zero), test_collection, test_no_pairs, test_qc e test_periodic (file contro la struttura di PISTAK) | Parziale: un errore sistematico passa; per gli export c'è `check_export.py` (sezione 7) |
+| Parità con il sito | test_parity, test_core (porting dei test del sito) | No da sola: stesso algoritmo |
+| Istantanee | test_snapshots | Ora sì per le COD: valori rifatti a parte (voce 29) |
+| Interfaccia, lingue, manuale | test_gui, test_i18n, test_layout, test_manual, test_measure3d, test_session, test_structure | Non riguardano i numeri |
+
+### Tolleranze
+
+Misurate dentro ogni test con un plugin di pytest che registra lo scarto reale delle asserzioni con tolleranza ≥ 10⁻³:
+sui cristalli sintetici gli scarti sono 10⁻⁶–10⁻⁵ Å (arrotondamento delle coordinate a 6 decimali nei CIF di prova),
+quindi le tolleranze erano 200 volte più larghe del necessario: un errore di 0,5 mÅ sarebbe passato. Strette a 10⁻⁴ Å
+e 10⁻³°. Restano larghe, motivatamente: densità contro il CIF (scarto 3·10⁻⁴, il CIF ha 3 decimali), tabelle `_geom_`
+(cifre del CIF), σ del Monte Carlo (rel 0,05–0,12: errore statistico con poche centinaia di campioni).
+
+### CIF non distribuibili
+
+`DATI_REALI/` (CIF della CSD) serve a test_geometry, test_checks e test_manual; senza, quei casi si saltano con un messaggio
+esplicito («CIF reali non distribuiti»). Le stesse verifiche girano sui CIF COD in `tests/data/cod/` e, in grande,
+negli script di `validation/`: la copertura dei numeri non dipende da `DATI_REALI/`.
 

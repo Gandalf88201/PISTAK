@@ -36,7 +36,7 @@ def test_ogni_file_ha_coppie_e_colonne(entries):
     assert len(entries) == 6 and all(e.error is None for e in entries)
     demo = by_name(entries, "demo_naphthalene.cif")
     assert [p.kind for p in demo.pairs] == ["stack"]
-    assert demo.pairs[0].values["interplanar"] == pytest.approx(3.4, abs=1e-3)
+    assert demo.pairs[0].values["interplanar"] == pytest.approx(3.4, abs=1e-4)
     assert demo.columns and demo.columns[0]["rank"] == 1
     assert by_name(entries, "infinite_chain.cif").pairs == []
 
@@ -63,7 +63,7 @@ def test_tabella_e_descrizione(entries):
     assert stack["pairs"] == len(vals) and stack["mean"] == pytest.approx(vals.mean())
     assert stack["min"] <= stack["q25"] <= stack["median"] <= stack["q75"] <= stack["max"]
     only_demo = describe(t, ["interplanar"], "stack", files={"demo_naphthalene.cif"})[0]
-    assert only_demo["mean"] == pytest.approx(3.4, abs=1e-3) and only_demo["std"] == pytest.approx(0, abs=1e-6)
+    assert only_demo["mean"] == pytest.approx(3.4, abs=1e-4) and only_demo["std"] == pytest.approx(0, abs=1e-6)
 
 
 def test_istogramma_somma_i_pesi(entries):
@@ -90,7 +90,7 @@ def test_confronto_con_riferimento(entries):
     r_ref = rows[ref]
     assert r_ref.motif_distance == 0 and all(abs(v) < 1e-12 for v in r_ref.delta.values())
     other = next(r for r in rows if r.name == "herringbone_anthracene.cif")
-    assert other.delta["interplanar"] == pytest.approx(other.best["interplanar"] - 3.4, abs=1e-3)
+    assert other.delta["interplanar"] == pytest.approx(other.best["interplanar"] - 3.4, abs=1e-4)
     expected = motif_distance(by_name(entries, "herringbone_anthracene.cif"), entries[ref])
     assert other.motif_distance == pytest.approx(expected) and math.isfinite(expected)
     nostack = next(r for r in rows if r.name == "infinite_chain.cif")
@@ -106,7 +106,7 @@ def test_riepilogo_per_file(entries):
     rows = summary_rows(entries)
     d = next(r for r in rows if r["file"] == "demo_naphthalene.cif")
     # canonical: un contatto per cella (il sito contava a→b e b→a: 2)
-    assert d["n_stack"] == 1 and d["mean_stack_interplanar"] == pytest.approx(3.4, abs=1e-3)
+    assert d["n_stack"] == 1 and d["mean_stack_interplanar"] == pytest.approx(3.4, abs=1e-4)
 
 
 def test_analyse_one_diretto():
