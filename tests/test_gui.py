@@ -326,3 +326,20 @@ def test_misura_con_il_mouse_nella_3d(view3d):
     assert v.picks == [0, 5]
     v.pick_box.setChecked(False)
     assert v.picks == [] and v._pick_observers is None
+
+
+def test_viste_chiuse_non_ricevono_le_incertezze(world, monkeypatch):
+    """Una vista chiusa (widget C++ cancellato) non deve più ricevere `uncertaintyChanged`: con una lambda restava
+    collegata e ogni Monte Carlo successivo dava «Internal C++ object … already deleted»."""
+    import sys
+
+    from PySide6.QtCore import QCoreApplication, QEvent
+
+    s, _a, views = world
+    errors = []
+    monkeypatch.setattr(sys, "excepthook", lambda *exc: errors.append(exc[1]))
+    for v in views.values():
+        v.deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    s.uncertaintyChanged.emit()
+    assert errors == []

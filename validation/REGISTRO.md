@@ -64,6 +64,10 @@ conti a mano.
 | 39 | requirements | Solo versioni minime (`>=`), nessun file di versioni bloccate: i numeri del paper non sono legati a un ambiente | P2 | **Corretto** (documentato) | `validation/ambiente.txt`: versioni esatte con cui girano test e controlli. Batch e Monte Carlo deterministici (`check_riproducibilita.py`) |
 | 40 | pistak/ | Leggibilità: ruff pulito (nessun import o variabile inutilizzati; 11 argomenti non usati, tutti segnature di slot Qt). vulture non installato; il mypy di sistema (1.19) non legge le stub di numpy 2.5 | P3 | **Aperto** | Installare mypy e vulture nel venv (insieme alla voce 32) |
 | 41 | paper | Dichiarazione sull'uso dell'IA | P1 (paper) | **Bozza** | `validation/dichiarazione_ia.md`: fatti dal repository (29 commit con Claude co-autore), testo IT/EN, parti da completare dall'autore |
+| 42 | repository | Sezione 10, passo 1: nessuna CI (`.github/workflows` assente); pytest gira solo in locale | P2 | **Aperto** | Aggiungere un workflow GitHub Actions con pytest e ruff (senza `DATI_REALI/`) |
+| 43 | core/cores.py | Sezione 10, passo 4: anelli confrontati con la topologia nota e con PLATON, non con RDKit (non installato) | P2 | **Aperto** | Installare RDKit nel venv e confrontare gli anelli minimi sui CIF COD |
+| 44 | core/pairs.py | Sezione 10, passo 5: analisi di sensibilità dei risultati alle soglie (`max_dihedral`, `max_interplanar`, …) non ancora registrata | P1 | **Aperto** | Script in `validation/` che varia ogni soglia e conta le coppie che cambiano tipo |
+| 45 | repository | Sezione 10, passo 8: versione per il paper (tag attuali v0.0.1, v0.0.2); istantanee da rigenerare e congelare | P1 | **Aperto** | Decisione dell'autore: quando chiudere le voci aperte e creare il tag v1.0.0 |
 
 ## 1. `beta_b` etichettato γ
 

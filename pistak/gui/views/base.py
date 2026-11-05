@@ -80,7 +80,9 @@ class PairView(QWidget):
         session.selectionChanged.connect(self._selection_changed)
         session.subsetChanged.connect(self._subset_changed)
         session.paramsChanged.connect(self.on_params)
-        session.uncertaintyChanged.connect(lambda: self.on_pair(self.index))
+        # metodi, non lambda: PySide scollega da solo i metodi di un widget distrutto, una lambda no (una vista chiusa
+        # riceverebbe ancora il segnale e toccherebbe widget già cancellati)
+        session.uncertaintyChanged.connect(self._uncertainty_changed)
 
     # ---- stato ---------------------------------------------------------------------
     @property
@@ -175,6 +177,12 @@ class PairView(QWidget):
                 self._stale = True
             else:
                 self.on_pair(index)
+
+    def _uncertainty_changed(self) -> None:
+        if self._hidden():
+            self._stale = True
+        else:
+            self.on_pair(self.index)
 
     def _subset_changed(self, group: str, indices) -> None:
         if group == self.group:
