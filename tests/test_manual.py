@@ -56,6 +56,7 @@ def test_le_due_lingue_hanno_la_stessa_struttura():
 
 
 def test_la_finestra_trova_lo_stesso_slug():
+    pytest.importorskip("PySide6")  # la finestra del manuale è della GUI: senza PySide6 (CI del solo calcolo) si salta
     from pistak.gui.manual_window import headings as h2
     from pistak.gui.manual_window import slug as s2
 
