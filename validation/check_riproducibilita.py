@@ -31,7 +31,7 @@ def _dump(entries) -> str:
 
 def check_batch() -> None:
     print("== cartella: 1 processo contro 4 ==")
-    files = sorted((HERE / "cod_cache").glob("*.cif"))[:40]
+    files = sorted((HERE / "cod_cache").glob("[0-9]*.cif"))[:40]  # [0-9]: non i file ._ di macOS sui dischi exFAT
     one, four, again = (_dump(run_batch(files, Limits(), w)) for w in (1, 4, 4))
     print(f"  {len(files)} file; 1 = 4 processi: {one == four}; due esecuzioni a 4 uguali: {four == again}")
 

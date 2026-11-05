@@ -16,6 +16,7 @@ verifica chiusa; sotto la tabella, per ogni voce, l'oracolo usato e il risultato
 .venv/bin/python validation/check_snapshot.py            # sezione 8: istantanee COD rifatte con numpy
 .venv/bin/python validation/check_struttura.py oblique origin   # sezione 8: invarianza per cella e origine
 .venv/bin/python validation/check_riproducibilita.py    # sezione 9: batch 1 contro 4 processi, seme del Monte Carlo
+.venv/bin/python validation/check_sensibilita.py        # sezione 10: sensibilità alle soglie (200 CIF, ~2 min)
 ```
 
 Gli oracoli non usano `pistak.core`: geometria ricalcolata con numpy, topologia nota dei policicli, tensore metrico,
@@ -66,7 +67,7 @@ conti a mano.
 | 41 | paper | Dichiarazione sull'uso dell'IA | P1 (paper) | **Bozza** | `validation/dichiarazione_ia.md`: fatti dal repository (29 commit con Claude co-autore), testo IT/EN, parti da completare dall'autore |
 | 42 | repository | Sezione 10, passo 1: nessuna CI (`.github/workflows` assente); pytest gira solo in locale | P2 | **Aperto** | Aggiungere un workflow GitHub Actions con pytest e ruff (senza `DATI_REALI/`) |
 | 43 | core/cores.py | Sezione 10, passo 4: anelli confrontati con la topologia nota e con PLATON, non con RDKit (non installato) | P2 | **Aperto** | Installare RDKit nel venv e confrontare gli anelli minimi sui CIF COD |
-| 44 | core/pairs.py | Sezione 10, passo 5: analisi di sensibilità dei risultati alle soglie (`max_dihedral`, `max_interplanar`, …) non ancora registrata | P1 | **Aperto** | Script in `validation/` che varia ogni soglia e conta le coppie che cambiano tipo |
+| 44 | core/pairs.py | Sezione 10, passo 5: sensibilità dei risultati alle soglie | P1 | **Verificato** | `check_sensibilita.py` su 200 CIF COD: `max_dihedral` è la scelta che pesa (±5° → ±6 % di stack, ±10° → −18/+15 %); `max_interplanar` ±0,2 Å → ≤ 2 %; le altre soglie ≤ 2 %, tranne `min_fragment_atoms` = 6 (−5 %: frammenti di 5 atomi). Da riportare nel paper |
 | 45 | repository | Sezione 10, passo 8: versione per il paper (tag attuali v0.0.1, v0.0.2); istantanee da rigenerare e congelare | P1 | **Aperto** | Decisione dell'autore: quando chiudere le voci aperte e creare il tag v1.0.0 |
 
 ## 1. `beta_b` etichettato γ
@@ -501,10 +502,43 @@ derivato è `gui/flow_layout.py` (voce 37). Licenze delle dipendenze dai metadat
 
 ### Riproducibilità
 
-`check_riproducibilita.py`: 40 strutture COD in 1 e in 4 processi, e due volte in 4, danno risultati identici; il Monte
-Carlo con lo stesso seme dà le stesse σ. Versioni esatte in `ambiente.txt` (voce 39).
+`check_riproducibilita.py`: 40 strutture COD (361 coppie, nessun errore) in 1 e in 4 processi, e due volte in 4, danno
+risultati identici; il Monte Carlo con lo stesso seme dà le stesse σ. (La prima versione dello script prendeva anche i
+file `._*.cif` che macOS crea sui dischi exFAT, analizzando così soprattutto righe d'errore: corretta e rieseguita.) Versioni esatte in `ambiente.txt` (voce 39).
 
 ### Dichiarazione sull'uso dell'IA
 
 Bozza in `dichiarazione_ia.md` (voce 41).
+
+## Sezione 10: sensibilità alle soglie (5 novembre 2026)
+
+`check_sensibilita.py` sposta una soglia alla volta attorno al predefinito su 200 CIF COD (3816 coppie, 116 stack con
+le soglie predefinite) e confronta le coppie, identificate da molecole, traslazione e frammenti π.
+
+| Soglia (predefinito) | Valore | Cambiano tipo | Nuove | Perse | Stack | Strutture con stack diversi |
+| --- | --- | --- | --- | --- | --- | --- |
+| `max_dihedral` (20°) | 10 / 15 / 25 / 30° | 21 / 7 / 7 / 17 | 0 | 0 | 95 / 109 / 123 / 133 (−18 / −6 / +6 / +15 %) | 15 / 5 / 7 / 13 |
+| `max_interplanar` (4,2 Å) | 3,8 / 4,0 / 4,4 / 4,6 | 5 / 2 / 1 / 2 | 0 | 0 | 111 / 114 / 117 / 118 (−4 / −2 / +1 / +2 %) | 5 / 2 / 1 / 2 |
+| `contact_cutoff` (4,5 Å) | 4,0 / 5,0 | 0 / 0 | 0 / 440 | 640 / 3 | 114 / 116 | 2 / 0 |
+| `ring_rms` (0,10 Å) | 0,05 / 0,15 | 9 / 1 | 174 / 212 | 203 / 133 | 117 / 115 | 4 / 4 |
+| `molecule_rms` (0,15 Å) | 0,10 / 0,20 | 1 / 0 | 25 / 45 | 71 / 10 | 114 / 116 | 1 / 0 |
+| `bond_tolerance` (0,4 Å) | 0,3 / 0,5 | 0 / 2 | 294 / 93 | 279 / 144 | 116 / 116 | 0 / 2 |
+| `max_ring_size` (8) | 6 / 10 | 0 | 0 | 0 | 116 | 0 |
+| `min_fragment_atoms` (5) | 4 / 6 | 0 | 66 / 6 | 0 / 379 | 116 / 110 | 0 / 4 |
+
+Lettura:
+
+- **`max_dihedral` è la soglia che decide**: ±5° spostano il 6 % degli stack, ±10° il 15–18 %. Nel paper conviene
+  dare i risultati anche a 15° e 25°, o la distribuzione degli angoli, così che il lettore veda dove cade il taglio.
+- **`max_interplanar`** pesa poco: ±0,2 Å cambiano al più il 2 % degli stack (le coppie quasi parallele sono quasi
+  tutte ben sotto 4,2 Å o ben sopra).
+- **`contact_cutoff` = 4,0 Å perde 2 stack** (coppie con distanza interplanare ≤ 4,2 Å ma contatto tra atomi pesanti
+  > 4,0 Å): conferma la voce 6 (4,5 Å). A 5,0 Å arrivano 440 coppie, nessuna stack. Le 3 «perse» a 5,0 Å non cambiano
+  il numero di stack: con più candidate la coppia rappresentativa di una classe di equivalenza può essere un'altra.
+- **Nuclei e molecole** (`ring_rms`, `molecule_rms`, `bond_tolerance`): molte coppie nuove o perse, ma il numero di stack
+  cambia al più dell'1–2 %. Una parte delle «nuove/perse» è solo rinumerazione: se cambia un nucleo cambiano gli indici
+  dei frammenti, quindi il confronto per chiave le conta due volte.
+- **`min_fragment_atoms` = 6** toglie 6 stack in 4 strutture: frammenti di 5 atomi (anelli a cinque, eteroaromatici).
+  Il predefinito 5 li tiene; va detto nel paper.
+- `max_ring_size` 6–10 non cambia nulla in questo campione.
 
