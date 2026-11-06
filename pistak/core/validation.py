@@ -129,10 +129,15 @@ def _density(a: Analysis) -> list[Alert]:
 
 
 # ---- idrogeni -------------------------------------------------------------------------------------------------
-#: Un C terminale legato solo a N o O più corto di così è un triplo legame (cianuro, isonitrile, carbonile metallico:
-#: 1,13–1,17 Å) e non porta idrogeni; un doppio legame C=O è più lungo (da 1,19 Å).
+#: Un C terminale legato solo a N o O più corto di così è un triplo legame (cianuro, isonitrile, carbonile metallico)
+#: e non porta idrogeni; un doppio legame C=O è più lungo. F. H. Allen et al., J. Chem. Soc. Perkin Trans. 2 1987,
+#: S1–S19, tabella: Csp≡N da 1,136 Å (nitrili C*–C≡N, n = 140) a 1,155 Å ((S–C≡N)⁻); C=O da 1,187 Å (anidridi, esteri
+#: arilici; quartile inferiore 1,181) a 1,21–1,23 (chetoni, ammidi). Sui 200 CIF COD della revisione (registro,
+#: voce 23; `check_struttura.py hthresh`) i 697 C=O di carbonili partono da 1,182 Å (mediana 1,221): nessuno sotto.
 TRIPLE_CX = 1.18
-#: Un C con due vicini e un angolo sotto questo valore è sp² (≈ 120°) e gli manca un H; un C sp (≈ 180°) no.
+#: Un C con due vicini e un angolo sotto questo valore è sp² (≈ 120°) e gli manca un H; un C sp (≈ 180°) no. Allen 1987
+#: dà solo lunghezze di legame: la soglia si controlla sui CIF COD, dove i C sp² con un H arrivano a 134,5° e i C sp
+#: (nitrili, alchini) stanno a 176° di mediana.
 SP_ANGLE = 150.0
 
 
@@ -277,6 +282,15 @@ def _vdw_radii(a: Analysis) -> list[Alert]:
     """Elementi senza raggio di van der Waals tabulato: contatti e parametri di vdW usano `DEFAULT_VDW`."""
     missing = sorted({e for e in a.structure.cell_el if e not in VDW_RADII}, key=atomic_number)
     return [Alert("vdwDefault", "G", {"elements": ", ".join(missing), "r": DEFAULT_VDW})] if missing else []
+
+
+@check("oldDefaults")
+def _old_defaults(a: Analysis) -> list[Alert]:
+    """Soglie rimaste a un vecchio valore predefinito (di solito da un user.toml salvato prima del cambio)."""
+    from pistak.core.config import superseded_values
+
+    return [Alert("oldDefault", "C", {"key": k, "value": v, "default": d, "date": when})
+            for k, v, d, when in superseded_values(a.limits)]
 
 
 @check("refinement")

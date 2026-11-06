@@ -1,4 +1,4 @@
-"""Finestre ridimensionabili e dentro lo schermo, anche piccolo."""
+"""Windows are resizable and fit on the screen, even a small one."""
 import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -25,19 +25,19 @@ def app():
     return QApplication.instance() or QApplication([])
 
 
-def test_fit_to_screen_riduce_e_centra(app):
+def test_fit_to_screen_shrinks_and_centres(app):
     w = QWidget()
     avail = QRect(0, 25, 1024, 600)
     fit_to_screen(w, 1500, 920, avail=avail)
     assert w.width() <= 1024 and w.height() <= 600
     assert w.minimumWidth() <= w.width() and w.minimumHeight() <= w.height()
     assert avail.contains(w.geometry().topLeft()) and w.x() + w.width() <= 1024 and w.y() + w.height() <= 625
-    big = QWidget()  # schermo grande: si usa la dimensione preferita
+    big = QWidget()  # large screen: the preferred size is used
     fit_to_screen(big, 1500, 920, avail=QRect(0, 0, 2560, 1440))
     assert (big.width(), big.height()) == (1500, 920)
 
 
-def test_clamp_into_screen_riporta_dentro_una_finestra_troppo_grande(app):
+def test_clamp_into_screen_brings_back_oversized_window(app):
     w = QWidget()
     w.setMinimumSize(100, 100)
     w.resize(3000, 2000)
@@ -47,41 +47,41 @@ def test_clamp_into_screen_riporta_dentro_una_finestra_troppo_grande(app):
     assert 0 <= w.x() and w.x() + w.width() <= 1280 and 0 <= w.y() and w.y() + w.height() <= 720
 
 
-def test_flow_layout_va_a_capo(app):
+def test_flow_layout_wraps(app):
     host = QWidget()
     lay = FlowLayout(host)
     for i in range(6):
-        b = QPushButton(f"Pulsante molto lungo numero {i}")
+        b = QPushButton(f"Very long button number {i}")
         lay.addWidget(b)
     wide = lay.heightForWidth(4000)
     narrow = lay.heightForWidth(250)
-    assert narrow > 3 * wide  # stretto: una riga per pulsante
-    assert lay.minimumSize().width() < 300  # la larghezza minima è quella del pulsante più largo, non della somma
+    assert narrow > 3 * wide  # narrow: one row per button
+    assert lay.minimumSize().width() < 300  # the minimum width is the widest button's, not the sum
 
 
-def test_la_finestra_principale_puo_stare_in_uno_schermo_piccolo(app):
+def test_main_window_fits_small_screen(app):
     win = MainWindow(Session())
     win.show()
     for _ in range(5):
         app.processEvents()
     hint = win.minimumSizeHint()
-    assert hint.width() <= 700 and hint.height() <= 500, f"finestra troppo rigida: {hint}"
+    assert hint.width() <= 700 and hint.height() <= 500, f"window too rigid: {hint}"
     win.resize(720, 480)
     for _ in range(5):
         app.processEvents()
-    assert (win.width(), win.height()) == (720, 480)  # il layout non impone più di così
-    win.resize(1800, 1100)  # e si può ingrandire
+    assert (win.width(), win.height()) == (720, 480)  # the layout imposes nothing larger
+    win.resize(1800, 1100)  # and it can be enlarged
     app.processEvents()
     assert win.width() == 1800
 
 
-def test_finestra_principale_non_supera_lo_schermo(app):
+def test_main_window_not_larger_than_screen(app):
     avail = app.primaryScreen().availableGeometry()
     win = MainWindow(Session())
     assert win.width() <= avail.width() and win.height() <= avail.height()
 
 
-def test_finestra_di_confronto_e_impostazioni_si_adattano(app):
+def test_comparison_and_settings_windows_fit(app):
     avail = app.primaryScreen().availableGeometry()
     for w in (CollectionWindow(Limits()), SettingsDialog(Limits())):
         w.show()

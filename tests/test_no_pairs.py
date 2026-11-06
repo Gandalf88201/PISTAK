@@ -1,4 +1,4 @@
-"""Strutture senza coppie: il motivo (`pistak.core.diagnosis`) al posto di viste vuote."""
+"""Structures without pairs: the reason (`pistak.core.diagnosis`) instead of empty views."""
 import math
 from pathlib import Path
 
@@ -16,7 +16,7 @@ BOX = Cell(9.0, 9.0, 9.0, 90.0, 90.0, 90.0)
 
 
 def cyclohexane() -> list:
-    """Cicloesano a sedia con gli idrogeni: anello saturo, scarto dal piano ~0,25 Å."""
+    """Chair cyclohexane with hydrogens: a saturated ring, ~0.25 Å out of the plane."""
     atoms = []
     for k in range(6):
         a = math.radians(60 * k)
@@ -30,12 +30,12 @@ def analyse(atoms, cell=BOX, symops=("x, y, z",)):
     return api.analyse_text(make_cif(atoms, cell, list(symops), origin_frac=(0.5, 0.5, 0.5)), "t.cif")
 
 
-def test_con_coppie_nessun_motivo():
+def test_with_pairs_no_reason():
     assert why_no_pairs(api.analyse_file(EX / "herringbone_anthracene.cif")) is None
 
 
-def test_struttura_reale_con_anelli_saturi():
-    # COD 1550133: cinque anelli, tutti saturi (scarto dal piano 0,17–0,21 Å): nessun nucleo π
+def test_real_structure_with_saturated_rings():
+    # COD 1550133: five rings, all saturated (0.17–0.21 Å out of the plane): no π core
     a = api.analyse_file(Path(__file__).parent / "data" / "cod" / "1550133.cif")
     assert not a.pairs
     r = why_no_pairs(a)
@@ -43,7 +43,7 @@ def test_struttura_reale_con_anelli_saturi():
     assert all(x.saturated for x in ring_planarity(a))
 
 
-def test_anelli_saturi():
+def test_saturated_rings():
     a = analyse(cyclohexane())
     assert not a.pairs
     rings = ring_planarity(a)
@@ -52,8 +52,8 @@ def test_anelli_saturi():
     assert r.code == "nonPlanarRings" and r.values["n"] == 1 and r.values["limit"] == "0.10"
 
 
-def test_aromatico_distorto():
-    atoms, k = [], 0  # benzene a sedia appena accennata: carboni alternati ±0,17 Å (oltre le soglie di anello e nucleo)
+def test_distorted_aromatic():
+    atoms, k = [], 0  # benzene with a slight chair: carbons alternating ±0.17 Å (beyond the ring and core thresholds)
     for e, p in ring_system(1):
         if e == "C":
             k += 1
@@ -64,19 +64,19 @@ def test_aromatico_distorto():
     assert "alza la soglia" in no_pairs_text(r)
 
 
-def test_nessun_anello():
-    c = np.zeros(3)  # neopentano: atomi pesanti a tetraedro, niente di planare
+def test_no_rings():
+    c = np.zeros(3)  # neopentane: heavy atoms in a tetrahedron, nothing planar
     atoms = [("C", c)] + [("C", c + 1.53 * np.array(v) / math.sqrt(3)) for v in ((1, 1, 1), (1, -1, -1), (-1, 1, -1), (-1, -1, 1))]
     assert why_no_pairs(analyse(atoms)).code == "noRings"
 
 
-def test_nuclei_pi_troppo_lontani():
-    a = analyse(ring_system(2), Cell(30.0, 30.0, 30.0, 90.0, 90.0, 90.0))  # un naftalene solo, immagini a 30 Å
+def test_pi_cores_too_far_apart():
+    a = analyse(ring_system(2), Cell(30.0, 30.0, 30.0, 90.0, 90.0, 90.0))  # a single naphthalene, images at 30 Å
     r = why_no_pairs(a)
     assert r.code == "noContacts" and r.values["n"] == 1
 
 
-def test_testi_in_due_lingue():
+def test_texts_in_two_languages():
     r = why_no_pairs(analyse(cyclohexane()))
     it = no_pairs_text(r)
     try:
@@ -108,7 +108,7 @@ def app():
     return QApplication.instance() or QApplication([])
 
 
-def test_viste_vuote_spiegano_perche(app):
+def test_empty_views_explain_why(app):
     from pistak.gui.session import Session
     from pistak.gui.views.detail_view import DetailView
     from pistak.gui.views.table_view import TableView
@@ -118,8 +118,8 @@ def test_viste_vuote_spiegano_perche(app):
     s._apply(analyse(cyclohexane()))
     assert not table.empty_notice.isHidden() and table.table.isHidden()
     assert "saturi" in table.empty_notice.text() and "Geometria" in table.empty_notice.text()
-    assert detail.empty_notice.isHidden() and not detail.tabs.isHidden()  # il Dettaglio resta utilizzabile
+    assert detail.empty_notice.isHidden() and not detail.tabs.isHidden()  # the Detail view stays usable
     assert "Nessuna coppia di nuclei π" in detail.summary.toPlainText()
-    s._apply(api.analyse_file(EX / "herringbone_anthracene.cif"))  # con coppie torna tutto come prima
+    s._apply(api.analyse_file(EX / "herringbone_anthracene.cif"))  # with pairs everything is back as before
     assert table.empty_notice.isHidden() and not table.table.isHidden()
     assert "Nessuna coppia" not in detail.summary.toPlainText()

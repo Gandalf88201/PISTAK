@@ -1,4 +1,4 @@
-"""Lingue: completezza del dizionario, testi inglesi in terminale e nella finestra, cambio lingua a finestra aperta."""
+"""Languages: dictionary completeness, English texts on the command line and in the window, switching language with the window open."""
 import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -21,7 +21,7 @@ EX = Path(__file__).resolve().parents[1] / "examples"
 
 
 @pytest.fixture(autouse=True)
-def italiano_alla_fine():
+def italian_at_the_end():
     yield
     i18n.set_language("it")
 
@@ -30,46 +30,46 @@ def fields(text: str) -> set[str]:
     return {name for _, name, _, _ in string.Formatter().parse(text) if name}
 
 
-# ---- dizionario ---------------------------------------------------------------------------
-def test_nessun_testo_senza_traduzione():
+# ---- dictionary ---------------------------------------------------------------------------
+def test_no_text_without_translation():
     assert i18n_check.missing() == []
 
 
-def test_segnaposto_identici_nelle_due_lingue():
+def test_same_placeholders_in_both_languages():
     for it, en in TEXT.items():
-        assert fields(it) == fields(en), f"segnaposto diversi: {it!r} → {en!r}"
+        assert fields(it) == fields(en), f"different placeholders: {it!r} → {en!r}"
 
 
-def test_il_dizionario_non_ha_voci_morte():
-    vive = i18n_check.all_texts() | {"#"}
-    assert [k for k in TEXT if k not in vive] == []
+def test_dictionary_has_no_dead_entries():
+    alive = i18n_check.all_texts() | {"#"}
+    assert [k for k in TEXT if k not in alive] == []
 
 
-def test_nessuna_traduzione_vuota_o_uguale_per_errore():
-    vuote = [k for k, v in TEXT.items() if not v.strip()]
-    assert vuote == []
+def test_no_empty_translation():
+    empty = [k for k, v in TEXT.items() if not v.strip()]
+    assert empty == []
 
 
-# ---- funzioni di base -------------------------------------------------------------------------
-def test_italiano_e_il_testo_originale_inglese_lo_traduce():
+# ---- basic functions ---------------------------------------------------------------------------
+def test_italian_is_the_source_english_translates_it():
     assert tr("Tabella") == "Tabella"
     i18n.set_language("en")
     assert tr("Tabella") == "Table"
     assert tf("{n} coppie in {f} file; tipo: {kind}", n=3, f=2, kind="stack") == "3 pairs in 2 files; type: stack"
 
 
-def test_testo_senza_traduzione_resta_italiano():
+def test_untranslated_text_stays_italian():
     i18n.set_language("en")
     assert tr("un testo che non esiste nel dizionario") == "un testo che non esiste nel dizionario"
 
 
-def test_scelta_della_lingua():
+def test_language_choice():
     assert i18n.resolve("en") == "en" and i18n.resolve("IT") == "it"
     assert i18n.resolve("klingon") == i18n.DEFAULT and i18n.resolve(None) == i18n.DEFAULT
     assert i18n.resolve("auto") in i18n.LANGS
 
 
-def test_traduzioni_dei_plugin():
+def test_plugin_translations():
     i18n.add_translations("en", {"Il mio parametro": "My parameter"})
     i18n.set_language("en")
     assert tr("Il mio parametro") == "My parameter"
@@ -77,8 +77,8 @@ def test_traduzioni_dei_plugin():
     TEXT_COPY.pop("Il mio parametro")
 
 
-# ---- parti non grafiche ---------------------------------------------------------------------------
-def test_nomi_dei_parametri_e_dei_tipi_in_inglese():
+# ---- non-graphical parts ---------------------------------------------------------------------------
+def test_parameter_and_kind_names_in_english():
     from pistak.gui import theme
     from pistak.labels import rank_name
     from pistak.params import get_spec
@@ -93,7 +93,7 @@ def test_nomi_dei_parametri_e_dei_tipi_in_inglese():
     assert get_spec("interplanar").name == "Distanza interplanare" and rank_name(1) == "colonna"
 
 
-def test_relazione_della_coppia_in_inglese_e_csv_uguale_nelle_due_lingue(tmp_path):
+def test_pair_relation_in_english_and_same_csv_in_both_languages(tmp_path):
     from pistak import analyse_file
     from pistak.io import export
     from pistak.labels import relation
@@ -105,11 +105,11 @@ def test_relazione_della_coppia_in_inglese_e_csv_uguale_nelle_due_lingue(tmp_pat
     i18n.set_language("it")
     assert relation(a.pairs[0]).startswith("stessa")
     it = export.write_csv(a, tmp_path / "q.csv").read_text()
-    # le intestazioni dei file non si traducono: uno script li legge allo stesso modo in ogni lingua
+    # file headers are not translated: a script reads them the same way in every language
     assert en == it and it.splitlines()[0].startswith("n,kind,molecule_a,molecule_b,shift,")
 
 
-def test_terminale_in_inglese(capsys):
+def test_command_line_in_english(capsys):
     from pistak.cli import main
 
     assert main(["--lang", "en", "analyze", str(EX / "demo_naphthalene.cif")]) == 0
@@ -120,7 +120,7 @@ def test_terminale_in_inglese(capsys):
     assert "atomi in cella" in capsys.readouterr().out
 
 
-def test_errori_del_lettore_in_inglese(tmp_path, capsys):
+def test_reader_errors_in_english(tmp_path, capsys):
     from pistak.cli import main
 
     bad = tmp_path / "b.cif"
@@ -129,7 +129,7 @@ def test_errori_del_lettore_in_inglese(tmp_path, capsys):
     assert "cell parameters are missing" in capsys.readouterr().err
 
 
-def test_batch_compare_stats_in_inglese(tmp_path, capsys):
+def test_batch_compare_stats_in_english(tmp_path, capsys):
     from pistak.cli import main
 
     assert main(["--lang", "en", "compare", str(EX / "demo_naphthalene.cif"), str(EX / "herringbone_anthracene.cif")]) == 0
@@ -140,13 +140,13 @@ def test_batch_compare_stats_in_inglese(tmp_path, capsys):
     assert (tmp_path / "s.csv").read_text().splitlines()[0].startswith("parameter,n,pairs,mean,std,")
 
 
-def test_sessioni_vecchie_con_nomi_italiani_delle_viste():
+def test_old_sessions_with_italian_view_names():
     from pistak.gui.views import LEGACY_KINDS, VIEW_TYPES
 
     assert all(v in VIEW_TYPES for v in LEGACY_KINDS.values())
 
 
-# ---- finestra ---------------------------------------------------------------------------------------
+# ---- window -----------------------------------------------------------------------------------------
 pytest.importorskip("PySide6")
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QDockWidget
@@ -168,11 +168,11 @@ def wait(app, cond, timeout=40):
     while not cond() and time.time() - t < timeout:
         app.processEvents()
         time.sleep(0.02)
-    assert cond(), "tempo scaduto"
+    assert cond(), "timed out"
 
 
 def visible_texts(root) -> list[str]:
-    """Tutti i testi che l'utente può leggere in una finestra: etichette, pulsanti, menu, schede, intestazioni, suggerimenti."""
+    """Every text the user can read in a window: labels, buttons, menus, tabs, headers, tooltips."""
     from PySide6.QtGui import QAction
     from PySide6.QtWidgets import QAbstractButton, QComboBox, QLabel, QTableView, QTableWidget, QTabWidget, QTextBrowser, QTreeWidget
 
@@ -202,14 +202,14 @@ def visible_texts(root) -> list[str]:
     return [t for t in out if t]
 
 
-def test_finestra_principale_tutta_in_inglese(app):
+def test_main_window_all_in_english(app):
     from pistak.gui.main_window import MainWindow
     from pistak.gui.session import Session
 
     i18n.set_language("en")
     win = MainWindow(Session())
     win.autosave = False
-    win.session.limits = Limits.site()  # 3 coppie nell'herringbone: la selezione 2 esiste
+    win.session.limits = Limits.site()  # 3 pairs in the herringbone: selection 2 exists
     win.session.load_file(EX / "herringbone_anthracene.cif")
     wait(app, lambda: win.session.analysis is not None)
     for _ in range(20):
@@ -219,10 +219,10 @@ def test_finestra_principale_tutta_in_inglese(app):
     for _tab in win.docks[-1].widget().tabs.findChildren(object):
         pass
     left = [t for t in visible_texts(win) if ITALIAN.search(t)]
-    assert left == [], f"testi ancora in italiano: {left}"
+    assert left == [], f"texts still in Italian: {left}"
 
 
-def test_finestra_di_confronto_tutta_in_inglese(app):
+def test_comparison_window_all_in_english(app):
     from pistak.core.config import Limits
     from pistak.gui.collection_window import CollectionWindow
 
@@ -239,7 +239,7 @@ def test_finestra_di_confronto_tutta_in_inglese(app):
     assert win.tabs.tabText(0) == "Structures" and "Distributions" in [win.tabs.tabText(i) for i in range(win.tabs.count())]
 
 
-def test_dettaglio_e_impostazioni_in_inglese(app):
+def test_detail_and_settings_in_english(app):
     from pistak.core.config import Limits
     from pistak.gui.settings_dialog import SettingsDialog
 
@@ -251,16 +251,16 @@ def test_dettaglio_e_impostazioni_in_inglese(app):
     assert any("Maximum interplanar distance" in str(x) for x in labels)
 
 
-def test_cambio_lingua_a_finestra_aperta_conserva_la_sessione(app, monkeypatch):
+def test_language_switch_with_open_window_keeps_session(app, monkeypatch):
     from pistak.gui.main_window import MainWindow
     from pistak.gui.session import Session
     from pistak.gui.views.hist_view import HistogramView
 
-    monkeypatch.setattr(i18n, "save_language", lambda lang: None)  # non scrive config/user.toml durante i test
+    monkeypatch.setattr(i18n, "save_language", lambda lang: None)  # do not write config/user.toml during the tests
     i18n.set_language("it")
     win = MainWindow(Session())
     win.autosave = False
-    win.session.limits = Limits.site()  # 3 coppie nell'herringbone: la selezione 2 esiste
+    win.session.limits = Limits.site()  # 3 pairs in the herringbone: selection 2 exists
     win.session.load_file(EX / "herringbone_anthracene.cif")
     wait(app, lambda: win.session.analysis is not None)
     for _ in range(20):
@@ -281,21 +281,21 @@ def test_cambio_lingua_a_finestra_aperta_conserva_la_sessione(app, monkeypatch):
     assert (new.session.selection("A"), new.session.subset("A")) == (2, {1, 2})
     hist2 = next(d.widget() for d in new.docks if isinstance(d.widget(), HistogramView))
     assert hist2.bins.value() == 7 and hist2.combo.currentData() == "lat_slip" and not hist2.weighted.isChecked()
-    assert new.docks[0].widget().index == 2  # le viste mostrano di nuovo la coppia scelta
+    assert new.docks[0].widget().index == 2  # the views show the chosen pair again
 
-    new.change_language("it")  # e si torna indietro
+    new.change_language("it")  # and back again
     for _ in range(20):
         app.processEvents()
     assert app.main_window.docks[0].windowTitle() == "Tabella" and app.main_window.session.selection("A") == 2
 
 
-def test_cambio_tema_a_finestra_aperta_conserva_la_sessione(app, monkeypatch):
+def test_theme_switch_with_open_window_keeps_session(app, monkeypatch):
     from pistak.gui import theme
     from pistak.gui.main_window import MainWindow
     from pistak.gui.session import Session
     from pistak.gui.views.scatter_view import ScatterView
 
-    monkeypatch.setattr(theme, "save_mode", lambda m: None)  # non scrive user.toml durante i test
+    monkeypatch.setattr(theme, "save_mode", lambda m: None)  # do not write user.toml during the tests
     monkeypatch.setattr(theme, "_mode", "light")
     win = MainWindow(Session())
     win.autosave = False

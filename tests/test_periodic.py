@@ -1,4 +1,4 @@
-"""Fase 4a: la cella intera come input per calcoli periodici (VASP, Quantum ESPRESSO, CP2K, CRYSTAL)."""
+"""Phase 4a: the whole cell as input for periodic calculations (VASP, Quantum ESPRESSO, CP2K, CRYSTAL)."""
 import re
 from pathlib import Path
 
@@ -20,17 +20,17 @@ def herring():
     return api.analyse_file(EX / "herringbone_anthracene.cif")
 
 
-def test_cella_con_idrogeni_normalizzati(herring):
+def test_cell_with_normalised_hydrogens(herring):
     s = herring.structure
     cell = periodic.periodic_cell(herring)
     assert len(cell.el) == s.n_cell_atoms and sorted(cell.el) == sorted(s.cell_el)
-    assert cell.el == sorted(cell.el, key=lambda e: (e != "C", e != "H", e))  # raggruppati per elemento
+    assert cell.el == sorted(cell.el, key=lambda e: (e != "C", e != "H", e))  # grouped by element
     assert ((cell.frac >= 0) & (cell.frac < 1)).all()
     cart = cell.frac @ cell.vectors
     shifts = np.array([(x, y, z) for x in (-1, 0, 1) for y in (-1, 0, 1) for z in (-1, 0, 1)]) @ cell.vectors
     h = [i for i, e in enumerate(cell.el) if e == "H"]
     c = [i for i, e in enumerate(cell.el) if e == "C"]
-    for i in h:  # ogni H a 1,085 Å (C aromatico) dal carbonio più vicino (immagini periodiche comprese)
+    for i in h:  # every H at 1.085 Å (aromatic C) from the nearest carbon (periodic images included)
         d = np.linalg.norm(cart[c][:, None, :] + shifts[None] - cart[i], axis=2).min()
         assert d == pytest.approx(XH_NEUTRON["Csp2"], abs=1e-6)
     raw = periodic.periodic_cell(herring, periodic.PeriodicOptions(normalize_h=False))
@@ -54,12 +54,12 @@ def test_quantum_espresso(herring):
     text = next(iter(periodic.periodic_files(herring, periodic.PeriodicOptions("qe", "relax")).values()))
     assert f"nat = {herring.structure.n_cell_atoms}" in text and "calculation = 'relax'" in text and "&IONS" in text
     assert "dftd3_version = 4" in text
-    assert text.startswith("&CONTROL")  # niente commenti prima delle namelist
+    assert text.startswith("&CONTROL")  # no comments before the namelists
     assert len(re.findall(rf"^\s+[A-Z][a-z]?\s+{NUM}\s+{NUM}\s+{NUM}\s*$", text.split("ATOMIC_POSITIONS")[1], re.M)) == \
         herring.structure.n_cell_atoms
 
 
-def test_cp2k_e_crystal(herring):
+def test_cp2k_and_crystal(herring):
     cp2k = next(iter(periodic.periodic_files(herring, periodic.PeriodicOptions("cp2k", "vc-relax", dispersion="d4")).values()))
     assert "RUN_TYPE CELL_OPT" in cp2k and "TYPE DFTD4" in cp2k and "&KIND H" in cp2k and "SCALED" in cp2k
     files = periodic.periodic_files(herring, periodic.PeriodicOptions("crystal", "relax", functional="B3LYP"))
@@ -77,7 +77,7 @@ def test_cp2k_e_crystal(herring):
     periodic.PeriodicOptions("vasp", functional="B3LYP"), periodic.PeriodicOptions("abinit"),
     periodic.PeriodicOptions(task="md"), periodic.PeriodicOptions(kpoint_length=0),
 ])
-def test_combinazioni_non_valide(herring, options):
+def test_invalid_combinations(herring, options):
     with pytest.raises(QCError):
         periodic.periodic_files(herring, options)
 

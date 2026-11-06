@@ -67,6 +67,8 @@ ALERT_TEXT = {
     "checkFailed": "Il controllo «{check}» non è riuscito: {error}",
     "vdwDefault": "Raggio di van der Waals non tabulato per {elements}: contatti e parametri di van der Waals usano "
                   "{r} Å.",
+    "oldDefault": "{key} = {value} era il valore predefinito fino al {date}; ora è {default}. Se viene da un user.toml "
+                  "salvato prima, toglilo dal file (o cambia la soglia e salvala di nuovo).",
 }
 #: Perché un'analisi non ha coppie (`pistak.core.diagnosis`), in italiano: si traducono al momento dell'uso.
 NO_PAIRS_TEXT = {

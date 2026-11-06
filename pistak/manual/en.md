@@ -298,7 +298,8 @@ checkCIF alert of the same level.
 | overlaps | distinct atoms closer than 0.7 Å (A): unresolved disorder or duplicated atoms |
 | bonds | C–C, C–N, C–O outside the plausible ranges (B); C–H, N–H, O–H (C) |
 | contacts | with `contact_check = "fixed"` (default): intermolecular C···C below 3.0 Å and H···H below 1.8 Å (C); with `"vdw"`: for each pair of elements, contacts more than `contact_check_margin` (0.5 Å) shorter than the sum of the van der Waals radii, plausible hydrogen bonds excluded (H bonded to N or O towards N, O, F) (C, `vdwContact`) |
-| van der Waals radii | elements without a radius in the tables (Fe, Co, Ru, lanthanides, …): contacts and van der Waals parameters use 1.9 Å (G, `vdwDefault`) |
+| van der Waals radii | elements without a radius in the tables (Pm, Fm and beyond): contacts and van der Waals parameters use 1.9 Å (G, `vdwDefault`) |
+| superseded thresholds | a threshold equal to an old default, usually from a `user.toml` saved before the change (today: `contact_cutoff` = 4.0 Å, the default until 3 November 2026; not in website mode) (C, `oldDefault`) |
 | refinement | R1 > 0.075 (C) or > 0.10 (B), wR2 > 0.20 (C) or > 0.25 (B), GoF outside 0.8–2.0, residual density > 1 e/Å³ for light atoms |
 | disorder | atoms left out by the disorder policy (G), partial occupancies in the analysed model (C), symmetry operations derived from the symbol (G) |
 | missed symmetry | like PLATON's ADDSYM: the `spglib` package looks for the space group of the model; more operations than declared within 0.1 Å → A, only within 0.3 Å → C (pseudosymmetry). As in PLATON, atoms with partial occupancy are left out; if they are more than half of the non-hydrogen atoms the search is skipped (G) |
@@ -324,7 +325,7 @@ bond angle above 175° (linear groups, for example X–M–X on an inversion cen
 aligned atoms the plane is undefined.
 
 The **contacts** are the pairs of atoms of two different molecules (or of two copies of the same one) closer than the
-sum of their van der Waals radii (Bondi 1964 and Mantina et al. 2009; H 1.10 Å from Rowland and Taylor), shortest in proportion first: besides the distance they give the
+sum of their van der Waals radii (Bondi 1964 and Mantina et al. 2009, H 1.10 Å from Rowland and Taylor; d- and f-block metals from Alvarez 2013), shortest in proportion first: besides the distance they give the
 sum of the radii and the difference *d − Σ r vdW*. The first atom always belongs to the independent molecule; each
 contact equivalent by symmetry appears once. They include hydrogen bonds (H···O and H···N below 2.6 Å), the close
 contacts of stack columns and clashes worth checking; those shorter than 3.0 Å between carbons and 1.8 Å between
@@ -409,7 +410,7 @@ Changing a threshold restarts from its stage and reuses the rest. With the thres
 geometry is measured again (a few milliseconds). The *maximum contact* instead decides which pairs to measure: it is
 applied when you release the slider, in a background thread.
 
-*Save as defaults* writes the thresholds to `user.toml`; *Saved thresholds* goes back to them; *Website values* sets
+*Save as defaults* writes to `user.toml` the thresholds that differ from the defaults; *Saved thresholds* goes back to them; *Website values* sets
 the criterion of the website. After a change of thresholds the Monte Carlo uncertainties must be computed again.
 
 ## 9. Analysis conventions

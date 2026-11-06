@@ -3,6 +3,8 @@
 # Copyright (C) 2013 Riverbank Computing Limited.
 # Copyright (C) 2022 The Qt Company Ltd.
 # SPDX-License-Identifier: BSD-3-Clause
+# (l'esempio originale è distribuito come «LicenseRef-Qt-Commercial OR BSD-3-Clause»: qui si usa BSD-3-Clause;
+# intestazione controllata su pyside-setup, rami 6.5, 6.8 e dev, 6 novembre 2026)
 #
 # Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 # following conditions are met:

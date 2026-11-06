@@ -1,5 +1,5 @@
-"""Fase 4a: geometria delle molecole (legami, angoli, torsioni, contatti di van der Waals) con le incertezze propagate
-dalle s.u. del CIF e i codici di simmetria."""
+"""Phase 4a: molecular geometry (bonds, angles, torsions, van der Waals contacts) with uncertainties propagated from the
+CIF s.u. and symmetry codes."""
 import csv
 import math
 import re
@@ -16,35 +16,35 @@ from pistak.core.intramolecular import angle, molecule_geometry, symmetry_codes,
 ROOT = Path(__file__).resolve().parents[1]
 EX = ROOT / "examples"
 COD = ROOT / "tests" / "data" / "cod"
-REAL = ROOT / "DATI_REALI"  # CIF non distribuibili (CSD): se mancano, i test che li usano si saltano
+REAL = ROOT / "DATI_REALI"  # CIFs that cannot be redistributed (CSD): if missing, the tests that use them are skipped
 
 
-def test_misure_elementari():
+def test_elementary_measurements():
     p = np.array([[1.0, 0, 0], [0, 0, 0], [0, 1.0, 0], [0, 1.0, 1.0]])
     assert angle(p[:3]) == pytest.approx(90)
-    assert torsion(p) == pytest.approx(-90) and torsion(p[::-1]) == pytest.approx(-90)  # il verso non dipende dalla lettura
+    assert torsion(p) == pytest.approx(-90) and torsion(p[::-1]) == pytest.approx(-90)  # the sign does not depend on the reading direction
     p[3] = [1.0, 1.0, 0]
     assert torsion(p) == pytest.approx(0, abs=1e-9)
 
 
-def test_molecola_sul_centro_di_inversione():
+def test_molecule_on_inversion_centre():
     a = analyse_file(EX / "demo_naphthalene.cif")
     assert unique_molecules(a.structure) == [0]
     g = molecule_geometry(a.structure, a.cif)
     bonds = [x for x in g if x.kind == "bond"]
-    assert len(bonds) == 10  # 11 C–C + 8 C–H, metà per la simmetria interna (C3–C3#1 una volta)
+    assert len(bonds) == 10  # 11 C–C + 8 C–H, half because of the internal symmetry (C3–C3#1 once)
     labels, legend = symmetry_codes(bonds)
     assert legend == [("#1", "-x,-y,-z")] and ("C3", "C3#1") in labels
-    assert sum(any(x.codes) for x in bonds) == 2  # tra le copie uguali vince quella con meno atomi trasformati
-    assert all(math.isnan(x.su) for x in g)  # il CIF dimostrativo non ha s.u.
+    assert sum(any(x.codes) for x in bonds) == 2  # among equal copies the one with fewer transformed atoms wins
+    assert all(math.isnan(x.su) for x in g)  # the demo CIF has no s.u.
     cc = [x.value for x in bonds if all(lab.startswith("C") for lab in x.atoms)]
     assert min(cc) > 1.3 and max(cc) < 1.5
-    assert {x.kind for x in g} == {"bond", "angle", "torsion"}  # una molecola sola in una cella larga: nessun contatto
+    assert {x.kind for x in g} == {"bond", "angle", "torsion"}  # a single molecule in a wide cell: no contact
     no_h = molecule_geometry(a.structure, a.cif, include_h=False)
     assert all(not lab.startswith("H") for x in no_h for lab in x.atoms) and len(no_h) < len(g)
 
 
-def test_molecole_equivalenti_misurate_una_volta():
+def test_equivalent_molecules_measured_once():
     a = analyse_file(EX / "herringbone_anthracene.cif")
     assert len(unique_molecules(a.structure)) < len(a.structure.molecules)
 
@@ -61,7 +61,7 @@ def test_csv(tmp_path):
 
 
 def _cif_geometry(path: Path) -> dict[tuple, str]:
-    """Le tabelle _geom_bond / _geom_angle del CIF (solo le misure senza codici di simmetria)."""
+    """The CIF _geom_bond / _geom_angle tables (only the measurements without symmetry codes)."""
     b = next(x for x in _blocks(tokenize(path.read_text(encoding="utf-8"))) if x.loops)
     out = {}
     for lp in b.loops:
@@ -79,9 +79,9 @@ def _cif_geometry(path: Path) -> dict[tuple, str]:
 
 @pytest.mark.parametrize("path", [COD / "4500022.cif", COD / "2311088.cif", COD / "2100417.cif", REAL / "UNITCELL.cif"],
                          ids=lambda p: p.name)
-def test_come_le_tabelle_del_cif_reale(path):
+def test_matches_real_cif_tables(path):
     if not path.is_file():
-        pytest.skip(f"{path} non c'è (CIF reali non distribuiti)")
+        pytest.skip(f"{path} is missing (real CIFs are not distributed)")
     a = analyse_file(path)
     ref = _cif_geometry(path)
     matched = 0
@@ -92,22 +92,22 @@ def test_come_le_tabelle_del_cif_reale(path):
             continue
         matched += 1
         value, su = cif_number(ref[key]), cif_su(ref[key])
-        unit = 10.0 ** -len(re.match(r"[-\d]*\.?(\d*)", ref[key]).group(1))  # l'ultima cifra scritta nel CIF
-        # il programma di affinamento misura sulle coordinate non arrotondate: con un asse di 50 Å l'arrotondamento
-        # delle coordinate frazionarie del CIF sposta le distanze fino a ~0,002 Å; gli idrogeni in posizione calcolata
-        # (senza s.u.) hanno coordinate scritte con meno cifre
+        unit = 10.0 ** -len(re.match(r"[-\d]*\.?(\d*)", ref[key]).group(1))  # the last digit written in the CIF
+        # the refinement program measures on unrounded coordinates: with a 50 Å axis, rounding the CIF fractional
+        # coordinates moves distances by up to ~0.002 Å; hydrogens in calculated positions (without s.u.) have
+        # coordinates written with fewer digits
         tol = (0.003, 0.15) if math.isfinite(g.su) else (0.01, 0.6)
         assert g.value == pytest.approx(value, abs=max(tol[g.kind != "bond"], unit / 2 + 1e-9)), key
         if su and math.isfinite(g.su):
-            # un'unità sull'ultima cifra (arrotondamento), o il 35% (il CIF include anche le s.u. di cella); il 45% per le
-            # misure tra un atomo e la sua immagine per simmetria, dove pesano le correlazioni tra coordinate che il CIF
-            # non riporta (SHELXL usa la matrice di covarianza completa)
+            # one unit in the last digit (rounding), or 35% (the CIF also includes the cell s.u.); 45% for measurements
+            # between an atom and its symmetry image, where the coordinate correlations the CIF does not report matter
+            # (SHELXL uses the full covariance matrix)
             rel = 0.45 if any(g.codes) else 0.35
             assert abs(g.su - su) <= max(unit, rel * su) + 1e-9, (key, g.su, su)
     assert matched >= 10
 
 
-def test_testo_delle_operazioni():
+def test_operation_text():
     assert symop_text(-np.eye(3), np.array([1.0, 0.0, 0.5])) == "-x+1,-y,-z+1/2"
     assert symop_text(np.array([[1, -1, 0], [1, 0, 0], [0, 0, 1.0]]), np.array([0, 0, 1 / 3])) == "x-y,x,z+1/3"
     assert symop_text(np.eye(3), np.zeros(3)) == "x,y,z"
@@ -121,8 +121,8 @@ def _hbonds(path: Path) -> list[tuple[str, str, float]]:
              cif_number(r[col["_geom_hbond_distance_ha"]])) for r in lp.rows]
 
 
-def test_contatti_come_i_legami_h_del_cif():
-    # ogni H···A della tabella _geom_hbond più corto della somma dei raggi di van der Waals è tra i contatti
+def test_contacts_match_cif_hbonds():
+    # every H···A of the _geom_hbond table shorter than the van der Waals radii sum is among the contacts
     a = analyse_file(COD / "4500022.cif")
     contacts = vdw_contacts(a.structure, a.cif)
     assert contacts and all(c.delta < 0 for c in contacts)
@@ -138,13 +138,13 @@ def test_contatti_come_i_legami_h_del_cif():
     assert checked >= 10
     unique = set(unique_molecules(a.structure))
     assert all(c.molecule in unique for c in contacts)
-    assert len({(tuple(sorted(c.atoms)), round(c.value, 3)) for c in contacts}) == len(contacts)  # niente doppioni
+    assert len({(tuple(sorted(c.atoms)), round(c.value, 3)) for c in contacts}) == len(contacts)  # no duplicates
     _labels, legend = symmetry_codes(contacts)
     assert legend and all(op.count(",") == 2 for _n, op in legend)
     assert all(math.isfinite(c.su) for c in contacts if not any(x.startswith("H") for x in c.atoms))
 
 
-def test_contatti_senza_idrogeni_e_nessun_contatto_nella_stessa_molecola():
+def test_contacts_without_hydrogens_and_none_within_a_molecule():
     a = analyse_file(EX / "herringbone_anthracene.cif")
     all_c = vdw_contacts(a.structure, a.cif)
     no_h = vdw_contacts(a.structure, a.cif, include_h=False)
@@ -153,7 +153,7 @@ def test_contatti_senza_idrogeni_e_nessun_contatto_nella_stessa_molecola():
     assert all(c.value > 1.0 for c in all_c) and not any(tuple(sorted(c.atoms)) in bonded and c.value < 1.7 for c in all_c)
 
 
-def test_json_completo(tmp_path):
+def test_complete_json(tmp_path):
     import json
 
     from pistak import api
@@ -173,8 +173,8 @@ def test_json_completo(tmp_path):
     assert data["ring_pairs"] and all(r["pair"] >= 1 for r in data["ring_pairs"]) and len(data["symops"]) == 4
 
 
-def test_niente_torsioni_su_tre_atomi_allineati():
-    # Ni su un centro di inversione con due S trans (S–Ni–S = 180°): le torsioni S–Ni–S–C non sono definite
+def test_no_torsions_over_three_collinear_atoms():
+    # Ni on an inversion centre with two trans S (S–Ni–S = 180°): the S–Ni–S–C torsions are not defined
     from pistak.core.analysis import analyse_text
     from pistak.core.intramolecular import MAX_TORSION_ANGLE
 
@@ -211,9 +211,9 @@ C1 C 0.23 0.14 0
     assert not any(x.kind == "torsion" and "Ni1" in x.atoms[1:3] and x.atoms.count("S1") == 2 for x in g)
 
 
-def test_angoli_cis_e_trans_attorno_a_un_centro_di_inversione():
-    # Ni sul centro di inversione con S1 e N1 a 80° e le loro immagini: S1–Ni1–N1 (80°) e S1–Ni1–N1#1 (100°) hanno le
-    # stesse etichette ma valori diversi, e vanno riportati entrambi; S1–Ni1–S1#1 (180°) una volta sola
+def test_cis_and_trans_angles_around_inversion_centre():
+    # Ni on the inversion centre with S1 and N1 at 80° and their images: S1–Ni1–N1 (80°) and S1–Ni1–N1#1 (100°) have
+    # the same labels but different values, and both must be reported; S1–Ni1–S1#1 (180°) only once
     from pistak.core.analysis import analyse_text
 
     x = 0.18

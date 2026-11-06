@@ -7,8 +7,10 @@
     rdkit     legami e anelli contro RDKit: legami rifatti dalle sole coordinate (DetermineConnectivity), anelli dalla
               SSSR simmetrizzata, sia sui legami di PISTAK sia su quelli di RDKit
     radii     raggi covalenti e di van der Waals contro le tabelle di gemmi (confronto, non oracolo: fonti non dichiarate)
+    hthresh   voce 23: le soglie del controllo sugli idrogeni (`TRIPLE_CX`, `SP_ANGLE`) contro le distanze C=O dei
+              carbonili e gli angoli dei C a due vicini misurati con numpy sulle molecole del campione
 
-    .venv/bin/python validation/check_struttura.py [cell moiety oblique rings rdkit radii]
+    .venv/bin/python validation/check_struttura.py [cell moiety oblique rings rdkit radii hthresh]
 """
 from __future__ import annotations
 
@@ -349,8 +351,43 @@ def check_radii() -> None:
         print(f"  {name}: {len(d)} elementi, {len(off)} diversi: {off}")
 
 
+def check_hthresh() -> None:
+    from pistak.core.validation import SP_ANGLE, TRIPLE_CX
+
+    print(f"\n== soglie degli idrogeni: TRIPLE_CX = {TRIPLE_CX} Å, SP_ANGLE = {SP_ANGLE}° (numpy sulle molecole) ==")
+    co, sp2, bare = [], [], []
+    for f in FILES:
+        try:
+            a = analyse_text(f.read_text(encoding="utf-8", errors="replace"), f.stem, Limits())
+        except Exception:  # noqa: BLE001  (CIF che PISTAK rifiuta: fuori dal confronto)
+            continue
+        for m in a.structure.molecules:
+            nb = [[] for _ in m.el]
+            for i, j in m.bonds:
+                nb[i].append(j)
+                nb[j].append(i)
+            for k, e in enumerate(m.el):
+                if e != "C":
+                    continue
+                heavy = [x for x in nb[k] if m.el[x] != "H"]
+                n_h = len(nb[k]) - len(heavy)
+                if len(heavy) == 3 and n_h == 0:  # carbonile: C a tre vicini con un O terminale
+                    co += [float(np.linalg.norm(m.pos[x] - m.pos[k])) for x in heavy if m.el[x] == "O" and len(nb[x]) == 1]
+                if len(heavy) == 2 and n_h <= 1:
+                    u, v = m.pos[heavy[0]] - m.pos[k], m.pos[heavy[1]] - m.pos[k]
+                    ang = math.degrees(math.acos(np.clip(u @ v / np.linalg.norm(u) / np.linalg.norm(v), -1, 1)))
+                    (sp2 if n_h else bare).append(ang)
+    co, sp2, bare = np.array(co), np.array(sp2), np.array(bare)
+    print(f"  C=O: {len(co)} carbonili, da {co.min():.3f} a {co.max():.3f} Å (mediana {np.median(co):.3f}); "
+          f"sotto TRIPLE_CX: {int((co <= TRIPLE_CX).sum())}")
+    print(f"  C sp² con un H: {len(sp2)}, angolo massimo {sp2.max():.1f}°; sopra SP_ANGLE: {int((sp2 >= SP_ANGLE).sum())}")
+    print(f"  C con due vicini e nessun H: {len(bare)}, mediana {np.median(bare):.1f}° (nitrili, alchini); "
+          f"sotto SP_ANGLE: {int((bare < SP_ANGLE).sum())} (H mancanti o C legati a metalli)")
+
+
 CHECKS = {"cell": check_cell, "moiety": check_moiety, "oblique": check_oblique,
-          "origin": lambda: check_oblique(shift=np.array([0.137, 0.291, 0.443])), "rings": check_rings, "rdkit": check_rdkit, "radii": check_radii}
+          "origin": lambda: check_oblique(shift=np.array([0.137, 0.291, 0.443])), "rings": check_rings, "rdkit": check_rdkit, "radii": check_radii,
+          "hthresh": check_hthresh}
 
 if __name__ == "__main__":
     for name in sys.argv[1:] or CHECKS:

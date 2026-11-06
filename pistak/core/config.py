@@ -158,6 +158,30 @@ def _read(path: Path) -> dict:
         return tomllib.load(f)
 
 
+#: Valori che erano predefiniti in versioni precedenti: (vecchio valore, data del cambio). Un user.toml salvato prima
+#: li ha congelati (la finestra «Impostazioni» scriveva tutte le soglie); il controllo rapido `oldDefault` lo segnala.
+SUPERSEDED_DEFAULTS: dict[str, tuple[object, str]] = {
+    "contact_cutoff": (4.0, "2026-11-03"),  # 4,0 → 4,5 Å (registro, voce 6); il modo del sito resta a 4,0
+}
+
+
+def superseded_values(limits: Limits) -> list[tuple[str, object, object, str]]:
+    """Soglie uguali a un vecchio valore predefinito: (chiave, valore, predefinito attuale, data del cambio). Nel modo
+    del sito `contact_cutoff` = 4,0 è la sua convenzione, non un valore rimasto indietro."""
+    current = default_limits().to_dict()
+    out = []
+    for key, (old, when) in SUPERSEDED_DEFAULTS.items():
+        value = getattr(limits, key)
+        if value == old != current[key] and not (key == "contact_cutoff" and limits.pair_mode == "site"):
+            out.append((key, value, current[key], when))
+    return out
+
+
+def default_limits() -> Limits:
+    """Le soglie predefinite: quelle del codice con sopra default.toml, senza il file dell'utente."""
+    return Limits.from_dict(dict(_read(DEFAULTS_FILE).get("limits", {})))
+
+
 def _merged(section: str, config_dir: Path | None) -> dict:
     merged: dict = dict(_read(DEFAULTS_FILE).get(section, {}))
     merged.update(_read((config_dir or user_config_dir()) / USER_FILE).get(section, {}))
@@ -184,12 +208,14 @@ def _toml_value(v) -> str:
 
 def save_user_config(limits: Limits | None = None, sections: dict[str, dict] | None = None,
                      config_dir: Path | None = None) -> Path:
-    """Scrive user.toml nella cartella dell'utente, conservando le altre sezioni già presenti."""
+    """Scrive user.toml nella cartella dell'utente, conservando le altre sezioni già presenti. Delle soglie si
+    scrivono solo quelle diverse dai valori predefiniti."""
     config_dir = config_dir or user_config_dir()
     path = config_dir / USER_FILE
     data = _read(path)
-    if limits is not None:
-        data["limits"] = limits.to_dict()
+    if limits is not None:  # solo ciò che differisce dai predefiniti: un predefinito cambiato in seguito vale anche qui
+        base = default_limits().to_dict()
+        data["limits"] = {k: v for k, v in limits.to_dict().items() if v != base.get(k)}
     for k, v in (sections or {}).items():
         data.setdefault(k, {}).update(v)
     config_dir.mkdir(parents=True, exist_ok=True)

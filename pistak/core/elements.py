@@ -46,10 +46,11 @@ COVALENT_RADII: dict[str, float] = {
 
 # Raggi di van der Waals in Å. Gruppi principali: M. Mantina et al., J. Phys. Chem. A 2009, 113, 5806, tabella 12
 # (che riprende Bondi dove c'era, aggiunge Be, B, Al, Ca, Ge, Rb, Sr, Sb, Cs, Ba, Bi e prende H = 1.10 da Rowland e
-# Taylor, J. Phys. Chem. 1996, 100, 7384, invece dell'1.20 di Bondi); Br 1.85 di Bondi (Mantina 1.83). Metalli di
-# transizione: A. Bondi, J. Phys. Chem. 1964, 68, 441, valori provvisori, come li riporta WebElements (Pt 1.75).
-# Gli altri metalli (Fe, Co, Ru, lantanidi, …) non hanno un valore in queste tabelle: `DEFAULT_VDW`, e il controllo
-# rapido `vdwDefault` lo dice.
+# Taylor, J. Phys. Chem. 1996, 100, 7384, invece dell'1.20 di Bondi); Br 1.85 di Bondi (Mantina 1.83).
+# Blocchi d e f: S. Alvarez, Dalton Trans. 2013, 42, 8617, tabella 1 (contatti E···O nel CSD); sostituiscono i valori
+# provvisori di Bondi 1964 per Ni, Cu, Zn, Pd, Ag, Cd, Pt, Au, Hg (1,4–1,75 Å, troppo piccoli per i metalli
+# coordinati). Ac, Pa, Cm, Bk, Cf, Es sono stime da una sola struttura (tra parentesi quadre nella tabella).
+# Senza valore (Pm, Fm e oltre): `DEFAULT_VDW`, e il controllo rapido `vdwDefault` lo dice.
 VDW_RADII: dict[str, float] = {
     "H": 1.10, "He": 1.40, "Li": 1.81, "Be": 1.53, "B": 1.92, "C": 1.70, "N": 1.55, "O": 1.52, "F": 1.47, "Ne": 1.54,
     "Na": 2.27, "Mg": 1.73, "Al": 1.84, "Si": 2.10, "P": 1.80, "S": 1.80, "Cl": 1.75, "Ar": 1.88,
@@ -57,8 +58,17 @@ VDW_RADII: dict[str, float] = {
     "Rb": 3.03, "Sr": 2.49, "In": 1.93, "Sn": 2.17, "Sb": 2.06, "Te": 2.06, "I": 1.98, "Xe": 2.16,
     "Cs": 3.43, "Ba": 2.68, "Tl": 1.96, "Pb": 2.02, "Bi": 2.07, "Po": 1.97, "At": 2.02, "Rn": 2.20,
     "Fr": 3.48, "Ra": 2.83,
-    "Ni": 1.63, "Cu": 1.40, "Zn": 1.39, "Pd": 1.63, "Ag": 1.72, "Cd": 1.58, "Pt": 1.75, "Au": 1.66, "Hg": 1.55,
 }
+#: Alvarez 2013, tabella 1: metalli dei blocchi d e f.
+ALVAREZ_2013: dict[str, float] = {
+    "Sc": 2.58, "Ti": 2.46, "V": 2.42, "Cr": 2.45, "Mn": 2.45, "Fe": 2.44, "Co": 2.40, "Ni": 2.40, "Cu": 2.38,
+    "Zn": 2.39, "Y": 2.75, "Zr": 2.52, "Nb": 2.56, "Mo": 2.45, "Tc": 2.44, "Ru": 2.46, "Rh": 2.44, "Pd": 2.15,
+    "Ag": 2.53, "Cd": 2.49, "Hf": 2.63, "Ta": 2.53, "W": 2.57, "Re": 2.49, "Os": 2.48, "Ir": 2.41, "Pt": 2.29,
+    "Au": 2.32, "Hg": 2.45, "La": 2.98, "Ce": 2.88, "Pr": 2.92, "Nd": 2.95, "Sm": 2.90, "Eu": 2.87, "Gd": 2.83,
+    "Tb": 2.79, "Dy": 2.87, "Ho": 2.81, "Er": 2.83, "Tm": 2.79, "Yb": 2.80, "Lu": 2.74, "Ac": 2.80, "Th": 2.93,
+    "Pa": 2.88, "U": 2.71, "Np": 2.82, "Pu": 2.81, "Am": 2.83, "Cm": 3.05, "Bk": 3.40, "Cf": 3.05, "Es": 2.70,
+}
+VDW_RADII.update(ALVAREZ_2013)
 
 # Colori Jmol (RGB 0–255), per gli elementi più comuni; gli altri sono grigio-rosa.
 COLORS: dict[str, tuple[int, int, int]] = {

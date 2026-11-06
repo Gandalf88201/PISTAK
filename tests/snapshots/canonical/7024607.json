@@ -30,14 +30,6 @@
     "atoms": "C14",
     "n": 1
    }
-  ],
-  [
-   "G",
-   "vdwDefault",
-   {
-    "elements": "Mn",
-    "r": 1.9
-   }
   ]
  ],
  "cell_atoms": 78,

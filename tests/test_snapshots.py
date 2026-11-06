@@ -1,20 +1,20 @@
-"""Istantanee dei risultati: ogni modifica al calcolo che cambia un numero deve essere voluta.
+"""Result snapshots: every change to the computation that changes a number must be intended.
 
-Per ogni CIF di `examples/` e di `tests/data/cod/` si salva tutto ciò che l'analisi produce (molecole, nuclei π,
-coppie con tutti i parametri predefiniti — builtin ed extra, non i plugin —, coppie di anelli, colonne di stack,
-grandezze della struttura, avvisi dei controlli rapidi e la geometria delle molecole: quante misure per tipo e
-l'elenco dei contatti di van der Waals) in due modi:
+For every CIF in `examples/` and `tests/data/cod/` everything the analysis produces is saved (molecules, π cores,
+pairs with all the default parameters — builtin and extra, not plugins —, ring pairs, stack columns, structure
+quantities, quick-check alerts and the molecular geometry: how many measurements per kind and the list of van der
+Waals contacts) in two modes:
 
-    tests/snapshots/site/<nome>.json        Limits.site(): le convenzioni del sito (devono restare quelle di sempre)
-    tests/snapshots/canonical/<nome>.json   Limits(): i valori predefiniti (coppie uniche, equivalenza per simmetria)
+    tests/snapshots/site/<name>.json        Limits.site(): the website conventions (must stay as they always were)
+    tests/snapshots/canonical/<name>.json   Limits(): the defaults (unique pairs, symmetry equivalence)
 
-Il test confronta i risultati attuali con quelli salvati.
+The test compares the current results with the saved ones.
 
-    pytest -m snapshot                       confronto
-    pytest -m snapshot --update-snapshots    riscrive le istantanee (dopo un cambiamento voluto: guarda il diff!)
+    pytest -m snapshot                       comparison
+    pytest -m snapshot --update-snapshots    rewrite the snapshots (after an intended change: look at the diff!)
 
-Strutture reali che non si possono distribuire (per esempio dal CSD): metti i CIF in una cartella e indicala con
-PISTAK_SNAPSHOT_DIR; le loro istantanee vanno in `tests/snapshots/local/<modo>/`, che non entra nel repository.
+Real structures that cannot be redistributed (for example from the CSD): put the CIFs in a folder and point
+PISTAK_SNAPSHOT_DIR to it; their snapshots go to `tests/snapshots/local/<mode>/`, which stays out of the repository.
 """
 from __future__ import annotations
 
@@ -52,7 +52,7 @@ def _cases() -> list[tuple[str, Path, Path, str]]:
 def _num(x) -> float | None:
     x = float(x)
     if not math.isfinite(x):
-        return None  # NaN e ±inf diventano null (il confronto li tratta come uguali tra loro)
+        return None  # NaN and ±inf become null (the comparison treats them as equal to each other)
     return float(f"{x:.10g}")
 
 
@@ -61,14 +61,14 @@ def _vec(v) -> list[float | None]:
 
 
 def _pair_sort_key(p: dict) -> tuple:
-    # a→b e b→a con lo stesso interplanare possono scambiarsi di posto per rumore numerico (~1e-15):
-    # l'ordine si fissa con valori arrotondati e indici
+    # a→b and b→a with the same interplanar distance can swap places because of numerical noise (~1e-15):
+    # the order is fixed with rounded values and indices
     v = p["params"]
     return (p["kind"], round(v["interplanar"] or 0, 4), round(v["contact"] or 0, 4), p["a"], p["b"], p["shift"])
 
 
 def snapshot(a: Analysis) -> dict:
-    """Tutto il risultato di un'analisi in forma JSON (solo tipi semplici, numeri a 10 cifre significative)."""
+    """The whole result of an analysis as JSON (simple types only, numbers to 10 significant digits)."""
     keys = sorted(s.key for s in specs() if s.source in ("builtin", "extra"))
     molecules = []
     for m, core in zip(a.structure.molecules, a.cores):
@@ -112,39 +112,39 @@ def snapshot(a: Analysis) -> dict:
 
 
 def _diff(exp, got, path: str = "$") -> list[str]:
-    """Differenze tra due istantanee, con il percorso del valore; i numeri si confrontano con tolleranza."""
+    """Differences between two snapshots, with the path of each value; numbers are compared with a tolerance."""
     if isinstance(exp, dict) and isinstance(got, dict):
-        out = [f"{path}.{k}: manca nel risultato attuale" for k in exp.keys() - got.keys()]
-        out += [f"{path}.{k}: nuovo nel risultato attuale" for k in got.keys() - exp.keys()]
+        out = [f"{path}.{k}: missing from the current result" for k in exp.keys() - got.keys()]
+        out += [f"{path}.{k}: new in the current result" for k in got.keys() - exp.keys()]
         for k in sorted(exp.keys() & got.keys()):
             out += _diff(exp[k], got[k], f"{path}.{k}")
         return out
     if isinstance(exp, list) and isinstance(got, list):
         if len(exp) != len(got):
-            return [f"{path}: {len(exp)} elementi salvati, {len(got)} attuali"]
+            return [f"{path}: {len(exp)} items saved, {len(got)} now"]
         return [d for i, (x, y) in enumerate(zip(exp, got)) for d in _diff(x, y, f"{path}[{i}]")]
     if isinstance(exp, float) or isinstance(got, float):
         if isinstance(exp, (int, float)) and isinstance(got, (int, float)) and not isinstance(exp, bool) \
                 and math.isclose(exp, got, rel_tol=REL_TOL, abs_tol=ABS_TOL):
             return []
-        return [f"{path}: salvato {exp!r}, attuale {got!r}"]
-    return [] if exp == got else [f"{path}: salvato {exp!r}, attuale {got!r}"]
+        return [f"{path}: saved {exp!r}, now {got!r}"]
+    return [] if exp == got else [f"{path}: saved {exp!r}, now {got!r}"]
 
 
 @pytest.mark.parametrize("label,cif,snap,mode", _cases(), ids=[c[0] for c in _cases()])
-def test_risultati_invariati(label, cif, snap, mode, request):
+def test_results_unchanged(label, cif, snap, mode, request):
     got = snapshot(compute_structure(compute_all(analyse_file(cif, MODES[mode]()))))
     if request.config.getoption("--update-snapshots"):
         snap.parent.mkdir(parents=True, exist_ok=True)
         snap.write_text(json.dumps(got, indent=1, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
         return
     if not snap.exists():
-        pytest.fail(f"manca l'istantanea {snap.relative_to(ROOT)}: creala con  pytest -m snapshot --update-snapshots")
+        pytest.fail(f"snapshot {snap.relative_to(ROOT)} is missing: create it with  pytest -m snapshot --update-snapshots")
     diffs = _diff(json.loads(snap.read_text(encoding="utf-8")), got)
-    assert not diffs, f"{label}: {len(diffs)} differenze rispetto all'istantanea\n" + "\n".join(diffs[:40])
+    assert not diffs, f"{label}: {len(diffs)} differences from the snapshot\n" + "\n".join(diffs[:40])
 
 
-def test_il_confronto_vede_le_differenze():
+def test_comparison_sees_differences():
     base = {"x": 3.4, "v": [1.0, None], "k": "stack", "n": 2}
     assert _diff(base, dict(base)) == []
     assert _diff(base, {**base, "x": 3.4 + 1e-9}) == []

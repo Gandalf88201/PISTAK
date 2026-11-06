@@ -12,7 +12,7 @@ from pistak.labels import rank_name
 EX = Path(__file__).resolve().parents[1] / "examples"
 
 
-def test_demo_e_una_colonna_lungo_a():
+def test_demo_is_one_column_along_a():
     a = analyse_file(EX / "demo_naphthalene.cif", Limits())
     assert len(a.stacks) == 1
     col = a.stacks[0]
@@ -24,11 +24,11 @@ def test_demo_e_una_colonna_lungo_a():
     assert col.axis_normal_angle(normal) == pytest.approx(math.degrees(math.acos(d["interplanar"] / col.repeat)), abs=1e-3)
 
 
-def test_herringbone_ha_colonne_di_rango_1():
+def test_herringbone_has_rank_1_columns():
     a = analyse_file(EX / "herringbone_anthracene.cif", Limits())
     assert a.stacks and all(c.rank == 1 for c in a.stacks)
     assert all(np.linalg.norm(c.axis) > 0 for c in a.stacks)
 
 
-def test_senza_stack_nessuna_colonna():
+def test_no_stacks_no_columns():
     assert analyse_file(EX / "infinite_chain.cif", Limits()).stacks == []

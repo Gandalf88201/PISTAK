@@ -637,6 +637,8 @@ TEXT: dict[str, str] = {
     "Il controllo «{check}» non è riuscito: {error}": "The “{check}” check failed: {error}",
     "Raggio di van der Waals non tabulato per {elements}: contatti e parametri di van der Waals usano {r} Å.":
         "No tabulated van der Waals radius for {elements}: contacts and van der Waals parameters use {r} Å.",
+    "{key} = {value} era il valore predefinito fino al {date}; ora è {default}. Se viene da un user.toml salvato prima, toglilo dal file (o cambia la soglia e salvala di nuovo).":
+        "{key} = {value} was the default until {date}; it is now {default}. If it comes from a user.toml saved earlier, remove it from the file (or change the threshold and save it again).",
     "Geometria": "Geometry",
     "Controlli": "Checks",
     "Legami": "Bonds",

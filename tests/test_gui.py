@@ -1,4 +1,4 @@
-"""Prove della GUI senza schermo (piattaforma Qt "offscreen"): sincronizzazione delle viste e scena 3D."""
+"""GUI tests without a screen (Qt "offscreen" platform): view synchronisation and the 3D scene."""
 import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -33,7 +33,7 @@ def app():
 @pytest.fixture()
 def world(app):
     s = Session()
-    s.limits = Limits.site()  # 3 coppie (a→b e b→a separate): servono a provare selezione e filtri
+    s.limits = Limits.site()  # 3 pairs (a→b and b→a separate): needed to test selection and filters
     a = api.analyse_file(EX / "herringbone_anthracene.cif", s.limits)
     views = {
         "tableA": TableView(s, "A"), "scatterA": ScatterView(s, "A"), "projA": ProjectionView(s, "A"),
@@ -44,46 +44,46 @@ def world(app):
     return s, a, views
 
 
-def test_tutte_le_viste_partono_dalla_prima_coppia(world):
+def test_all_views_start_from_first_pair(world):
     s, a, v = world
     assert len(a.pairs) == 3
     assert all(view.index == 0 for view in v.values() if view.group)
 
 
-def test_la_selezione_segue_il_gruppo(world):
+def test_selection_follows_the_group(world):
     s, a, v = world
     v["scatterA"].choose(2)
     assert v["tableA"].index == v["projA"].index == v["detailA"].index == 2
     assert v["tableA"].pair is a.pairs[2]
-    assert v["tableB"].index == 0  # un altro gruppo non si muove
+    assert v["tableB"].index == 0  # another group does not move
     assert v["free"].index == 0
 
 
-def test_vista_non_sincronizzata_ha_selezione_propria(world):
+def test_unsynchronised_view_has_own_selection(world):
     s, a, v = world
     v["free"].choose(1)
     assert v["free"].index == 1
-    assert v["tableA"].index == 0  # e non sposta le altre
+    assert v["tableA"].index == 0  # and does not move the others
     s.select("A", 2)
-    assert v["free"].index == 1  # né le segue
+    assert v["free"].index == 1  # nor follows them
 
 
-def test_cambio_di_gruppo_di_una_vista(world):
+def test_changing_a_view_group(world):
     s, a, v = world
     s.select("B", 1)
     v["tableA"].sync_combo.setCurrentIndex(v["tableA"].sync_combo.findData("B"))
     assert v["tableA"].group == "B" and v["tableA"].index == 1
 
 
-def test_grafici_senza_plot_options(world):
-    # le voci «Plot Options» di pyqtgraph (FFT, medie, alpha) valgono per le curve: sui punti davano solo errori
+def test_plots_without_plot_options(world):
+    # pyqtgraph's «Plot Options» entries (FFT, averages, alpha) are for curves: on points they only raised errors
     _s, _a, v = world
     for key in ("scatterA", "projA", "histA"):
         item = v[key].plot.getPlotItem()
         assert not item.menuEnabled() and item.getViewBox().menuEnabled(), key
 
 
-def test_filtro_condiviso_dal_gruppo(world):
+def test_filter_shared_by_the_group(world):
     s, a, v = world
     v["scatterA"].filter_to({1, 2})
     assert v["tableA"].proxy.rowCount() == 2
@@ -92,23 +92,23 @@ def test_filtro_condiviso_dal_gruppo(world):
     assert v["tableA"].proxy.rowCount() == 3
 
 
-def test_scena_della_coppia_stack(world):
+def test_scene_of_stack_pair(world):
     s, a, v = world
     pair = a.pairs[0]
     assert pair.kind == "stack"
     scene = build_scene(a.pair_context(pair), show_h=True, show_column=True)
     n = len(a.structure.molecules[0])
     assert len(scene.pos) == 2 * n and len(scene.polygons) == 2
-    assert len(scene.ghost_pos) > 0  # le altre molecole della colonna
+    assert len(scene.ghost_pos) > 0  # the other molecules of the column
     heavy = build_scene(a.pair_context(pair), show_h=False)
     assert len(heavy.pos) < len(scene.pos) and all(e != "H" for e in heavy.el)
-    # il vettore tra i centroidi è la somma di L, W e n
+    # the vector between the centroids is the sum of L, W and n
     steps = [p.points[1] - p.points[0] for p in scene.paths[:3]]
     d = scene.paths[3].points[1] - scene.paths[3].points[0]
     assert np.allclose(sum(steps), d)
 
 
-def test_scena_fuori_schermo_con_pyvista(world):
+def test_offscreen_scene_with_pyvista(world):
     pv = pytest.importorskip("pyvista")
     from pistak.gui.views.view3d import Options, populate
 
@@ -119,24 +119,24 @@ def test_scena_fuori_schermo_con_pyvista(world):
         for style in (0, 1, 2):
             populate(pl, scene, Options(style=style))
         pl.close()
-    except Exception as e:  # nessun contesto OpenGL disponibile in questo ambiente
-        pytest.skip(f"rendering non disponibile: {e}")
+    except Exception as e:  # no OpenGL context available in this environment
+        pytest.skip(f"rendering not available: {e}")
 
 
-def test_scena_misure_sugli_assi(world):
+def test_scene_measurements_on_axes(world):
     s, a, _ = world
     pair = a.pairs[0]
     scene = build_scene(a.pair_context(pair))
-    assert [p.color for p in scene.axes] == [p.color for p in scene.paths[:3]]  # L, W, n con i colori dei gradini
+    assert [p.color for p in scene.axes] == [p.color for p in scene.paths[:3]]  # L, W, n with the colours of the steps
     texts = [lb.text for lb in scene.labels]
     assert {"L", "W", "n"} <= set(texts)
     for name, value in (("L", pair.long_slip), ("W", pair.lat_slip), ("n", pair.interplanar)):
-        assert f"{name} {value:.2f} Å" in texts  # gli stessi valori della tabella
+        assert f"{name} {value:.2f} Å" in texts  # the same values as the table
 
 
-def test_vista_dall_alto_come_la_proiezione(world):
-    """La camera «dall'alto» (quella di partenza) mette a schermo L a destra e W in alto, con la stessa scala sui due
-    assi: ogni atomo cade dove lo disegna la Proiezione, a meno di traslazione e ingrandimento."""
+def test_top_view_matches_projection(world):
+    """The «top» camera (the starting one) puts L to the right and W up on screen, with the same scale on both axes:
+    every atom falls where the Projection draws it, up to a translation and a zoom."""
     pv = pytest.importorskip("pyvista")
     from pistak.gui.views.view3d import view_directions
 
@@ -147,7 +147,7 @@ def test_vista_dall_alto_come_la_proiezione(world):
     try:
         pl = pv.Plotter(off_screen=True, window_size=(400, 300))
     except Exception as e:  # noqa: BLE001
-        pytest.skip(f"rendering non disponibile: {e}")
+        pytest.skip(f"rendering not available: {e}")
     pl.enable_parallel_projection()
     c = scene.center
     pl.camera_position = [tuple(c - direction * 30), tuple(c), tuple(up)]
@@ -160,8 +160,8 @@ def test_vista_dall_alto_come_la_proiezione(world):
         screen.append(ren.GetDisplayPoint()[:2])
     pl.close()
     screen = np.array(screen)
-    q = ctx.frame.project(scene.pos)[:, :2]  # coordinate (L, W) della Proiezione
-    # schermo = k · (L, W) + t, con k > 0 uguale sui due assi (niente rotazioni né specchiature)
+    q = ctx.frame.project(scene.pos)[:, :2]  # (L, W) coordinates of the Projection
+    # screen = k · (L, W) + t, with k > 0 equal on both axes (no rotations or mirroring)
     A = np.column_stack([q, np.ones(len(q))])
     coef, *_ = np.linalg.lstsq(A, screen, rcond=None)
     assert np.allclose(A @ coef, screen, atol=0.5)
@@ -169,7 +169,7 @@ def test_vista_dall_alto_come_la_proiezione(world):
     assert k > 0 and np.isclose(coef[1, 1], k, rtol=1e-3) and abs(coef[1, 0]) < 1e-3 * k and abs(coef[0, 1]) < 1e-3 * k
 
 
-def test_incertezze_nel_dettaglio(world):
+def test_uncertainties_in_detail(world):
     s, a, v = world
     from test_uncertainty import with_su
 
@@ -181,46 +181,46 @@ def test_incertezze_nel_dettaglio(world):
     s.uncertaintyChanged.emit()
     tree = v["detailA"].params
     texts = [tree.topLevelItem(i).text(1) for i in range(tree.topLevelItemCount())]
-    assert any("10" in t for t in texts)  # la riga «Incertezze: Monte Carlo, 10 campioni»
+    assert any("10" in t for t in texts)  # the «Incertezze: Monte Carlo, 10 campioni» row
     values = [tree.topLevelItem(i).child(j).text(1) for i in range(tree.topLevelItemCount())
               for j in range(tree.topLevelItem(i).childCount())]
     assert any("±" in t for t in values)
 
 
-def test_finestra_calcoli_quantistici(app):
+def test_quantum_chemistry_dialog(app):
     from pistak.gui.qc_dialog import QCDialog
     from pistak.io.qc import QCOptions
 
     d = QCDialog(QCOptions("gaussian", dispersion="d3zero", charges=(1, -1), multiplicities=(2, 2)))
     o = d.options()
     assert (o.program, o.dispersion, o.charges, o.multiplicities) == ("gaussian", "d3zero", (1, -1), (2, 2))
-    d.method.setCurrentIndex(d.method.findData("sapt"))  # SAPT esiste solo in Psi4
+    d.method.setCurrentIndex(d.method.findData("sapt"))  # SAPT exists only in Psi4
     assert d.options().program == "psi4" and not d.functional.isEnabled() and d.sapt_level.isEnabled()
     d.method.setCurrentIndex(d.method.findData("dft-d"))
     d.dispersion.setCurrentIndex(d.dispersion.findData("d4"))
-    d.program.setCurrentIndex(d.program.findData("gaussian"))  # Gaussian non ha D4
+    d.program.setCurrentIndex(d.program.findData("gaussian"))  # Gaussian has no D4
     assert d.options().dispersion == "d3bj"
     d.options().check()
 
 
-def test_dettaglio_geometria_e_controlli(world):
+def test_detail_geometry_and_checks(world):
     s, a, v = world
     d = v["detailA"]
-    assert d.geometry.rowCount() == 0  # la geometria si calcola solo quando la scheda è aperta
+    assert d.geometry.rowCount() == 0  # the geometry is computed only when the tab is open
     d.tabs.setCurrentIndex(6)
     n_bonds = d.geometry.rowCount()
     assert n_bonds > 0 and d.geometry.columnCount() == 5
     d.geom_kind.setCurrentIndex(d.geom_kind.findData("torsion"))
     assert d.geometry.columnCount() == 7 and d.geometry.rowCount() > 0
     d.geom_kind.setCurrentIndex(d.geom_kind.findData("contact"))
-    assert d.geometry.columnCount() == 7 and d.geometry.rowCount() > 0  # molecola, 2 atomi, d, s.u., Σ r vdW, Δ
+    assert d.geometry.columnCount() == 7 and d.geometry.rowCount() > 0  # molecule, 2 atoms, d, s.u., Σ r vdW, Δ
     assert "#1" in d.geometry.item(0, 2).text() and "#1 = " in d.geom_legend.text() and not d.geom_legend.isHidden()
     d.geom_kind.setCurrentIndex(d.geom_kind.findData("bond"))
     d.geom_h.setChecked(False)
     assert 0 < d.geometry.rowCount() < n_bonds
     assert d.checks.rowCount() == len(a.alerts) and d.checks.item(0, 1).text()
     assert "Volume della cella" in d.summary.toPlainText()
-    # lo stato salvato ricorda il tipo di misura e la casella degli idrogeni
+    # the saved state remembers the measurement kind and the hydrogen box
     d.geom_kind.setCurrentIndex(d.geom_kind.findData("angle"))
     st = d.extra_state()
     other = DetailView(s, "A")
@@ -228,14 +228,14 @@ def test_dettaglio_geometria_e_controlli(world):
     assert other.geom_kind.currentData() == "angle" and not other.geom_h.isChecked() and other.tabs.currentIndex() == 6
 
 
-def test_finestra_calcoli_periodici(app):
+def test_periodic_calculations_dialog(app):
     from pistak.gui.periodic_dialog import PeriodicDialog
     from pistak.io.periodic import PeriodicOptions
 
     d = PeriodicDialog(PeriodicOptions("cp2k", "vc-relax", dispersion="d4", kpoint_length=25))
     o = d.options()
     assert (o.program, o.task, o.dispersion, o.kpoint_length) == ("cp2k", "vc-relax", "d4", 25)
-    d.program.setCurrentIndex(d.program.findData("qe"))  # Quantum ESPRESSO non ha D4
+    d.program.setCurrentIndex(d.program.findData("qe"))  # Quantum ESPRESSO has no D4
     assert d.options().dispersion == "d3bj"
     d.options().check()
 
@@ -248,29 +248,29 @@ def view3d(world):
     s, a, _ = world
     v = View3D(s, "A")
     if isinstance(v.plotter, _NullPlotter):
-        pytest.skip("rendering non disponibile")
+        pytest.skip("rendering not available")
     v.resize(600, 400)
     v.refresh()
     yield s, a, v
     v.close()
 
 
-def test_png_della_3d_in_alta_risoluzione(view3d, tmp_path):
+def test_high_resolution_3d_png(view3d, tmp_path):
     from PySide6.QtGui import QImage
 
     _, _, v = view3d
     out = tmp_path / "v.png"
     v.screenshot(str(out), scale=3)
     im = QImage(str(out))
-    w, h = max(v.plotter.interactor.width(), 100), max(v.plotter.interactor.height(), 100)  # senza schermo il pannello è minuscolo
+    w, h = max(v.plotter.interactor.width(), 100), max(v.plotter.interactor.height(), 100)  # without a screen the panel is tiny
     assert (im.width(), im.height()) == (3 * w, 3 * h)
 
 
-def test_mantieni_la_vista_rispetto_alla_coppia(view3d):
+def test_keep_view_relative_to_pair(view3d):
     s, a, v = view3d
     v.lock_cam.setChecked(True)
     v.look("side")
-    v.plotter.camera.Azimuth(25)  # l'utente ruota: la vista non è più quella automatica
+    v.plotter.camera.Azimuth(25)  # the user rotates: the view is no longer the automatic one
     before = v._relative_camera()
     s.select("A", 2)
     after = v._relative_camera()
@@ -279,11 +279,11 @@ def test_mantieni_la_vista_rispetto_alla_coppia(view3d):
         assert np.allclose(before[k], after[k], atol=1e-6)
     v.lock_cam.setChecked(False)
     s.select("A", 0)
-    assert v._still_auto() and v._auto_view[0] == "top"  # senza: si torna alla vista dall'alto
+    assert v._still_auto() and v._auto_view[0] == "top"  # without it: back to the top view
 
 
-def test_misura_con_il_mouse_nella_3d(view3d):
-    # clic veri (pressione e rilascio) nel widget VTK: il rilascio arriva allo stile, non all'interattore
+def test_mouse_measurement_in_3d(view3d):
+    # real clicks (press and release) in the VTK widget: the release goes to the style, not the interactor
     import time
 
     from PySide6.QtCore import QPoint, Qt
@@ -293,7 +293,7 @@ def test_misura_con_il_mouse_nella_3d(view3d):
     _, _, v = view3d
     app = QApplication.instance()
     if app.platformName() == "offscreen":
-        pytest.skip("servono una finestra e OpenGL (QT_QPA_PLATFORM=cocoa, xcb…)")
+        pytest.skip("needs a window and OpenGL (QT_QPA_PLATFORM=cocoa, xcb…)")
     v.show()
 
     def spin(n=10):
@@ -316,7 +316,7 @@ def test_misura_con_il_mouse_nella_3d(view3d):
         QTest.mouseClick(w, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, at(i))
         spin(5)
     assert v.picks == [0, 5] and "Å" in v.pick_info.text()
-    p0 = at(3)  # trascinando si ruota, non si sceglie
+    p0 = at(3)  # dragging rotates, it does not pick
     QTest.mousePress(w, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, p0)
     for k in range(1, 6):
         QTest.mouseMove(w, p0 + QPoint(12 * k, 5 * k))
@@ -328,9 +328,9 @@ def test_misura_con_il_mouse_nella_3d(view3d):
     assert v.picks == [] and v._pick_observers is None
 
 
-def test_viste_chiuse_non_ricevono_le_incertezze(world, monkeypatch):
-    """Una vista chiusa (widget C++ cancellato) non deve più ricevere `uncertaintyChanged`: con una lambda restava
-    collegata e ogni Monte Carlo successivo dava «Internal C++ object … already deleted»."""
+def test_closed_views_do_not_receive_uncertainties(world, monkeypatch):
+    """A closed view (C++ widget deleted) must no longer receive `uncertaintyChanged`: with a lambda it stayed
+    connected and every later Monte Carlo gave «Internal C++ object … already deleted»."""
     import sys
 
     from PySide6.QtCore import QCoreApplication, QEvent

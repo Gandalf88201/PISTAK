@@ -1,4 +1,4 @@
-"""Export del dimero per calcoli quantistici: geometria, idrogeni normalizzati, input ORCA / Psi4 / Gaussian."""
+"""Dimer export for quantum-chemistry calculations: geometry, normalised hydrogens, ORCA / Psi4 / Gaussian inputs."""
 import re
 from pathlib import Path
 
@@ -24,7 +24,7 @@ def _coords(text: str) -> np.ndarray:
     return np.array([[float(x) for x in m.groups()[1:]] for m in COORD.finditer(text)])
 
 
-def test_idrogeni_alle_distanze_da_neutroni(herring):
+def test_hydrogens_at_neutron_distances(herring):
     a, _ = herring
     m = a.structure.molecules[0]
     pos, moved = qc.normalize_hydrogens(m.el, m.pos, m.bonds)
@@ -37,7 +37,7 @@ def test_idrogeni_alle_distanze_da_neutroni(herring):
     assert np.allclose(pos[heavy], m.pos[heavy])
 
 
-def test_dimero(herring):
+def test_dimer(herring):
     a, p = herring
     d = qc.dimer(a, p)
     A, B = a.structure.molecules[p.a], a.structure.molecules[p.b]
@@ -47,13 +47,13 @@ def test_dimero(herring):
     assert any("pair 1" in n for n in d.notes) and any("neutron" in n for n in d.notes)
 
 
-def test_orca_con_counterpoise(herring):
+def test_orca_with_counterpoise(herring):
     a, p = herring
     text = qc.dimer_input(a, p, qc.QCOptions("orca"))
     n = len(a.structure.molecules[p.a])
     assert text.count("$new_job") == 2 and text.count("! B3LYP D3BJ def2-TZVP") == 3
     jobs = text.split("$new_job")
-    assert jobs[0].count(" :") == 0 and jobs[1].count(" :") == n and jobs[2].count(" :") == n  # atomi fantasma
+    assert jobs[0].count(" :") == 0 and jobs[1].count(" :") == n and jobs[2].count(" :") == n  # ghost atoms
     assert np.allclose(_coords(jobs[0]), np.vstack(_coords_of(qc.dimer(a, p))), atol=1e-7)
     single = qc.dimer_input(a, p, qc.QCOptions("orca", counterpoise=False))
     assert "$new_job" not in single and single.count("* xyz 0 1") == 1
@@ -63,7 +63,7 @@ def _coords_of(d):
     return [d.a.pos, d.b.pos]
 
 
-def test_psi4_sapt_e_dft(herring):
+def test_psi4_sapt_and_dft(herring):
     a, p = herring
     sapt = qc.dimer_input(a, p, qc.QCOptions("psi4", "sapt"))
     assert sapt.count("\n--\n") == 1 and "energy('sapt0')" in sapt and "basis jun-cc-pvdz" in sapt
@@ -80,10 +80,10 @@ def test_gaussian(herring):
     assert "B3LYP/Def2TZVP" in route and "EmpiricalDispersion=GD3BJ" in route and "Counterpoise=2" in route
     assert "\n0 1 0 1 0 1\n" in text
     assert text.count("(Fragment=1)") == n and text.count("(Fragment=2)") == n
-    assert text.endswith("\n\n")  # Gaussian vuole una riga vuota in fondo
+    assert text.endswith("\n\n")  # Gaussian wants a blank line at the end
 
 
-def test_cariche_e_molteplicita(herring):
+def test_charges_and_multiplicities(herring):
     a, p = herring
     o = qc.QCOptions("orca", charges=(1, -1), multiplicities=(2, 2))
     text = qc.dimer_input(a, p, o)
@@ -92,14 +92,14 @@ def test_cariche_e_molteplicita(herring):
     assert "\n0 3 1 2 -1 2\n" in g
 
 
-def test_solo_ascii(herring):
+def test_ascii_only(herring):
     a, p = herring
     for program in qc.PROGRAMS:
         text = qc.dimer_input(a, p, qc.QCOptions(program, "sapt" if program == "psi4" else "dft-d"))
         assert text.isascii()
 
 
-def test_combinazioni_non_valide(herring):
+def test_invalid_combinations(herring):
     a, p = herring
     with pytest.raises(qc.QCError) as e:
         qc.dimer_input(a, p, qc.QCOptions("orca", "sapt"))
@@ -110,7 +110,7 @@ def test_combinazioni_non_valide(herring):
         qc.dimer_input(a, p, qc.QCOptions("molpro"))
 
 
-def test_coppia_intramolecolare_non_esportabile():
+def test_intramolecular_pair_not_exportable():
     from test_fragments import stacked_crystal
 
     a = api.analyse_text(stacked_crystal(), "fn", Limits())
@@ -121,7 +121,7 @@ def test_coppia_intramolecolare_non_esportabile():
     assert intra not in qc.exportable(a.pairs, None)
 
 
-def test_terminale(tmp_path, capsys):
+def test_command_line(tmp_path, capsys):
     from pistak.cli import main
 
     out = tmp_path / "inputs"
@@ -134,8 +134,8 @@ def test_terminale(tmp_path, capsys):
     assert main(["qc", str(EX / "demo_naphthalene.cif"), "--program", "orca", "--method", "sapt"]) == 1
 
 
-def test_commenti_in_inglese_in_ogni_lingua(herring):
-    """Come gli altri export, l'input ha commenti fissi in inglese, qualunque sia la lingua dell'interfaccia."""
+def test_english_comments_in_every_language(herring):
+    """Like the other exports, the input has fixed English comments, whatever the interface language."""
     from pistak import i18n
 
     a, p = herring
@@ -147,22 +147,22 @@ def test_commenti_in_inglese_in_ogni_lingua(herring):
     assert texts[0] == texts[1] and "# PISTAK: herringbone_anthracene.cif [herringbone] pair 1 (stack)" in texts[0]
 
 
-def test_molteplicita_del_dimero(herring):
+def test_dimer_multiplicity(herring):
     a, p = herring
-    # due doppietti: alto spin (tripletto) per impostazione, singoletto se richiesto; la nota lo dice
+    # two doublets: high spin (triplet) by default, singlet on request; the note says so
     hs = qc.dimer_input(a, p, qc.QCOptions("orca", multiplicities=(2, 2)))
     assert "* xyz 0 3" in hs and "high-spin coupling" in hs
     singlet = qc.dimer_input(a, p, qc.QCOptions("orca", multiplicities=(2, 2), dimer_multiplicity=1))
     assert "* xyz 0 1" in singlet and "* xyz 0 2" in singlet and "high-spin" not in singlet
     g = qc.dimer_input(a, p, qc.QCOptions("gaussian", multiplicities=(2, 2), dimer_multiplicity=1))
     assert "\n0 1 0 2 0 2\n" in g
-    for bad in (2, 5):  # due doppietti: solo 1 o 3
+    for bad in (2, 5):  # two doublets: only 1 or 3
         with pytest.raises(qc.QCError):
             qc.dimer_input(a, p, qc.QCOptions("orca", multiplicities=(2, 2), dimer_multiplicity=bad))
 
 
-def test_maxcore_con_margine(herring):
+def test_maxcore_with_margin(herring):
     a, p = herring
     text = qc.dimer_input(a, p, qc.QCOptions("orca", nprocs=4, memory_gb=8))
-    assert "%maxcore 1500" in text  # 8 GB / 4 processi = 2000 MB, il 75 %
+    assert "%maxcore 1500" in text  # 8 GB / 4 processes = 2000 MB, 75 % of it
     assert "monomers are the two whole molecules" in text

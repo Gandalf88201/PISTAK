@@ -1,4 +1,4 @@
-"""Batch con righe per coppia, statistiche su più file e confronto tra strutture."""
+"""Batch with one row per pair, statistics over several files and comparison between structures."""
 import math
 from pathlib import Path
 
@@ -23,7 +23,7 @@ def by_name(entries, name):
     return next(e for e in entries if e.name == name)
 
 
-def test_find_cifs_ignora_i_metadati_di_macos(tmp_path):
+def test_find_cifs_ignores_macos_metadata(tmp_path):
     (tmp_path / "a.cif").write_text("x")
     (tmp_path / "._a.cif").write_text("x")
     (tmp_path / "sub").mkdir()
@@ -32,7 +32,7 @@ def test_find_cifs_ignora_i_metadati_di_macos(tmp_path):
     assert all(not p.name.startswith(".") for p in find_cifs(tmp_path))
 
 
-def test_ogni_file_ha_coppie_e_colonne(entries):
+def test_every_file_has_pairs_and_columns(entries):
     assert len(entries) == 6 and all(e.error is None for e in entries)
     demo = by_name(entries, "demo_naphthalene.cif")
     assert [p.kind for p in demo.pairs] == ["stack"]
@@ -41,7 +41,7 @@ def test_ogni_file_ha_coppie_e_colonne(entries):
     assert by_name(entries, "infinite_chain.cif").pairs == []
 
 
-def test_file_illeggibile_non_ferma_il_resto(tmp_path):
+def test_unreadable_file_does_not_stop_the_rest(tmp_path):
     bad = tmp_path / "bad.cif"
     bad.write_text("data_x\n_cell_length_a 5\n")
     res = run_batch([bad, EX / "demo_naphthalene.cif"], Limits(), workers=1)
@@ -49,13 +49,13 @@ def test_file_illeggibile_non_ferma_il_resto(tmp_path):
     assert res[1].error is None
 
 
-def test_riepilogo_csv(entries, tmp_path):
+def test_summary_csv(entries, tmp_path):
     out = write_summary_csv(entries, tmp_path / "s.csv")
     lines = out.read_text().splitlines()
     assert len(lines) == 7 and lines[0].startswith("file,error,space_group,")
 
 
-def test_tabella_e_descrizione(entries):
+def test_table_and_description(entries):
     t = PairTable.from_entries(entries)
     assert len(t) == sum(len(e.pairs) for e in entries)
     stack = describe(t, ["interplanar"], "stack", weighted=False)[0]
@@ -66,7 +66,7 @@ def test_tabella_e_descrizione(entries):
     assert only_demo["mean"] == pytest.approx(3.4, abs=1e-4) and only_demo["std"] == pytest.approx(0, abs=1e-6)
 
 
-def test_istogramma_somma_i_pesi(entries):
+def test_histogram_sums_weights(entries):
     t = PairTable.from_entries(entries)
     edges, by_kind = histogram(t, "interplanar", bins=10, weighted=True)
     assert len(edges) == 11
@@ -74,17 +74,17 @@ def test_istogramma_somma_i_pesi(entries):
     assert total == t.counts[np.isfinite(t.column("interplanar"))].sum()
 
 
-def test_correlazione(entries):
+def test_correlation(entries):
     t = PairTable.from_entries(entries)
     c = correlation(t, ["interplanar", "centroid_distance", "long_slip"], None)
     assert c.shape == (3, 3) and np.allclose(np.diag(c)[np.isfinite(np.diag(c))], 1)
     assert np.allclose(c, c.T, equal_nan=True)
-    # un parametro costante non ha correlazione definita
+    # a constant parameter has no defined correlation
     small = PairTable.from_entries([by_name(entries, "demo_naphthalene.cif")])
     assert np.isnan(correlation(small, ["interplanar", "long_slip"], None)).all()
 
 
-def test_confronto_con_riferimento(entries):
+def test_comparison_with_reference(entries):
     ref = entries.index(by_name(entries, "demo_naphthalene.cif"))
     rows = compare(entries, ref)
     r_ref = rows[ref]
@@ -97,20 +97,20 @@ def test_confronto_con_riferimento(entries):
     assert math.isnan(nostack.motif_distance) and nostack.best == {}
 
 
-def test_csv_di_confronto(entries, tmp_path):
+def test_comparison_csv(entries, tmp_path):
     out = write_csv(compare(entries, 0), tmp_path / "c.csv")
     assert len(out.read_text().splitlines()) == 7
 
 
-def test_riepilogo_per_file(entries):
+def test_summary_per_file(entries):
     rows = summary_rows(entries)
     d = next(r for r in rows if r["file"] == "demo_naphthalene.cif")
-    # canonical: un contatto per cella (il sito contava a→b e b→a: 2)
+    # canonical: one contact per cell (the website counted a→b and b→a: 2)
     assert d["n_stack"] == 1 and d["mean_stack_interplanar"] == pytest.approx(3.4, abs=1e-4)
 
 
-def test_analyse_one_diretto():
+def test_analyse_one_directly():
     e = analyse_one(str(EX / "herringbone_anthracene.cif"), Limits())
-    assert e.counts["stack"] == 2 and e.counts["tilted"] == 4  # contatti per cella
+    assert e.counts["stack"] == 2 and e.counts["tilted"] == 4  # contacts per cell
     s = analyse_one(str(EX / "herringbone_anthracene.cif"), Limits.site())
-    assert s.counts["stack"] == 4 and s.counts["tilted"] == 8  # il sito conta i due versi
+    assert s.counts["stack"] == 4 and s.counts["tilted"] == 8  # the website counts both directions

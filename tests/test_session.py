@@ -1,4 +1,4 @@
-"""Sessione (salva/ripristina) e finestra di confronto, con Qt senza schermo e senza OpenGL."""
+"""Session (save/restore) and comparison window, with Qt without a screen and without OpenGL."""
 import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -37,12 +37,12 @@ def wait(app, cond, timeout=40):
     while not cond() and time.time() - t < timeout:
         app.processEvents()
         time.sleep(0.02)
-    assert cond(), "tempo scaduto"
+    assert cond(), "timed out"
 
 
 def new_window(app) -> MainWindow:
     win = MainWindow(Session())
-    win.session.limits = Limits.site()  # 3 coppie nell'herringbone: servono a provare selezione e filtri
+    win.session.limits = Limits.site()  # 3 pairs in the herringbone: needed to test selection and filters
     win.autosave = False
     return win
 
@@ -51,7 +51,7 @@ def view(win, cls, n=0):
     return [d.widget() for d in win.docks if isinstance(d.widget(), cls)][n]
 
 
-def test_salva_e_ripristina(app, tmp_path):
+def test_save_and_restore(app, tmp_path):
     win = new_window(app)
     win.session.limits = Limits.site(max_interplanar=4.5)
     win.session.load_file(EX / "herringbone_anthracene.cif")
@@ -71,7 +71,7 @@ def test_salva_e_ripristina(app, tmp_path):
     h.apply_state({"key": "lat_slip", "bins": 9, "weighted": False})
     n_views = len(win.docks)
 
-    out = win.save_session(tmp_path / "prova.pistak")
+    out = win.save_session(tmp_path / "test.pistak")
     data = json.loads(out.read_text())
     assert data["version"] == 1 and data["app"] == "PISTAK"
     assert data["source"]["name"] == "herringbone_anthracene.cif" and "data_" in data["source"]["text"]
@@ -92,24 +92,24 @@ def test_salva_e_ripristina(app, tmp_path):
     assert view(win2, TableView).kind_boxes["parallel"].isChecked() is False
     h2 = view(win2, HistogramView, 1)
     assert h2.group == "B" and h2.bins.value() == 9 and h2.combo.currentData() == "lat_slip" and not h2.weighted.isChecked()
-    # la disposizione dei pannelli: nel layout predefinito scatter e istogramma sono a schede nello stesso gruppo
+    # the panel layout: in the default layout scatter and histogram are tabs of the same group
     dock_of = lambda w: next(d for d in win2.docks if d.widget() is w)  # noqa: E731
     assert dock_of(h2 if False else view(win2, HistogramView, 0)) in win2.tabifiedDockWidgets(dock_of(sc2))
-    assert view(win2, TableView).index == 2  # la vista segue la selezione ripristinata del suo gruppo
+    assert view(win2, TableView).index == 2  # the view follows the restored selection of its group
     assert h2.index == 1
 
 
-def test_sessione_senza_cif_incorporato_e_file_sparito(app, tmp_path):
+def test_session_without_embedded_cif_and_missing_file(app, tmp_path):
     win = new_window(app)
     errors = []
     win._show_error = errors.append
     p = tmp_path / "x.pistak"
-    session_file.write(p, {"source": {"name": "sparito.cif", "path": str(tmp_path / "sparito.cif")}, "views": []})
+    session_file.write(p, {"source": {"name": "missing.cif", "path": str(tmp_path / "missing.cif")}, "views": []})
     assert win.load_session(p) is False
     assert errors and "non c'è più" in errors[0]
 
 
-def test_file_di_sessione_non_valido(app, tmp_path):
+def test_invalid_session_file(app, tmp_path):
     win = new_window(app)
     errors = []
     win._show_error = errors.append
@@ -117,7 +117,7 @@ def test_file_di_sessione_non_valido(app, tmp_path):
     bad.write_text("{non json")
     assert win.load_session(bad) is False
     other = tmp_path / "other.pistak"
-    other.write_text(json.dumps({"app": "altro"}))
+    other.write_text(json.dumps({"app": "other"}))
     assert win.load_session(other) is False
     newer = tmp_path / "newer.pistak"
     newer.write_text(json.dumps({"app": "PISTAK", "version": 99}))
@@ -125,17 +125,17 @@ def test_file_di_sessione_non_valido(app, tmp_path):
     assert len(errors) == 3 and "più nuova" in errors[2]
 
 
-def test_chiavi_sconosciute_e_soglie_non_valide_si_ignorano(app, tmp_path):
+def test_unknown_keys_and_invalid_thresholds_are_ignored(app, tmp_path):
     win = new_window(app)
     p = tmp_path / "f.pistak"
-    session_file.write(p, {"limits": {"max_dihedral": 12.0, "soglia_futura": 1}, "views": [{"kind": "VistaFutura", "state": {}}],
-                           "source": {"name": "d.cif", "text": (EX / "demo_naphthalene.cif").read_text()}, "novita": {"x": 1}})
+    session_file.write(p, {"limits": {"max_dihedral": 12.0, "future_threshold": 1}, "views": [{"kind": "FutureView", "state": {}}],
+                           "source": {"name": "d.cif", "text": (EX / "demo_naphthalene.cif").read_text()}, "news": {"x": 1}})
     assert win.load_session(p)
     wait(app, lambda: win.session.analysis is not None)
-    assert win.session.limits.max_dihedral == 12.0 and len(win.docks) > 0  # layout predefinito al posto delle viste ignote
+    assert win.session.limits.max_dihedral == 12.0 and len(win.docks) > 0  # default layout instead of the unknown views
 
 
-def test_finestra_di_confronto(app):
+def test_comparison_window(app):
     win = CollectionWindow(Limits())
     opened = []
     win.openRequested.connect(lambda path, i, block: opened.append((Path(path).name, i)))
@@ -143,16 +143,16 @@ def test_finestra_di_confronto(app):
     wait(app, lambda: len(win.entries) == 6)
     assert win.struct.rowCount() == 6 and len(win.table) > 0
     assert win.describe_rows() and win.describe_rows()[0]["n"] > 0
-    assert win.cloud.data["x"].size > 0  # lo scatter ha i punti
+    assert win.cloud.data["x"].size > 0  # the scatter has the points
     names = [win.struct.item(r, 1).text() for r in range(6)]
-    assert win.struct.item(0, 0).text() == "★"  # il primo è il riferimento
+    assert win.struct.item(0, 0).text() == "★"  # the first one is the reference
     win._open_entry(names.index("demo_naphthalene.cif"))
     assert opened == [("demo_naphthalene.cif", 0)]
     win._set_reference(names.index("demo_naphthalene.cif"))
     assert win.reference == names.index("demo_naphthalene.cif")
     win.kind_combo.setCurrentIndex(win.kind_combo.findData("tilted"))
     assert win.describe_rows()[0]["n"] > 0
-    win.add_paths([EX])  # file già presenti: nessun doppione
+    win.add_paths([EX])  # files already present: no duplicates
     app.processEvents()
     assert len(win.entries) == 6
     win.clear()
@@ -168,7 +168,7 @@ def _loaded(app, limits=None):
     return win
 
 
-def test_cursori_delle_soglie_in_tempo_reale(app):
+def test_threshold_sliders_in_real_time(app):
     win = _loaded(app)
     s, panel = win.session, win.limits_dock.widget()
     a0 = s.analysis
@@ -178,34 +178,34 @@ def test_cursori_delle_soglie_in_tempo_reale(app):
     sc = view(win, ScatterView)
     sc.y_combo.setCurrentIndex(sc.y_combo.findData("interplanar"))
     row = panel.rows["max_interplanar"]
-    row.slider.setValue(round((3.0 - row.lo) / row.step))  # come trascinare il cursore
+    row.slider.setValue(round((3.0 - row.lo) / row.step))  # like dragging the slider
     assert row.spin.value() == pytest.approx(3.0)
-    panel._commit()  # senza aspettare il timer
+    panel._commit()  # without waiting for the timer
     a1 = s.analysis
     assert a1 is not a0 and s.limits.max_interplanar == pytest.approx(3.0)
-    assert "stack" not in [p.kind for p in a1.pairs]  # riclassificate subito, nel thread dell'interfaccia
-    assert a1.structure is a0.structure and a1.cache.contacts is a0.cache.contacts  # nessuna geometria rifatta
-    assert a1.pairs[s.selection("A")].key == key  # la selezione resta sulla stessa coppia
+    assert "stack" not in [p.kind for p in a1.pairs]  # reclassified at once, in the interface thread
+    assert a1.structure is a0.structure and a1.cache.contacts is a0.cache.contacts  # no geometry redone
+    assert a1.pairs[s.selection("A")].key == key  # the selection stays on the same pair
     assert "0" in panel.summary.text()
     lines = [ln.value() for ln in sc.lines if ln.angle == 0]
-    assert lines == [pytest.approx(3.0)]  # la linea della soglia segue il cursore
+    assert lines == [pytest.approx(3.0)]  # the threshold line follows the slider
     win.close()
 
 
-def test_soglie_che_rimisurano_in_un_thread(app):
+def test_remeasuring_thresholds_in_a_thread(app):
     win = _loaded(app)
     s, panel = win.session, win.limits_dock.widget()
     a0 = s.analysis
     assert panel.rows["contact_cutoff"].heavy and not panel.rows["max_slip"].heavy
-    for v in (3.5, 3.6, 3.7):  # richieste ravvicinate: si fondono, vince l'ultima
+    for v in (3.5, 3.6, 3.7):  # close requests: they merge, the last one wins
         s.set_limits(s.limits.with_values(contact_cutoff=v))
     wait(app, lambda: s.analysis is not a0 and not s._limits_task and s.analysis.limits.contact_cutoff == pytest.approx(3.7))
     assert s.analysis.structure is a0.structure and s.analysis.cache.contacts is not a0.cache.contacts
-    assert panel.rows["contact_cutoff"].value() == pytest.approx(3.7)  # il pannello segue le soglie della sessione
+    assert panel.rows["contact_cutoff"].value() == pytest.approx(3.7)  # the panel follows the session thresholds
     win.close()
 
 
-def test_soglie_da_altrove_aggiornano_il_pannello(app):
+def test_thresholds_from_elsewhere_update_the_panel(app):
     win = _loaded(app)
     s, panel = win.session, win.limits_dock.widget()
     s.set_limits(s.limits.with_values(max_dihedral=12.0, overlap_measure="area"))
@@ -217,16 +217,16 @@ def test_soglie_da_altrove_aggiornano_il_pannello(app):
     win.close()
 
 
-def test_manuale_dal_menu_aiuto(app):
+def test_manual_from_help_menu(app):
     win = new_window(app)
     win.show()
     m = win.show_manual("8-soglie-in-tempo-reale")
     app.processEvents()
-    assert m.lang == "it" and m.toc.topLevelItemCount() == 21  # indice + 20 capitoli
+    assert m.lang == "it" and m.toc.topLevelItemCount() == 21  # index + 20 chapters
     assert m.text.verticalScrollBar().value() > 0
-    for i in range(m.toc.topLevelItemCount()):  # ogni voce dell'indice porta al suo titolo
+    for i in range(m.toc.topLevelItemCount()):  # every index entry leads to its heading
         assert m.go_to(m.toc.topLevelItem(i).data(0, Qt.ItemDataRole.UserRole))
-    widths = []  # le figure larghe si adattano al testo (i blocchi di codice lunghi invece scorrono)
+    widths = []  # wide figures fit the text (long code blocks scroll instead)
     block = m.text.document().begin()
     while block.isValid():
         it = block.begin()
@@ -239,6 +239,6 @@ def test_manuale_dal_menu_aiuto(app):
     assert len(widths) >= 12 and 0 < max(widths) <= m.text.viewport().width()
     m.lang_combo.setCurrentIndex(m.lang_combo.findData("en"))
     assert m.lang == "en" and m.toc.topLevelItem(1).text(0) == "1. Basic concepts"
-    assert win.show_manual() is not m or m.lang == "it"  # con l'interfaccia in italiano si riapre in italiano
+    assert win.show_manual() is not m or m.lang == "it"  # with the interface in Italian it reopens in Italian
     m.close()
     win.close()

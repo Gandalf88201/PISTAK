@@ -1,5 +1,5 @@
-"""Il manuale (pistak/manual/it.md, en.md): figure presenti, link interni validi, le due lingue allineate, gli esempi
-di codice per la libreria che girano davvero."""
+"""The manual (pistak/manual/it.md, en.md): figures present, internal links valid, the two languages aligned, the
+library code examples actually run."""
 import os
 import re
 from pathlib import Path
@@ -30,16 +30,16 @@ def headings(md: str) -> list[tuple[int, str]]:
 
 
 @pytest.mark.parametrize("lang", LANGS)
-def test_figure_presenti(lang):
+def test_figures_present(lang):
     images = re.findall(r"!\[[^\]]*\]\(([^)]+)\)", text(lang))
     assert len(images) >= 12
     for rel in images:
-        assert rel.startswith(f"img/{lang}/"), rel  # ogni lingua le sue figure
+        assert rel.startswith(f"img/{lang}/"), rel  # each language has its own figures
         assert (MANUAL / rel).is_file(), rel
 
 
 @pytest.mark.parametrize("lang", LANGS)
-def test_link_interni(lang):
+def test_internal_links(lang):
     md = text(lang)
     anchors = {slug(t) for _lvl, t in headings(md)}
     links = re.findall(r"\]\(#([^)]+)\)", md)
@@ -47,7 +47,7 @@ def test_link_interni(lang):
     assert not [a for a in links if a not in anchors]
 
 
-def test_le_due_lingue_hanno_la_stessa_struttura():
+def test_both_languages_have_same_structure():
     it, en = text("it"), text("en")
     assert [lvl for lvl, _ in headings(it)] == [lvl for lvl, _ in headings(en)]
     figs = [re.findall(r"img/\w+/([\w.]+)", t) for t in (it, en)]
@@ -55,8 +55,8 @@ def test_le_due_lingue_hanno_la_stessa_struttura():
     assert it.count("```") == en.count("```")
 
 
-def test_la_finestra_trova_lo_stesso_slug():
-    pytest.importorskip("PySide6")  # la finestra del manuale è della GUI: senza PySide6 (CI del solo calcolo) si salta
+def test_window_finds_same_slug():
+    pytest.importorskip("PySide6")  # the manual window belongs to the GUI: without PySide6 (computation-only CI) skip
     from pistak.gui.manual_window import headings as h2
     from pistak.gui.manual_window import slug as s2
 
@@ -65,24 +65,24 @@ def test_la_finestra_trova_lo_stesso_slug():
 
 
 @pytest.mark.parametrize("lang", LANGS)
-def test_esempio_della_libreria(lang, tmp_path, monkeypatch, capsys):
-    """Il primo blocco Python del capitolo sulla libreria, eseguito com'è (dalla cartella del progetto)."""
+def test_library_example(lang, tmp_path, monkeypatch, capsys):
+    """The first Python block of the library chapter, run as it is (from the project folder)."""
     md = text(lang)
     section = md[md.index("## 18."):md.index("## 19.")]
     code = re.findall(r"```python\n(.*?)```", section, re.S)[0]
     code = code.replace('"examples/', f'"{ROOT}/examples/').replace("samples=200", "samples=20")
-    monkeypatch.chdir(tmp_path)  # export.write_json scrive a.json qui
+    monkeypatch.chdir(tmp_path)  # export.write_json writes a.json here
     exec(compile(code, f"manual-{lang}", "exec"), {})
     out = capsys.readouterr().out
     assert "stack" in out and "molecule dimer" in out and (tmp_path / "a.json").exists()
 
 
-def test_figure_rigenerabili():
-    """Lo script delle figure c'è e usa solo i CIF di examples/ e quelli della COD in tests/data/cod/ (dominio
-    pubblico): le strutture della CSD non si distribuiscono."""
+def test_figures_regenerable():
+    """The figure script exists and uses only the CIFs in examples/ and the COD ones in tests/data/cod/ (public
+    domain): CSD structures cannot be redistributed."""
     src = (ROOT / "tools" / "manual_figures.py").read_text(encoding="utf-8")
     others = re.sub(r"COD / \"\d+\.cif\"", "", src.replace("_anthracene.cif", "").replace("_naphthalene.cif", ""))
     assert "examples" in src and "DATI_REALI" not in src and not re.search(r"\.cif[\"']\)", others)
     for name in re.findall(r"COD / \"(\d+\.cif)\"", src):
         assert (ROOT / "tests" / "data" / "cod" / name).is_file(), name
-    assert os.path.getsize(MANUAL / "img" / "it" / "main_window.png") < 200_000  # PNG a 256 colori
+    assert os.path.getsize(MANUAL / "img" / "it" / "main_window.png") < 200_000  # 256-colour PNG

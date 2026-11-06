@@ -1,4 +1,4 @@
-"""Porting dei test del sito (tests/pistak.test.ts) più verifiche sulle parti nuove."""
+"""Port of the website tests (tests/pistak.test.ts) plus checks on the new parts."""
 import sys
 
 import numpy as np
@@ -16,12 +16,12 @@ from pistak.core.structure import cell_vectors, to_cart, to_frac
 
 
 class TestCif:
-    def test_numeri_con_incertezza_e_mancanti(self):
+    def test_numbers_with_uncertainty_and_missing(self):
         assert cif_number("10.3528(16)") == 10.3528
         assert cif_number("-0.15128(16)") == -0.15128
         assert np.isnan(cif_number("?"))
 
-    def test_operazioni_di_simmetria(self):
+    def test_symmetry_operations(self):
         op = parse_symop("-x+1/2, y+1/2, -z+1/2")
         assert op.r.tolist() == [[-1, 0, 0], [0, 1, 0], [0, 0, -1]]
         assert op.t.tolist() == [0.5, 0.5, 0.5]
@@ -30,14 +30,14 @@ class TestCif:
         with pytest.raises(CifError):
             parse_symop("x, y")
 
-    def test_elemento_da_simbolo_o_etichetta(self):
+    def test_element_from_symbol_or_label(self):
         assert element_of("C", "C12A", is_known) == "C"
         assert element_of("Cl", "CL1", is_known) == "Cl"
         assert element_of(None, "Cl1", is_known) == "Cl"
         assert element_of(None, "C1A", is_known) == "C"
         assert element_of("O2-", "O1", is_known) == "O"
 
-    def test_apici_campi_di_testo_e_disordine(self):
+    def test_quotes_text_fields_and_disorder(self):
         cif = parse_cif("\n".join([
             "data_x", "_cell_length_a 5(1)", "_cell_length_b 6", "_cell_length_c 7",
             "_cell_angle_alpha 90", "_cell_angle_beta 90", "_cell_angle_gamma 90",
@@ -51,8 +51,8 @@ class TestCif:
         assert cif.skipped_disorder == 1
         assert len(cif.symops) == 1
 
-    def test_fcf_incollato_in_un_campo_di_testo(self):
-        # COD 2300778: Olex2 mette l'FCF in _iucr_refine_fcf_details; il suo 'data_I' non apre un altro blocco
+    def test_fcf_pasted_in_a_text_field(self):
+        # COD 2300778: Olex2 puts the FCF in _iucr_refine_fcf_details; its 'data_I' does not open another block
         cif = parse_cif("\n".join([
             "data_x", "_cell_length_a 5", "_cell_length_b 6", "_cell_length_c 7",
             "_cell_angle_alpha 90", "_cell_angle_beta 90", "_cell_angle_gamma 90",
@@ -65,15 +65,15 @@ class TestCif:
         assert cif.items["_iucr_refine_fcf_details"].startswith("data_I")
         assert cif.items["_publ_contact_author_name"] == "_not_a_tag"
 
-    def test_senza_operazioni_si_usano_quelle_del_gruppo(self):
+    def test_without_operations_group_ones_are_used(self):
         text = ("data_x\n_cell_length_a 5\n_cell_length_b 5\n_cell_length_c 5\n_cell_angle_alpha 90\n_cell_angle_beta 90\n"
                 "_cell_angle_gamma 90\n_symmetry_space_group_name_H-M 'P 21/c'\nloop_\n_atom_site_label\n_atom_site_fract_x\n"
                 "_atom_site_fract_y\n_atom_site_fract_z\nC1 0 0 0\n")
         c = parse_cif(text)
         assert c.symops_source == "table" and {o.text for o in c.symops} == {"x,y,z", "-x,-y,-z", "-x,y+1/2,-z+1/2", "x,-y+1/2,z+1/2"}
 
-    def test_senza_operazioni_e_con_gruppo_sconosciuto_si_ferma(self, monkeypatch):
-        monkeypatch.setitem(sys.modules, "gemmi", None)  # con gemmi il gruppo sarebbe noto
+    def test_without_operations_and_unknown_group_stops(self, monkeypatch):
+        monkeypatch.setitem(sys.modules, "gemmi", None)  # with gemmi the group would be known
         text = ("data_x\n_cell_length_a 5\n_cell_length_b 5\n_cell_length_c 5\n_cell_angle_alpha 90\n_cell_angle_beta 90\n"
                 "_cell_angle_gamma 90\n_symmetry_space_group_name_H-M 'P 42/n c m'\nloop_\n_atom_site_label\n_atom_site_fract_x\n"
                 "_atom_site_fract_y\n_atom_site_fract_z\nC1 0 0 0\n")
@@ -81,7 +81,7 @@ class TestCif:
             parse_cif(text)
         assert e.value.code == "noSymops"
 
-    def test_stile_cif2_e_apice_interno(self):
+    def test_cif2_style_and_inner_quote(self):
         cif = parse_cif("\n".join([
             "data_y", "_cell_length_a 5", "_cell_length_b 6", "_cell_length_c 7",
             "_cell_angle_alpha 90", "_cell_angle_beta 90", "_cell_angle_gamma 90",
@@ -91,25 +91,25 @@ class TestCif:
         assert len(cif.symops) == 2
         assert cif.atoms[0].label == "O'Brien"
 
-    def test_file_vuoto(self):
+    def test_empty_file(self):
         with pytest.raises(CifError) as e:
             parse_cif("  \n")
         assert e.value.code == "empty"
 
 
-class TestGeometria:
-    def test_cella_frazionarie_e_cartesiane_si_corrispondono(self):
+class TestGeometry:
+    def test_cell_fractional_and_cartesian_correspond(self):
         m = cell_vectors(Cell(10.35, 13.03, 21.21, 96.3, 97.4, 98.4))
         assert np.linalg.norm(m[2]) == pytest.approx(21.21, abs=1e-6)
         assert to_frac(m, to_cart(m, np.array([0.1, -0.4, 0.7]))) == pytest.approx([0.1, -0.4, 0.7], abs=1e-10)
 
-    def test_piano_medio_di_punti_complanari(self):
+    def test_mean_plane_of_coplanar_points(self):
         p = fit_plane(np.array([[0, 0, 1], [4, 0, 1], [0, 1, 1], [4, 1, 1]], dtype=float))
         assert abs(p.normal[2]) == pytest.approx(1, abs=1e-9)
         assert abs(p.long[0]) == pytest.approx(1, abs=1e-9)
         assert p.rms == pytest.approx(0, abs=1e-9)
 
-    def test_involucro_e_intersezione(self):
+    def test_hull_and_intersection(self):
         sq = np.array([[0, 0], [2, 0], [2, 2], [0, 2], [1, 1]], dtype=float)
         h = convex_hull(sq)
         assert len(h) == 4 and polygon_area(h) == pytest.approx(4)
@@ -119,7 +119,7 @@ class TestGeometria:
 
 
 class TestDemo:
-    """Il cristallo dimostrativo del sito: la costruzione si ritrova nei valori misurati."""
+    """The website demo crystal: its construction shows up in the measured values."""
 
     @staticmethod
     @pytest.fixture(scope="module")
@@ -127,20 +127,20 @@ class TestDemo:
         cif = parse_cif(demo_cif())
         return cif, core.analyse_cif(cif, "demo", Limits())
 
-    def test_il_centro_di_inversione_completa_la_molecola(self, result):
+    def test_inversion_centre_completes_the_molecule(self, result):
         cif, a = result
-        assert len(cif.atoms) == 9  # 5 C + 4 H nell'unità asimmetrica
+        assert len(cif.atoms) == 9  # 5 C + 4 H in the asymmetric unit
         assert a.structure.n_cell_atoms == 18
         assert len(a.structure.molecules) == 1
         assert len(a.structure.molecules[0].bonds) == 19  # 11 C–C + 8 C–H
         assert not a.structure.molecules[0].extended
 
-    def test_nucleo_pi_sono_i_due_anelli_condensati(self, result):
+    def test_pi_core_is_the_two_fused_rings(self, result):
         _, a = result
         assert a.cores[0].kind == "rings"
         assert len(a.cores[0].atoms) == 10
 
-    def test_distanza_interplanare_e_slittamenti(self, result):
+    def test_interplanar_distance_and_slips(self, result):
         _, a = result
         stack = next(p for p in a.pairs if p.kind == "stack")
         assert stack.interplanar == pytest.approx(DEMO_STACK["interplanar"], abs=1e-4)
@@ -149,43 +149,43 @@ class TestDemo:
         assert stack.dihedral == pytest.approx(0, abs=1e-4)
         assert stack.overlap > 0
 
-    def test_il_vicino_nello_stesso_piano_non_e_uno_stack(self, result):
+    def test_in_plane_neighbour_is_not_a_stack(self, result):
         _, a = result
         side = measure_pair(a.structure, a.cores, 0, 0, (0, 1, 0), a.limits)
         assert side.kind == "parallel"
         assert side.interplanar == pytest.approx(0, abs=1e-6)
         assert side.overlap == 0
-        # i carboni sono a 7,5 − 2·1,4 = 4,7 Å: oltre la soglia dei contatti, quindi non è tra le coppie elencate
+        # the carbons are 7.5 − 2·1.4 = 4.7 Å apart: beyond the contact threshold, so it is not among the listed pairs
         assert all(p.kind == "stack" for p in a.pairs)
 
-    def test_soglie_modificabili(self):
+    def test_thresholds_can_be_changed(self):
         a = core.analyse_text(demo_cif(), "demo", Limits(max_interplanar=3.0))
-        assert all(p.kind != "stack" for p in a.pairs)  # 3,40 Å supera il nuovo limite
+        assert all(p.kind != "stack" for p in a.pairs)  # 3.40 Å exceeds the new limit
 
 
-class TestCasiCostruiti:
-    def test_catena_infinita_e_rete_estesa(self):
+class TestBuiltCases:
+    def test_infinite_chain_is_extended_network(self):
         a = core.analyse_text(cifgen.infinite_chain(), "chain", Limits())
         assert a.structure.molecules[0].extended
         assert a.cores == [None] and a.pairs == []
 
-    def test_catena_senza_anelli_usa_la_molecola(self):
+    def test_chain_without_rings_uses_the_molecule(self):
         a = core.analyse_text(cifgen.chain_molecule(), "zigzag", Limits())
         assert len(a.structure.molecules) == 2
         assert all(c is not None and c.kind == "molecule" for c in a.cores)
 
-    def test_lisca_di_pesce_ha_coppie_inclinate(self):
+    def test_herringbone_has_tilted_pairs(self):
         a = core.analyse_text(cifgen.anthracene_p21a_like(), "herringbone", Limits())
         assert len(a.structure.molecules) == 2
         assert {"stack", "tilted"} <= {p.kind for p in a.pairs}
 
-    def test_atomi_in_cella_e_molecole_intere(self):
+    def test_cell_atoms_and_whole_molecules(self):
         a = core.analyse_text(cifgen.tilted_sandwich(), "tilted", Limits())
         n_per_mol = len(a.structure.molecules[0])
         assert n_per_mol == 24 and all(len(m) == n_per_mol for m in a.structure.molecules)
         assert a.structure.n_cell_atoms == len(a.structure.molecules) * n_per_mol
 
-    def test_troppi_atomi(self):
+    def test_too_many_atoms(self):
         from pistak.core.structure import StructureError
 
         with pytest.raises(StructureError):

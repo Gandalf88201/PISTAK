@@ -1,8 +1,8 @@
-"""Costruzione di cristalli di prova (NON sperimentali) in formato CIF.
+"""Building test crystals (NOT experimental) in CIF format.
 
-Si dà una molecola in coordinate cartesiane, una cella e le operazioni di simmetria: il CIF contiene
-l'intera molecola come unità asimmetrica e la simmetria genera il resto. Serve a fabbricare casi dalla
-geometria nota (π-stack, herringbone, reti infinite…) senza dipendere da file esterni.
+Given a molecule in Cartesian coordinates, a cell and the symmetry operations, the CIF holds the whole
+molecule as the asymmetric unit and the symmetry generates the rest. Used to make cases with a known
+geometry (π-stacks, herringbone, infinite networks…) without depending on external files.
 """
 from __future__ import annotations
 
@@ -15,10 +15,10 @@ from pistak.core.structure import cell_vectors
 
 
 def ring_system(n_rings: int, cc: float = 1.4, ch: float = 1.08, with_h: bool = True) -> list[tuple[str, np.ndarray]]:
-    """Acene lineare (1 = benzene, 2 = naftalene, 3 = antracene…) nel piano xy, asse lungo x, centrato nell'origine."""
+    """Linear acene (1 = benzene, 2 = naphthalene, 3 = anthracene…) in the xy plane, long axis along x, centred at the origin."""
     h = cc * math.cos(math.pi / 6)
     centers = [(k - (n_rings - 1) / 2) * 2 * h for k in range(n_rings)]
-    sites: list[list] = []  # [posizione, angolo di uscita dell'idrogeno, quante volte compare]
+    sites: list[list] = []  # [position, outward angle of the hydrogen, how many times it occurs]
     for cx in centers:
         for k in range(6):
             ang = math.pi / 6 + k * math.pi / 3
@@ -32,7 +32,7 @@ def ring_system(n_rings: int, cc: float = 1.4, ch: float = 1.08, with_h: bool = 
     out: list[tuple[str, np.ndarray]] = []
     for p, ang, n in sites:
         out.append(("C", p))
-        if with_h and n == 1:  # gli atomi di fusione (in due anelli) non hanno idrogeno
+        if with_h and n == 1:  # fusion atoms (in two rings) have no hydrogen
             out.append(("H", np.array([p[0] + ch * math.cos(ang), p[1] + ch * math.sin(ang), 0.0])))
     return out
 
@@ -45,7 +45,7 @@ def rotation(axis: str, deg: float) -> np.ndarray:
 
 def make_cif(atoms: list[tuple[str, np.ndarray]], cell: Cell, symops: list[str], name: str = "test",
              space_group: str = "?", origin_frac=(0.0, 0.0, 0.0)) -> str:
-    """CIF con la molecola data (coordinate cartesiane, già posizionata) come unità asimmetrica."""
+    """CIF with the given molecule (Cartesian coordinates, already placed) as the asymmetric unit."""
     m = cell_vectors(cell)
     inv = np.linalg.inv(m)
     counts: dict[str, int] = {}
@@ -73,8 +73,8 @@ def _rot(ax: float, ay: float, az: float) -> np.ndarray:
 
 
 def anthracene_p21a_like() -> str:
-    """Antracene in P21/c sull'origine (centro di inversione): due orientazioni, una coppia π-stack lungo
-    una direzione e coppie quasi perpendicolari (lisca di pesce). Parametri trovati con una ricerca casuale."""
+    """Anthracene in P21/c on the origin (inversion centre): two orientations, a π-stack pair along one
+    direction and nearly perpendicular pairs (herringbone). Parameters found by a random search."""
     R = _rot(11.525658880859515, 136.48144433162713, 106.39792492763716)
     mol = [(el, R @ p) for el, p in ring_system(3)]
     cell = Cell(8.602535319031425, 5.5620235029395, 12.596581710936837, 90.0, 111.81872721663667, 90.0)
@@ -82,14 +82,14 @@ def anthracene_p21a_like() -> str:
 
 
 def pyrene_like_dimers() -> str:
-    """Naftalene ruotato in P-1: due molecole sovrapposte con slittamento, più una seconda coppia in cella."""
+    """Rotated naphthalene in P-1: two overlapping molecules with a slip, plus a second pair in the cell."""
     mol = [(el, rotation("y", 12) @ rotation("z", 40) @ p) for el, p in ring_system(2)]
     cell = Cell(6.2, 7.9, 9.4, 83.0, 97.0, 101.0)
     return make_cif(mol, cell, ["x, y, z", "-x, -y, -z"], "dimers", "P -1", origin_frac=(0.1, 0.2, 0.15))
 
 
 def tilted_sandwich() -> str:
-    """Seconda disposizione di antracene in P21/c, con coppie a ~45° e un contatto di stack molto stretto."""
+    """A second arrangement of anthracene in P21/c, with pairs at ~45° and a very tight stack contact."""
     R = _rot(55.74060962574102, 13.854726846974142, 107.95730558338813)
     mol = [(el, R @ p) for el, p in ring_system(3)]
     cell = Cell(8.062755524350635, 5.894769712856839, 11.223808406850972, 90.0, 115.26167807418354, 90.0)
@@ -97,13 +97,13 @@ def tilted_sandwich() -> str:
 
 
 def infinite_chain() -> str:
-    """Un atomo di carbonio per cella, a 1.6 Å dai suoi traslati lungo a: catena infinita, nessuna molecola."""
+    """One carbon atom per cell, 1.6 Å from its translates along a: an infinite chain, no molecule."""
     cell = Cell(1.6, 8.0, 8.0, 90.0, 90.0, 90.0)
     return make_cif([("C", np.zeros(3))], cell, ["x, y, z"], "chain", "P 1", origin_frac=(0.0, 0.5, 0.5))
 
 
 def chain_molecule() -> str:
-    """Esano planare a zig-zag senza anelli: il nucleo è l'intera molecola (kind = molecule)."""
+    """Planar zig-zag hexane without rings: the core is the whole molecule (kind = molecule)."""
     pts = [(el, np.array([i * 1.25, 0.7 * (i % 2), 0.0])) for i, el in enumerate("CCCCCC")]
     cell = Cell(20.0, 6.0, 4.0, 90.0, 90.0, 90.0)
     return make_cif(pts, cell, ["x, y, z", "-x, -y, -z"], "zigzag", "P -1", origin_frac=(0.1, 0.3, 0.1))
