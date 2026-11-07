@@ -351,6 +351,11 @@ A pair is:
    `min_overlap` and, when `max_slip` > 0, the total slip is at most `max_slip`;
 3. otherwise **parallel**.
 
+Two fragments that share an atom or are bonded to each other (same rule as the bonds: sum of the covalent radii
+plus `bond_tolerance`) are never a π-stack: this happens only inside one molecule or one extended network, for
+example the two rings of a biaryl or two chelate rings around the same metal. Such pairs stay parallel or tilted,
+with all their parameters, and are marked `bonded` in the JSON export.
+
 The overlap of the criterion is measured as the fraction of atoms inside the outline of the other core
 (`overlap_measure = "atoms"`, the website: one atom is enough) or as common area / area of the smaller core
 (`"area"`, stricter and continuous: with `min_overlap = 0.3` at least 30% of the area must be covered).
@@ -453,7 +458,9 @@ fragments and those of neighbouring units. These pairs are marked **polymer** (i
 in the JSON `"polymer": true`): the contact distance is the one between the two fragments, not between units, and they
 are not exported as dimers for quantum chemistry. Symmetry-equivalent pairs are merged even when an operation maps the
 unit onto a different cut of the chain. **Detail ▸ Structure** reports it; intramolecular geometry and molecule groups
-leave extended networks out. Rings containing a metal (chelates, metallacycles) are not π fragments.
+leave extended networks out. Rings containing a metal (chelates, metallacycles) can be π fragments, here and in
+molecules; two fragments that share an atom or are bonded to each other are never a π-stack (see
+[Classification](#7-classification-and-thresholds)).
 
 ## 10. Stack columns
 

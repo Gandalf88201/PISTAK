@@ -494,3 +494,41 @@ def test_old_default_reported_and_user_toml_only_differences(tmp_path):
     saved = tomllib.loads((tmp_path / "user.toml").read_text(encoding="utf-8"))["limits"]
     assert saved == {"max_dihedral": 15.0}
     assert load_limits(tmp_path) == replace(Limits(), max_dihedral=15.0)
+
+
+# ---- fragments bonded to each other are never π-stacked ---------------------------------------------------------
+def test_classify_bonded_never_stack():
+    """The stack criterion alone would accept a pair at 0 Å; two fragments that share an atom or are bonded cannot be
+    a stacking contact, whatever the thresholds."""
+    from pistak.core.pairs import classify
+
+    lim = Limits()
+    assert classify(0.0, 3.5, 1.0, 0.0, lim) == "stack"
+    assert classify(0.0, 3.5, 1.0, 0.0, lim, bonded=True) == "parallel"
+    assert classify(50.0, 3.5, 1.0, 0.0, lim, bonded=True) == "tilted"
+
+
+def test_chelate_rings_sharing_the_metal_not_stacked():
+    """COD 2210645: the two NiS₂C₂ chelate rings of [Ni(mnt)₂]²⁻ (centrosymmetric, coplanar, Ni in common) were a
+    "π-stack" at 0.04 Å (found while writing the paper). Now they are a bonded, parallel intramolecular pair, and the
+    real π-stacked pair of the structure is still there."""
+    a = api.analyse_file(ROOT / "tests" / "data" / "cod" / "2210645.cif", Limits())
+    chelate = [p for p in a.pairs if p.intramolecular and p.contact < 1e-6]  # the two rings share the Ni atom
+    assert len(chelate) == 1 and chelate[0].bonded and chelate[0].kind == "parallel" and chelate[0].interplanar < 0.1
+    stacks = [p for p in a.pairs if p.kind == "stack"]
+    assert len(stacks) == 1 and not stacks[0].bonded and stacks[0].interplanar > 3.0
+    # the live thresholds cannot turn it into a stack either
+    assert all(p.kind != "stack" for p in reanalyse(a, a.limits.with_values(min_overlap=0.0, max_interplanar=9.0)).pairs if p.bonded)
+
+
+def test_bonded_flag_in_chains_and_biaryls():
+    """Neighbouring rings of the same poly(p-phenylene) chain (para C–C 1.48 Å) are bonded, the stack between chains
+    is not; the twisted phenyl–naphthyl of the fragments test is a bonded, tilted intramolecular pair."""
+    from test_fragments import stacked_crystal
+
+    a = analyse_text(_polyphenylene(["x, y, z"], (0.5, 0.5, 0.5)), "ppp")
+    along_chain = [p for p in a.pairs if p.shift in ((1, 0, 0), (-1, 0, 0))]
+    assert along_chain and all(p.bonded and p.kind != "stack" for p in along_chain)
+    assert [p.bonded for p in a.pairs if p.kind == "stack"] == [False]
+    intra = [p for p in analyse_text(stacked_crystal(), "fn", Limits()).pairs if p.intramolecular]
+    assert len(intra) == 1 and intra[0].bonded and intra[0].kind == "tilted"

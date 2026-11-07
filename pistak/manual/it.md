@@ -353,6 +353,11 @@ Una coppia è:
    `min_overlap` e, se `max_slip` > 0, lo slittamento totale è al massimo `max_slip`;
 3. altrimenti **parallela**.
 
+Due frammenti con un atomo in comune o legati tra loro (stessa regola dei legami: somma dei raggi covalenti più
+`bond_tolerance`) non sono mai un π-stack: succede solo dentro una molecola o una rete estesa, per esempio i due anelli
+di un biarile o due anelli chelati attorno allo stesso metallo. Queste coppie restano parallele o inclinate, con tutti
+i loro parametri, e nell'export JSON hanno `bonded`.
+
 La sovrapposizione del criterio si misura come frazione di atomi dentro il contorno dell'altro nucleo
 (`overlap_measure = "atoms"`, il sito: basta un atomo) o come area comune / area del nucleo minore (`"area"`, più
 severo e continuo: con `min_overlap = 0.3` servono almeno 30% di area coperta).
@@ -455,7 +460,9 @@ quelli delle unità vicine. Queste coppie sono segnate **polimero** (in tabella 
 `"polymer": true`): la distanza di contatto è quella tra i due frammenti, non tra le unità, e non si esportano come
 dimeri per la chimica quantistica. Le coppie equivalenti per simmetria si uniscono anche quando un'operazione porta
 l'unità in un altro taglio della catena. **Dettaglio ▸ Struttura** lo segnala; la geometria intramolecolare e i gruppi
-di molecole non comprendono le reti estese. Gli anelli con un metallo (chelati, metallacicli) non sono frammenti π.
+di molecole non comprendono le reti estese. Gli anelli con un metallo (chelati, metallacicli) possono essere frammenti
+π, qui come nelle molecole; due frammenti con un atomo in comune o legati tra loro non sono mai un π-stack (vedi
+[Classificazione](#7-classificazione-e-soglie)).
 
 ## 10. Colonne di stack
 

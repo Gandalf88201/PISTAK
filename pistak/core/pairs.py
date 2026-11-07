@@ -35,6 +35,7 @@ from scipy.spatial.distance import cdist
 
 from pistak.core.config import Limits
 from pistak.core.cores import Core
+from pistak.core.elements import covalent_radius
 from pistak.core.geometry import clip_convex, convex_hull, points_inside, polygon_area, unit
 from pistak.core.structure import Structure
 
@@ -121,6 +122,10 @@ class Pair:
     #: Vero se una delle due molecole è una rete estesa (polimero di coordinazione, catena covalente): i frammenti π
     #: sono anelli della rete, il contatto è quello tra i due frammenti e la coppia non si esporta come dimero.
     polymer: bool = False
+    #: Vero se i due frammenti hanno un atomo in comune o un legame covalente tra loro (frammenti della stessa molecola o
+    #: della stessa rete estesa: due anelli chelati che condividono il metallo, un biarile). Non è mai un π-stack: la
+    #: coppia resta parallel o tilted, con tutti i suoi parametri.
+    bonded: bool = False
 
     def get(self, key: str, default: float = float("nan")) -> float:
         """Valore di un parametro del registro per questa coppia."""
@@ -148,11 +153,13 @@ def area_overlap(hull_a: np.ndarray, hull_b: np.ndarray) -> float:
     return polygon_area(clip_convex(hull_a, hull_b)) / smaller if smaller > 0 else 0.0
 
 
-def classify(dihedral: float, interplanar: float, overlap: float, slip: float, limits: Limits) -> str:
-    """stack | parallel | tilted secondo le soglie. `overlap` è già misurata come chiede `limits.overlap_measure`."""
+def classify(dihedral: float, interplanar: float, overlap: float, slip: float, limits: Limits, bonded: bool = False) -> str:
+    """stack | parallel | tilted secondo le soglie. `overlap` è già misurata come chiede `limits.overlap_measure`.
+    Due frammenti legati tra loro (`bonded`) non sono mai uno stack."""
     if dihedral > limits.max_dihedral:
         return "tilted"
-    if interplanar <= limits.max_interplanar and overlap > limits.min_overlap and (limits.max_slip <= 0 or slip <= limits.max_slip):
+    if (not bonded and interplanar <= limits.max_interplanar and overlap > limits.min_overlap
+            and (limits.max_slip <= 0 or slip <= limits.max_slip)):
         return "stack"
     return "parallel"
 
@@ -164,7 +171,24 @@ def stack_overlap(p: Pair, limits: Limits) -> float:
 
 def reclassify(p: Pair, limits: Limits) -> str:
     """Il tipo di una coppia già misurata secondo altre soglie (stadio `pairs`: nessuna geometria da rifare)."""
-    return classify(p.dihedral, p.interplanar, stack_overlap(p, limits), p.slip, limits)
+    return classify(p.dihedral, p.interplanar, stack_overlap(p, limits), p.slip, limits, p.bonded)
+
+
+#: Due posizioni più vicine di così sono lo stesso atomo (frammenti che lo condividono), come `d² ≥ 0,16` di `structure`.
+SAME_ATOM = 0.4
+
+
+def fragments_bonded(s: Structure, ca: Core, cb: Core, a: int, b: int, v: np.ndarray, limits: Limits) -> bool:
+    """Vero se i frammenti `ca` (molecola a) e `cb` (molecola b traslata di v) condividono un atomo o hanno un legame
+    tra loro, con la stessa regola dei legami di `structure` (somma dei raggi covalenti + `bond_tolerance`). Serve solo
+    per frammenti della stessa molecola o di reti estese: molecole diverse non sono legate per costruzione."""
+    ma, mb = s.molecules[a], s.molecules[b]
+    d = cdist(ma.pos[ca.atoms], mb.pos[cb.atoms] + v)
+    if (d < SAME_ATOM).any():
+        return True
+    ra = np.array([covalent_radius(ma.el[i]) for i in ca.atoms])
+    rb = np.array([covalent_radius(mb.el[i]) for i in cb.atoms])
+    return bool((d < ra[:, None] + rb[None, :] + limits.bond_tolerance).any())
 
 
 def _heavy_contact(s: Structure, a: int, b: int, v: np.ndarray) -> float:
@@ -178,7 +202,7 @@ def _fragment_distance(s: Structure, ca: Core, cb: Core, a: int, b: int, v: np.n
 
 
 def _measure(s: Structure, ca: Core, cb0: Core, a: int, b: int, shift: Shift, limits: Limits, contact: float,
-             fa: int, fb: int, fragmented: bool) -> Pair:
+             fa: int, fb: int, fragmented: bool, bonded: bool = False) -> Pair:
     v = s.shift_vector(shift)
     pa, pb = s.molecules[a].pos, s.molecules[b].pos + v
     cb = cb0.moved(v)
@@ -196,12 +220,12 @@ def _measure(s: Structure, ca: Core, cb0: Core, a: int, b: int, shift: Shift, li
     area = float(area_overlap(hull_a, hull_b))
     interplanar = abs(z)
     slip = float(np.linalg.norm(sv))
-    kind = classify(dihedral, interplanar, area if limits.overlap_measure == "area" else overlap, slip, limits)
+    kind = classify(dihedral, interplanar, area if limits.overlap_measure == "area" else overlap, slip, limits, bonded)
     return Pair(
         a=a, b=b, shift=shift, kind=kind, interplanar=interplanar,
         long_slip=abs(float(np.dot(sv, f.L))), lat_slip=abs(float(np.dot(sv, f.W))), slip=slip,
         dihedral=dihedral, centroid_distance=float(np.linalg.norm(d)), contact=contact, overlap=overlap,
-        fa=fa, fb=fb, fragmented=fragmented, overlap_area=area,
+        fa=fa, fb=fb, fragmented=fragmented, overlap_area=area, bonded=bonded,
     )
 
 
@@ -215,13 +239,15 @@ def measure_pair(s: Structure, cores: Sequence, a: int, b: int, shift: Shift, li
         return None
     ca, cb0 = frags[a][fa], frags[b][fb]
     v = s.shift_vector(shift)
-    if a == b and shift == (0, 0, 0):
+    intra = a == b and shift == (0, 0, 0)
+    if intra:
         contact = _fragment_distance(s, ca, cb0, a, b, v)
     else:
         contact = _heavy_contact(s, a, b, v)
     if max_contact is not None and contact > max_contact:
         return None
-    return _measure(s, ca, cb0, a, b, shift, limits, contact, fa, fb, len(frags[a]) > 1 or len(frags[b]) > 1)
+    bonded = (intra or s.molecules[a].extended or s.molecules[b].extended) and fragments_bonded(s, ca, cb0, a, b, v, limits)
+    return _measure(s, ca, cb0, a, b, shift, limits, contact, fa, fb, len(frags[a]) > 1 or len(frags[b]) > 1, bonded)
 
 
 def remeasure(s: Structure, frags: Fragments, pair: Pair, limits: Limits) -> Pair:
@@ -231,7 +257,7 @@ def remeasure(s: Structure, frags: Fragments, pair: Pair, limits: Limits) -> Pai
     v = s.shift_vector(pair.shift)
     by_fragment = pair.intramolecular or pair.polymer
     contact = _fragment_distance(s, ca, cb0, pair.a, pair.b, v) if by_fragment else _heavy_contact(s, pair.a, pair.b, v)
-    q = _measure(s, ca, cb0, pair.a, pair.b, pair.shift, limits, contact, pair.fa, pair.fb, pair.fragmented)
+    q = _measure(s, ca, cb0, pair.a, pair.b, pair.shift, limits, contact, pair.fa, pair.fb, pair.fragmented, pair.bonded)
     q.index, q.count, q.members, q.polymer = pair.index, pair.count, pair.members, pair.polymer
     return q
 
@@ -316,7 +342,8 @@ def iter_neighbour_pairs(s: Structure, cores: Sequence, limits: Limits) -> Itera
                     for fa, fb in itertools.product(range(len(frags[a])), range(len(frags[b]))):
                         dist = _fragment_distance(s, frags[a][fa], frags[b][fb], a, b, v)
                         if dist <= reach:  # come i frammenti secondari delle molecole: contact_cutoff + FRAGMENT_MARGIN
-                            p = _measure(s, frags[a][fa], frags[b][fb], a, b, sh, limits, dist, fa, fb, fragmented)
+                            bonded = fragments_bonded(s, frags[a][fa], frags[b][fb], a, b, v, limits)
+                            p = _measure(s, frags[a][fa], frags[b][fb], a, b, sh, limits, dist, fa, fb, fragmented, bonded)
                             p.polymer = True
                             yield p
                     continue
@@ -335,7 +362,8 @@ def iter_neighbour_pairs(s: Structure, cores: Sequence, limits: Limits) -> Itera
                 continue
             dist = _fragment_distance(s, frags[a][fa], frags[a][fb], a, a, zero)
             if dist <= reach:
-                p = _measure(s, frags[a][fa], frags[a][fb], a, a, (0, 0, 0), limits, dist, fa, fb, True)
+                bonded = fragments_bonded(s, frags[a][fa], frags[a][fb], a, a, zero, limits)
+                p = _measure(s, frags[a][fa], frags[a][fb], a, a, (0, 0, 0), limits, dist, fa, fb, True, bonded)
                 p.polymer = s.molecules[a].extended
                 yield p
 
