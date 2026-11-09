@@ -519,7 +519,10 @@ def group_pairs(contacts: list[Pair], keys: list[Member] | None, limits: Limits)
     fresh = [replace(p, kind=reclassify(p, limits), count=1, members=[], values={}, index=-1) for p in contacts]
     pairs, stack_edges = _group_site(fresh) if keys is None else _group_canonical(fresh, keys)
     order = {k: i for i, k in enumerate(KINDS)}
-    pairs.sort(key=lambda p: (order[p.kind], p.interplanar, p.contact))
+    # distanze arrotondate a 1e-6 Å e spareggio su grandezze e indici: due coppie con la stessa distanza (2.3655 contro
+    # 2.3655 − 1 ulp) non si scambiano di posto da una macchina all'altra (REGISTRO, voce 66)
+    pairs.sort(key=lambda p: (order[p.kind], round(p.interplanar, 6), round(p.contact, 6),
+                              round(p.centroid_distance, 6), p.a, p.b, p.fa, p.fb, tuple(p.shift)))
     for i, p in enumerate(pairs):
         p.index = i
     return pairs, stack_edges

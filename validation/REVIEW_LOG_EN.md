@@ -102,3 +102,4 @@ unchanged), *deferred* (left to the author), *open*.
 | 63 | overlap | self-overlapping ring sets (convex hull; found on COD 2100449, whose cause was entry 65, kept as a safeguard), macrocycle triangles over rings, `planes_cross` for coplanar fragments | corrected |
 | 64 | fragments | duplicated rings in the conjugated merge (H₂Pc) | corrected |
 | 65 | structure | after entry 60, the same atom written twice at half occupancy (COD 2100449) was no longer merged; positions coinciding within 0.05 Å are merged whatever their occupancy | corrected |
+| 66 | ordering | pairs with the same interplanar distance up to the last binary digit swapped places between machines (COD 2008099 on Linux, Python 3.12); distances rounded to 10⁻⁶ Å in the sort key, deterministic tie-break | corrected |
