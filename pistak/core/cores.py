@@ -14,8 +14,14 @@ from dataclasses import dataclass, replace
 import numpy as np
 
 from pistak.core.config import Limits
+from pistak.core.elements import NONMETALS
 from pistak.core.geometry import Plane, fit_plane
 from pistak.core.structure import Molecule
+
+#: Sotto questo rapporto √(λ2/λ3) la nuvola di punti è quasi una retta: il piano medio (e la sua normale) non è definito.
+MIN_PLANE_ASPECT = 0.05
+#: Anelli più grandi cercati nei frammenti uniti da `fragment_merge = "conjugated"` (macrocicli porfirinici: 16).
+MAX_MACROCYCLE = 20
 
 
 @dataclass(frozen=True)
@@ -27,6 +33,9 @@ class Core:
     kind: str  # "rings" | "molecule"
     #: Da dove viene l'asse lungo: "pca" (direzione di massima estensione) | "atoms" (definito dall'utente).
     axis_source: str = "pca"
+    #: Gli anelli del frammento (indici nella molecola): i loro poligoni, proiettati, danno la sovrapposizione delle
+    #: coppie (unione di poligoni convessi, non l'involucro convesso del frammento). Vuoto: si usa l'involucro.
+    rings: tuple[tuple[int, ...], ...] = ()
 
     @property
     def centroid(self) -> np.ndarray:
@@ -101,10 +110,22 @@ def small_rings(n: int, bonds: np.ndarray, allowed, max_size: int = 8) -> list[l
 
 
 def planar_rings(m: Molecule, limits: Limits) -> list[tuple[list[int], Plane]]:
-    """Gli anelli planari della molecola (senza idrogeni), ciascuno con il suo piano medio."""
+    """Gli anelli planari della molecola (senza idrogeni), ciascuno con il suo piano medio.
+
+    Due passate: prima gli anelli tra i soli atomi non metallici, poi quelli che contengono un metallo. In una sola
+    passata i cicli più corti attraverso un legame C–C di un Cp o di un arene η⁵/η⁶ sono i triangoli M–C–C, e
+    l'anello aromatico non verrebbe mai trovato (ferrocene, Cr(η⁶-C₆H₆)(CO)₃: revisione, voce 51)."""
     heavy = m.heavy
+    metal = [_is_metal(e) for e in m.el]
+    found: dict[tuple[int, ...], list[int]] = {}
+    for r in small_rings(len(m), m.bonds, lambda i: heavy[i] and not metal[i], limits.max_ring_size):
+        found.setdefault(tuple(sorted(r)), r)
+    if any(metal):
+        for r in small_rings(len(m), m.bonds, lambda i: heavy[i], limits.max_ring_size):
+            if any(metal[i] for i in r):
+                found.setdefault(tuple(sorted(r)), r)
     out = []
-    for r in small_rings(len(m), m.bonds, lambda i: heavy[i], limits.max_ring_size):
+    for r in found.values():
         pl = fit_plane(m.pos[r])
         if pl.rms < limits.ring_rms:
             out.append((r, pl))
@@ -117,31 +138,112 @@ def pi_core(m: Molecule, limits: Limits) -> Core | None:
     return frags[0] if frags else None
 
 
+def _is_metal(el: str) -> bool:
+    return el not in NONMETALS
+
+
+def _fuse(rings: list[list[int]]) -> list[tuple[set[int], list[list[int]]]]:
+    """Anelli condensati (che condividono almeno due atomi) riuniti in sistemi: (atomi, anelli) per sistema."""
+    groups: list[tuple[set[int], list[list[int]]]] = []
+    for r in rings:
+        touching = [g for g in groups if sum(1 for i in r if i in g[0]) >= 2]
+        atoms, members = set(r), [r]
+        for g in touching:
+            atoms |= g[0]
+            members += g[1]
+            groups.remove(g)
+        groups.append((atoms, members))
+    return groups
+
+
+def _planar_systems(m: Molecule, limits: Limits) -> list[tuple[list[int], list[list[int]]]]:
+    """I sistemi di anelli planari condensati che passano la soglia di planarità `molecule_rms`.
+
+    Un sistema che non la passa e contiene anelli con un metallo si riprova senza quegli anelli: in un metallocene o in
+    un complesso η⁶-arene i triangoli M–C–C (legami M–C entro la tolleranza) sono «anelli» planari condensati con il Cp
+    o l'arene, e il sistema intero, con il metallo a ~1,6 Å dal piano, non è planare; senza di loro resta l'anello
+    aromatico. Un chelato planare con il metallo (metallo-porfirina) passa la soglia così com'è e resta intero."""
+    rings = [r for r, _ in planar_rings(m, limits)]
+    out = []
+    for atoms, members in _fuse(rings):
+        g = sorted(atoms)
+        if fit_plane(m.pos[g]).rms < limits.molecule_rms:
+            out.append((g, members))
+            continue
+        organic = [r for r in members if not any(_is_metal(m.el[i]) for i in r)]
+        if len(organic) < len(members):
+            for atoms2, members2 in _fuse(organic):
+                g2 = sorted(atoms2)
+                if fit_plane(m.pos[g2]).rms < limits.molecule_rms:
+                    out.append((g2, members2))
+    return out
+
+
+def _conjugated(m: Molecule, systems: list[tuple[list[int], list[list[int]]]], limits: Limits) -> list[tuple[list[int], list[list[int]]]]:
+    """`fragment_merge = "conjugated"`: unisce i sistemi di anelli complanari collegati da un legame o da atomi sp/sp²
+    (non metalli, al più tre vicini: carboni meso delle porfirine, ponti vinilici, alchini) e aggiunge gli atomi
+    sp/sp² esociclici complanari. Si cresce un frammento alla volta, dal sistema più grande, accettando un atomo o un
+    sistema adiacente solo se l'insieme resta entro `molecule_rms`: un biarile ruotato resta in due frammenti."""
+    heavy = m.heavy
+    nbr: list[list[int]] = [[] for _ in range(len(m))]
+    for p, q in m.bonds:
+        nbr[int(p)].append(int(q))
+        nbr[int(q)].append(int(p))
+    owner = {i: k for k, (g, _) in enumerate(systems) for i in g}
+    linker = {i for i in range(len(m)) if heavy[i] and i not in owner and not _is_metal(m.el[i]) and len(nbr[i]) <= 3}
+    used: set[int] = set()
+    out = []
+    for k in sorted(range(len(systems)), key=lambda k: -len(systems[k][0])):
+        if k in used:
+            continue
+        used.add(k)
+        atoms, rings = set(systems[k][0]), list(systems[k][1])
+        grown = True
+        while grown:
+            grown = False
+            frontier = sorted({j for i in atoms for j in nbr[i] if j not in atoms and (j in linker or (j in owner and owner[j] not in used))})
+            for j in frontier:
+                if j in atoms or (j in owner and owner[j] in used):
+                    continue  # sistema già unito attraverso un altro atomo della frontiera (anelli doppi: revisione 2)
+                add = set(systems[owner[j]][0]) if j in owner else {j}
+                trial = sorted(atoms | add)
+                if fit_plane(m.pos[trial]).rms < limits.molecule_rms:
+                    atoms |= add
+                    if j in owner:
+                        rings += systems[owner[j]][1]
+                        used.add(owner[j])
+                    grown = True
+        if len(rings) > len(systems[k][1]):
+            # macrocicli (anello interno di 16 atomi di porfirine e ftalocianine): non sono anelli «piccoli», ma l'area
+            # che racchiudono fa parte del frammento e conta nella sovrapposizione delle coppie
+            known = {tuple(sorted(r)) for r in rings}
+            rings += [r for r in small_rings(len(m), m.bonds, lambda i, s=frozenset(atoms): i in s, MAX_MACROCYCLE)
+                      if len(r) > limits.max_ring_size and tuple(sorted(r)) not in known]
+        out.append((sorted(atoms), rings))
+    return out
+
+
 def pi_fragments(m: Molecule, limits: Limits) -> list[Core]:
     """I frammenti π della molecola: i sistemi di anelli planari condensati (che condividono almeno un legame), dal
     più grande. Con `limits.fragments == "largest"` solo il primo, il nucleo π del sito; con "all" anche gli altri
-    con almeno `min_fragment_atoms` atomi. Senza anelli adatti: tutta la molecola senza idrogeni, se è planare."""
-    # anelli condensati: condividono almeno un legame (due atomi)
-    groups: list[set[int]] = []
-    for r, _ in planar_rings(m, limits):
-        touching = [g for g in groups if sum(1 for i in r if i in g) >= 2]
-        merged = set(r)
-        for g in touching:
-            merged |= g
-            groups.remove(g)
-        groups.append(merged)
-    candidates = [sorted(g) for g in groups]
-    candidates = [g for g in candidates if fit_plane(m.pos[g]).rms < limits.molecule_rms]
-    candidates.sort(key=len, reverse=True)  # ordinamento stabile come nel sito
-    if candidates:
-        keep = candidates[:1] if limits.fragments == "largest" else \
-            candidates[:1] + [g for g in candidates[1:] if len(g) >= limits.min_fragment_atoms]
-        return [Core(fit_plane(m.pos[g]), np.array(g), "rings") for g in keep]
+    con almeno `min_fragment_atoms` atomi (la soglia non vale per il primo). Con `fragment_merge == "conjugated"` i
+    sistemi complanari collegati da legami o atomi sp/sp² diventano un frammento solo (`_conjugated`). Senza anelli
+    adatti: tutta la molecola senza idrogeni, se è planare e non lineare."""
+    systems = _planar_systems(m, limits)
+    if getattr(limits, "fragment_merge", "fused") == "conjugated" and systems:
+        systems = _conjugated(m, systems, limits)
+    systems.sort(key=lambda s: len(s[0]), reverse=True)  # ordinamento stabile come nel sito
+    if systems:
+        keep = systems[:1] if limits.fragments == "largest" else \
+            systems[:1] + [s for s in systems[1:] if len(s[0]) >= limits.min_fragment_atoms]
+        return [Core(fit_plane(m.pos[g]), np.array(g), "rings", rings=tuple(tuple(r) for r in rs)) for g, rs in keep]
     allh = np.flatnonzero(m.heavy)
     if len(allh) < 4:
         return []
     pl = fit_plane(m.pos[allh])
-    return [Core(pl, allh, "molecule")] if pl.rms < limits.molecule_rms else []
+    if pl.rms >= limits.molecule_rms or pl.aspect < MIN_PLANE_ASPECT:  # lineare: normale non definita
+        return []
+    return [Core(pl, allh, "molecule")]
 
 
 def axis_atoms(m: Molecule, spec: str) -> tuple[int, int] | None:

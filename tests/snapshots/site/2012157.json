@@ -167,6 +167,7 @@
     "interplanar": 0.4508386161,
     "lat_slip": 1.170691769,
     "lat_slip_signed": -1.170691769,
+    "local_interplanar": null,
     "long_slip": 16.06493821,
     "long_slip_signed": 16.06493821,
     "mean_atom_height": 0.4508386161,
@@ -174,9 +175,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 16.10753733,
     "slip_angle": 4.167917774,
-    "slip_direction": -4.167917774
+    "slip_direction": -4.167917774,
+    "twist": 0.0
    },
    "ring_pairs": [],
    "shift": [
@@ -232,6 +235,7 @@
     "interplanar": 0.8543808612,
     "lat_slip": 1.088335824,
     "lat_slip_signed": -1.088335824,
+    "local_interplanar": null,
     "long_slip": 16.0543319,
     "long_slip_signed": 16.0543319,
     "mean_atom_height": 0.8543808612,
@@ -239,9 +243,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 16.09117919,
     "slip_angle": 3.878192491,
-    "slip_direction": -3.878192491
+    "slip_direction": -3.878192491,
+    "twist": 0.0
    },
    "ring_pairs": [],
    "shift": [
@@ -297,6 +303,7 @@
     "interplanar": 1.748762225,
     "lat_slip": 4.250064445,
     "lat_slip_signed": 4.250064445,
+    "local_interplanar": null,
     "long_slip": 14.05736304,
     "long_slip_signed": 14.05736304,
     "mean_atom_height": 1.748762225,
@@ -304,9 +311,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 14.68579257,
     "slip_angle": 16.82202232,
-    "slip_direction": 16.82202232
+    "slip_direction": 16.82202232,
+    "twist": 0.0
    },
    "ring_pairs": [],
    "shift": [
@@ -362,6 +371,7 @@
     "interplanar": 2.166188831,
     "lat_slip": 4.14658384,
     "lat_slip_signed": 4.14658384,
+    "local_interplanar": null,
     "long_slip": 14.03011551,
     "long_slip_signed": 14.03011551,
     "mean_atom_height": 2.166188831,
@@ -369,9 +379,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 14.6300478,
     "slip_angle": 16.46498165,
-    "slip_direction": 16.46498165
+    "slip_direction": 16.46498165,
+    "twist": 0.0
    },
    "ring_pairs": [],
    "shift": [
@@ -427,6 +439,7 @@
     "interplanar": 2.603143086,
     "lat_slip": 5.338400269,
     "lat_slip_signed": -5.338400269,
+    "local_interplanar": null,
     "long_slip": 1.996968864,
     "long_slip_signed": 1.996968864,
     "mean_atom_height": 2.603143086,
@@ -434,9 +447,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 5.699684384,
     "slip_angle": 69.49036956,
-    "slip_direction": -69.49036956
+    "slip_direction": -69.49036956,
+    "twist": 0.0
    },
    "ring_pairs": [
     {
@@ -557,6 +572,7 @@
     "interplanar": 2.617027447,
     "lat_slip": 5.317275609,
     "lat_slip_signed": -5.317275609,
+    "local_interplanar": null,
     "long_slip": 2.034822703,
     "long_slip_signed": 2.034822703,
     "mean_atom_height": 2.617027447,
@@ -564,9 +580,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 5.693322698,
     "slip_angle": 69.05907895,
-    "slip_direction": -69.05907895
+    "slip_direction": -69.05907895,
+    "twist": 0.0
    },
    "ring_pairs": [
     {
@@ -687,6 +705,7 @@
     "interplanar": 3.485630417,
     "lat_slip": 1.615605867,
     "lat_slip_signed": 1.615605867,
+    "local_interplanar": null,
     "long_slip": 13.90839584,
     "long_slip_signed": 13.90839584,
     "mean_atom_height": 3.789233829,
@@ -694,9 +713,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 14.0019162,
     "slip_angle": 6.62581019,
-    "slip_direction": 6.62581019
+    "slip_direction": 6.62581019,
+    "twist": 0.3667745564
    },
    "ring_pairs": [
     {
@@ -769,6 +790,7 @@
     "interplanar": 3.485630417,
     "lat_slip": 1.704605691,
     "lat_slip_signed": 1.704605691,
+    "local_interplanar": null,
     "long_slip": 13.89776877,
     "long_slip_signed": 13.89776877,
     "mean_atom_height": 2.476990633,
@@ -776,9 +798,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 14.0019162,
     "slip_angle": 6.992584747,
-    "slip_direction": 6.992584747
+    "slip_direction": 6.992584747,
+    "twist": 0.3667745564
    },
    "ring_pairs": [
     {
@@ -851,6 +875,7 @@
     "interplanar": 3.710103564,
     "lat_slip": 2.968279113,
     "lat_slip_signed": -2.968279113,
+    "local_interplanar": null,
     "long_slip": 2.147005155,
     "long_slip_signed": 2.147005155,
     "mean_atom_height": 4.64361469,
@@ -858,9 +883,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 3.663374405,
     "slip_angle": 54.12116493,
-    "slip_direction": -54.12116493
+    "slip_direction": -54.12116493,
+    "twist": 0.3667745564
    },
    "ring_pairs": [
     {
@@ -1109,6 +1136,7 @@
     "interplanar": 3.710103564,
     "lat_slip": 2.954474501,
     "lat_slip_signed": -2.954474501,
+    "local_interplanar": null,
     "long_slip": 2.165962247,
     "long_slip_signed": 2.165962247,
     "mean_atom_height": 2.026152017,
@@ -1116,9 +1144,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 3.663374405,
     "slip_angle": 53.75439037,
-    "slip_direction": -53.75439037
+    "slip_direction": -53.75439037,
+    "twist": 0.3667745564
    },
    "ring_pairs": [
     {
@@ -1367,6 +1397,7 @@
     "interplanar": 3.717826835,
     "lat_slip": 2.970986081,
     "lat_slip_signed": -2.970986081,
+    "local_interplanar": null,
     "long_slip": 0.1500511476,
     "long_slip_signed": -0.1500511476,
     "mean_atom_height": 2.040471604,
@@ -1374,9 +1405,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 2.974772872,
     "slip_angle": 87.10870452,
-    "slip_direction": -92.89129548
+    "slip_direction": -92.89129548,
+    "twist": 0.3667745564
    },
    "ring_pairs": [
     {
@@ -1641,6 +1674,7 @@
     "interplanar": 3.717826835,
     "lat_slip": 2.971885742,
     "lat_slip_signed": -2.971885742,
+    "local_interplanar": null,
     "long_slip": 0.1310296626,
     "long_slip_signed": -0.1310296626,
     "mean_atom_height": 4.643179464,
@@ -1648,9 +1682,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 2.974772872,
     "slip_angle": 87.47547908,
-    "slip_direction": -92.52452092
+    "slip_direction": -92.52452092,
+    "twist": 0.3667745564
    },
    "ring_pairs": [
     {

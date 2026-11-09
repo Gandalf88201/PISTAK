@@ -353,12 +353,25 @@ A pair is:
 
 Two fragments that share an atom or are bonded to each other (same rule as the bonds: sum of the covalent radii
 plus `bond_tolerance`) are never a π-stack: this happens only inside one molecule or one extended network, for
-example the two rings of a biaryl or two chelate rings around the same metal. Such pairs stay parallel or tilted,
-with all their parameters, and are marked `bonded` in the JSON export.
+example the two rings of a biaryl or two chelate rings around the same metal. The same holds for two fragments both
+bonded to one atom (*bridged*: the two rings of ferrocene or of a bis(arene) complex, bonded to the metal and not to
+each other). Such pairs stay parallel or tilted, with all their parameters, and are marked `bonded` or `bridged` in
+the JSON export.
 
-The overlap of the criterion is measured as the fraction of atoms inside the outline of the other core
-(`overlap_measure = "atoms"`, the website: one atom is enough) or as common area / area of the smaller core
-(`"area"`, stricter and continuous: with `min_overlap = 0.3` at least 30% of the area must be covered).
+In structures with no C–C or C–H bond (inorganic networks, also carbides, carbonates, cyanides) no π fragments are
+sought (`pi_scope = "organic"`); `pi_scope = "all"` searches them anyway.
+
+The overlap of the criterion is measured, by default, as common area / area of the smaller fragment
+(`overlap_measure = "area"`, `min_overlap = 0.10`: at least 10% of the area must be covered). The outline of a
+fragment is the union of its rings, so bays and the notches at ring fusions do not count. The website's measure,
+the fraction of atoms inside the convex hull of the other core (`overlap_measure = "atoms"`, one atom is enough with
+`min_overlap = 0`), is the one used by `Limits.site()`.
+
+When a fragment has no preferred in-plane direction (benzene, coronene, porphyrins: isotropy above
+`max_axis_isotropy`) or the long axes of the two fragments are nearly perpendicular (twist above `max_axis_twist`),
+the longitudinal and lateral slips are not defined and are shown empty; the total slip is always given. With
+`fragment_merge = "conjugated"` coplanar ring systems joined by a bond or by sp/sp² atoms (coplanar biaryls,
+free-base porphyrins and phthalocyanines) become one fragment.
 
 Thresholds are changed from **Analysis ▸ Thresholds…** (all of them), from the **Live thresholds** panel (those of the
 criterion), from `user.toml` or on the command line.
@@ -370,14 +383,18 @@ criterion), from `user.toml` or on the command line.
 | `max_dihedral` | 20° | above it, the pair is tilted |
 | `max_interplanar` | 4.2 Å | above it, no π-stack |
 | `contact_cutoff` | 4.5 Å | two molecules are neighbours if they have heavy atoms closer than this (above `max_interplanar`: with parallel planes the contact is never shorter than the interplanar distance) |
-| `overlap_measure` | atoms | how the overlap is measured (atoms / area) |
-| `min_overlap` | 0 | minimum overlap for a π-stack |
+| `overlap_measure` | area | how the overlap is measured (area / atoms) |
+| `min_overlap` | 0.10 | minimum overlap for a π-stack |
+| `fragment_merge` | fused | π fragments: fused ring systems, or also conjugated coplanar systems |
+| `pi_scope` | organic | where π fragments are sought: structures with a C–C or C–H bond (organic), or all |
+| `max_axis_isotropy` | 0.9 | above it the automatic long axis is undefined |
+| `max_axis_twist` | 75° | above it L and W of the pair are undefined |
 | `max_slip` | 0 Å | maximum slip for a π-stack (0 = no limit) |
 | `ring_rms` | 0.10 Å | maximum non-planarity of a ring |
 | `molecule_rms` | 0.15 Å | maximum non-planarity of the whole core |
 | `max_ring_size` | 8 | maximum atoms in a ring |
 | `bond_tolerance` | 0.4 Å | bond if the distance is below the sum of covalent radii plus this |
-| `same_site` | 0.3 Å | two positions closer than this are the same atom |
+| `same_site` | 0.3 Å | images of one site, or ordered atoms written twice, closer than this are merged; alternative positions of a split atom are kept (positions within 0.05 Å are always one atom) |
 | `neighbour_shells` | 2 | neighbouring cells explored (a minimum: in canonical mode it grows by itself) |
 | `ring_pair_max_distance` | 6.0 Å | maximum Cg···Cg for the ring table |
 | `max_cell_atoms` | 6000 | limit of atoms in the cell |
@@ -496,7 +513,9 @@ comes from the others: the Detail view, a terminal warning and the JSON field `s
 parameter) say so.
 
 Approximations (the same as crystallographic programs without the full covariance matrix): independent coordinates,
-special positions not constrained, atoms without s.u. kept fixed. A large σ on the L and W slips of a nearly isotropic
+atoms without s.u. kept fixed. Atoms on special positions move only within their site symmetry (constraints such as
+x = y or z = 0 are kept). A CIF without any coordinate s.u. gives the alert `noSU` (G); atoms of π fragments without s.u.
+(rigid groups, constrained disorder) give `fragmentNoSU` (C), because their σ would silently be zero. A large σ on the L and W slips of a nearly isotropic
 core says that the long axis is not defined: fix it with two atoms.
 
 ## 12. Comparison and statistics across structures

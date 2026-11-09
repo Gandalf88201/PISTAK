@@ -151,6 +151,7 @@
     "interplanar": 1.550757705,
     "lat_slip": 1.262744485,
     "lat_slip_signed": -1.262744485,
+    "local_interplanar": null,
     "long_slip": 8.389682137,
     "long_slip_signed": -8.389682137,
     "mean_atom_height": 1.550757705,
@@ -158,9 +159,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 8.484178805,
     "slip_angle": 8.559430975,
-    "slip_direction": -171.440569
+    "slip_direction": -171.440569,
+    "twist": 0.0
    },
    "ring_pairs": [],
    "shift": [
@@ -216,6 +219,7 @@
     "interplanar": 2.537683629,
     "lat_slip": 5.216340904,
     "lat_slip_signed": 5.216340904,
+    "local_interplanar": null,
     "long_slip": 1.254187939,
     "long_slip_signed": -1.254187939,
     "mean_atom_height": 2.537683629,
@@ -223,9 +227,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 5.364997652,
     "slip_angle": 76.48073381,
-    "slip_direction": 103.5192662
+    "slip_direction": 103.5192662,
+    "twist": 0.0
    },
    "ring_pairs": [
     {
@@ -348,6 +354,7 @@
     "interplanar": 2.016760364,
     "lat_slip": 2.96745,
     "lat_slip_signed": 2.96745,
+    "local_interplanar": null,
     "long_slip": 6.880276874,
     "long_slip_signed": -6.880276874,
     "mean_atom_height": 3.091941549,
@@ -355,9 +362,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 7.492927957,
     "slip_angle": 23.33044238,
-    "slip_direction": 156.6695576
+    "slip_direction": 156.6695576,
+    "twist": 24.5246522
    },
    "ring_pairs": [
     {
@@ -448,6 +457,7 @@
     "interplanar": 3.732248887,
     "lat_slip": 2.96745,
     "lat_slip_signed": 2.96745,
+    "local_interplanar": null,
     "long_slip": 1.572133349,
     "long_slip_signed": -1.572133349,
     "mean_atom_height": 2.105015625,
@@ -455,9 +465,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 3.35817849,
     "slip_angle": 62.08568376,
-    "slip_direction": 117.9143162
+    "slip_direction": 117.9143162,
+    "twist": 24.5246522
    },
    "ring_pairs": [
     {

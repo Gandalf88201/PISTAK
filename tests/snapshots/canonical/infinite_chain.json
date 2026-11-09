@@ -25,6 +25,11 @@
    "G",
    "noRefinement",
    {}
+  ],
+  [
+   "G",
+   "noSU",
+   {}
   ]
  ],
  "cell_atoms": 1,

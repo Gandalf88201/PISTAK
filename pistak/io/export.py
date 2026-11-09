@@ -114,7 +114,7 @@ def pair_dict(p: Pair, keys: list[str], uncertainty=None) -> dict:
     d = {
         "n": p.index + 1, "kind": p.kind, "molecule_a": p.a + 1, "molecule_b": p.b + 1, "shift": list(p.shift),
         "fragment_a": p.fa + 1, "fragment_b": p.fb + 1,
-        "equivalent_pairs": p.count, "polymer": p.polymer, "bonded": p.bonded, "parameters": {k: _clean(p.get(k)) for k in keys},
+        "equivalent_pairs": p.count, "polymer": p.polymer, "bonded": p.bonded, "bridged": p.bridged, "parameters": {k: _clean(p.get(k)) for k in keys},
     }
     if uncertainty is not None:
         d["su"] = {k: _clean(uncertainty.get(p, k)) for k in keys if k in uncertainty.keys}

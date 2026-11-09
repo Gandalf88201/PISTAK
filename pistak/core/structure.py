@@ -156,6 +156,9 @@ def special_disorder_copies(cif: Cif, vectors: np.ndarray, limits: Limits) -> di
     return out
 
 
+DUPLICATE = 0.05  # Å: due atomi del CIF più vicini di così sono lo stesso atomo (nessuna posizione sdoppiata raffinabile)
+
+
 def fill_cell(cif: Cif, vectors: np.ndarray, limits: Limits,
               origins: list[tuple[int, int]] | None = None) -> tuple[list[str], list[str], np.ndarray]:
     """Tutti gli atomi della cella: ogni operazione di simmetria applicata a ogni atomo, senza doppioni. Se si passa
@@ -166,22 +169,37 @@ def fill_cell(cif: Cif, vectors: np.ndarray, limits: Limits,
     labels: list[str] = []
     buf = np.zeros((16, 3))  # posizioni frazionarie accettate finora (cresce al bisogno)
     by_el: dict[str, list[int]] = {}
+    src: list[int] = []  # per ogni posizione accettata, l'atomo del CIF da cui viene
+
+    def ordered(i: int) -> bool:  # atomo a occupanza piena e fuori da gruppi di disordine
+        a = cif.atoms[i]
+        return a.occ >= 0.99 and a.group in (".", "?", "", "0")
+
     for ia, at in enumerate(cif.atoms):
         allowed = special.get((at.assembly, at.group))
         for k, op in enumerate(cif.symops):
             if allowed is not None and k not in allowed:
                 continue  # l'altra orientazione di un gruppo disordinato su un elemento di simmetria
             f = _wrap(op.apply(at.frac))
+            # si fondono le immagini per simmetria dello stesso sito (atomo su una posizione speciale), gli atomi
+            # ordinati ripetuti nel CIF (molecola intera su un centro di inversione) e le posizioni che coincidono entro
+            # DUPLICATE (lo stesso atomo scritto due volte, anche a occupanza parziale: COD 2100449 elenca le immagini
+            # per inversione con occupanza ½); mai due posizioni alternative distinte di un atomo sdoppiato, che
+            # distano più di DUPLICATE: revisione 2, voci 60 e 65
             idx = by_el.get(at.el)
             if idx:
                 d = f - buf[idx]
                 d -= np.round(d)
-                if (np.linalg.norm(d @ vectors, axis=1) < limits.same_site).any():
+                dist = np.linalg.norm(d @ vectors, axis=1)
+                close = np.flatnonzero(dist < limits.same_site)
+                if any(src[idx[c]] == ia or dist[c] < DUPLICATE or (ordered(ia) and ordered(src[idx[c]]))
+                       for c in close):
                     continue
             if len(els) == len(buf):
                 buf = np.vstack([buf, np.zeros_like(buf)])
             buf[len(els)] = f
             by_el.setdefault(at.el, []).append(len(els))
+            src.append(ia)
             els.append(at.el)
             labels.append(at.label)
             if origins is not None:

@@ -46,7 +46,7 @@ COVALENT_RADII: dict[str, float] = {
 
 # Raggi di van der Waals in Å. Gruppi principali: M. Mantina et al., J. Phys. Chem. A 2009, 113, 5806, tabella 12
 # (che riprende Bondi dove c'era, aggiunge Be, B, Al, Ca, Ge, Rb, Sr, Sb, Cs, Ba, Bi e prende H = 1.10 da Rowland e
-# Taylor, J. Phys. Chem. 1996, 100, 7384, invece dell'1.20 di Bondi); Br 1.85 di Bondi (Mantina 1.83).
+# Taylor, J. Phys. Chem. 1996, 100, 7384, invece dell’1.20 di Bondi); Br 1.83 di Mantina (Bondi 1.85; revisione, voce 57: un solo insieme per i non metalli).
 # Blocchi d e f: S. Alvarez, Dalton Trans. 2013, 42, 8617, tabella 1 (contatti E···O nel CSD); sostituiscono i valori
 # provvisori di Bondi 1964 per Ni, Cu, Zn, Pd, Ag, Cd, Pt, Au, Hg (1,4–1,75 Å, troppo piccoli per i metalli
 # coordinati). Ac, Pa, Cm, Bk, Cf, Es sono stime da una sola struttura (tra parentesi quadre nella tabella).
@@ -54,7 +54,7 @@ COVALENT_RADII: dict[str, float] = {
 VDW_RADII: dict[str, float] = {
     "H": 1.10, "He": 1.40, "Li": 1.81, "Be": 1.53, "B": 1.92, "C": 1.70, "N": 1.55, "O": 1.52, "F": 1.47, "Ne": 1.54,
     "Na": 2.27, "Mg": 1.73, "Al": 1.84, "Si": 2.10, "P": 1.80, "S": 1.80, "Cl": 1.75, "Ar": 1.88,
-    "K": 2.75, "Ca": 2.31, "Ga": 1.87, "Ge": 2.11, "As": 1.85, "Se": 1.90, "Br": 1.85, "Kr": 2.02,
+    "K": 2.75, "Ca": 2.31, "Ga": 1.87, "Ge": 2.11, "As": 1.85, "Se": 1.90, "Br": 1.83, "Kr": 2.02,
     "Rb": 3.03, "Sr": 2.49, "In": 1.93, "Sn": 2.17, "Sb": 2.06, "Te": 2.06, "I": 1.98, "Xe": 2.16,
     "Cs": 3.43, "Ba": 2.68, "Tl": 1.96, "Pb": 2.02, "Bi": 2.07, "Po": 1.97, "At": 2.02, "Rn": 2.20,
     "Fr": 3.48, "Ra": 2.83,

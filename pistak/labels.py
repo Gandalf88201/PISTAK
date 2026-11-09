@@ -51,6 +51,8 @@ ALERT_TEXT = {
     "goof": "GoF lontano da 1: {value}.",
     "residualDensity": "Densità elettronica residua alta per una struttura di atomi leggeri: {value} e/Å³.",
     "noRefinement": "Il CIF non riporta R1, wR2 né GoF.",
+    "fragmentNoSU": "{n} atomi dei frammenti π senza s.u. ({atoms}): nel Monte Carlo restano fermi e le σ dei loro descrittori sono sottostimate.",
+    "noSU": "Nessuna coordinata atomica ha una s.u. nel CIF: le incertezze Monte Carlo sarebbero tutte zero e non vanno riportate.",
     "disorderSkipped": "{n} atomi di componenti disordinate esclusi dall'analisi (regola «{policy}»).",
     "partialOccupancy": "{n} atomi con occupanza parziale nel modello analizzato: {atoms}.",
     "symopsDerived": "Operazioni di simmetria ricavate dal simbolo del gruppo ({source}), non elencate nel CIF.",

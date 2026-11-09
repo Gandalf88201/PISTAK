@@ -85,10 +85,13 @@ class Limits:
     ring_pair_max_distance: float = field(default=6.0, metadata={"label": "Cg···Cg massimo per le coppie di anelli (Å)", "min": 3, "max": 12, "step": 0.5})
     max_cell_atoms: int = field(default=6000, metadata={"label": "Atomi massimi nella cella", "min": 100, "max": 50000, "step": 100})
     # ---- criterio di stack (oltre ad angolo e distanza interplanare) --------------------------------------
-    overlap_measure: str = field(default="atoms", metadata={"label": "Sovrapposizione misurata come", "choices": {
+    #: Predefinito: area comune dei poligoni degli anelli / area del frammento minore, sopra 0,10 (revisione del paper,
+    #: voce 50). Il sito usava «un atomo dentro l'involucro convesso dell'altro nucleo» (`Limits.site()`), che accetta
+    #: coppie con meno dell'1 % di area in comune.
+    overlap_measure: str = field(default="area", metadata={"label": "Sovrapposizione misurata come", "choices": {
         "atoms": "frazione di atomi dentro il contorno dell'altro nucleo",
         "area": "area comune / area del nucleo minore"}})
-    min_overlap: float = field(default=0.0, metadata={"label": "Sovrapposizione minima per uno stack (sopra questo valore)", "min": 0, "max": 1, "step": 0.05})
+    min_overlap: float = field(default=0.10, metadata={"label": "Sovrapposizione minima per uno stack (sopra questo valore)", "min": 0, "max": 1, "step": 0.05})
     max_slip: float = field(default=0.0, metadata={"label": "Slittamento massimo per uno stack (Å, 0 = nessun limite)", "min": 0, "max": 20, "step": 0.1})
     # ---- coppie e disordine ------------------------------------------------------------------------------
     pair_mode: str = field(default="canonical", metadata={"label": "Coppie", "choices": {
@@ -103,7 +106,20 @@ class Limits:
         "all": "tutti i sistemi di anelli planari",
         "largest": "solo il più grande (come il sito)"}})
     min_fragment_atoms: int = field(default=5, metadata={"label": "Atomi minimi in un frammento π secondario", "min": 3, "max": 60, "step": 1})
+    fragment_merge: str = field(default="fused", metadata={"label": "Frammenti π", "choices": {
+        "fused": "sistemi di anelli condensati (che condividono un legame)",
+        "conjugated": "anche sistemi complanari collegati da legami o atomi sp/sp² (biarili, porfirine)"}})
+    #: Strutture senza legami C–C o C–H (reti inorganiche, carburi, cianuri metallici): per impostazione nessun frammento
+    #: π, perché i loro anelli planari non sono sistemi π e la loro unità ripetuta dipende dalla cella (revisione 2).
+    pi_scope: str = field(default="organic", metadata={"label": "Strutture in cui cercare frammenti π", "choices": {
+        "organic": "solo strutture con legami C–C o C–H",
+        "all": "tutte, anche senza legami C–C o C–H"}})
     long_axis_atoms: str = field(default="", metadata={"label": "Asse lungo da due atomi (etichette, es. C1,C9; vuoto = automatico)", "free": True})
+    #: Sopra questa isotropia ((λ2/λ3)^½ nel piano, la radice del rapporto degli autovalori) l'asse lungo automatico non è definito (benzene, coronene, porfirine:
+    #: un asse Cn con n ≥ 3 rende isotropa la dispersione nel piano) e gli slittamenti L/W valgono NaN.
+    max_axis_isotropy: float = field(default=0.9, metadata={"label": "Isotropia massima per l'asse lungo automatico", "min": 0.5, "max": 1, "step": 0.01})
+    #: Sopra questo angolo tra gli assi lunghi proiettati la bisettrice salta di 90° per variazioni infinitesime: L/W NaN.
+    max_axis_twist: float = field(default=75.0, metadata={"label": "Angolo massimo tra gli assi lunghi per L/W (°)", "min": 0, "max": 90, "step": 1})
     # ---- controlli rapidi --------------------------------------------------------------------------------
     contact_check: str = field(default="fixed", metadata={"label": "Controllo dei contatti corti", "choices": {
         "fixed": "soglie fisse (C···C sotto 3,0 Å, H···H sotto 1,8 Å)",
@@ -119,7 +135,8 @@ class Limits:
     @classmethod
     def site(cls, **kw) -> Limits:
         """Le soglie e le convenzioni dell'analizzatore del sito (per i confronti di parità)."""
-        return cls(**{"pair_mode": "site", "disorder": "first", "fragments": "largest", "contact_cutoff": 4.0, **kw})
+        return cls(**{"pair_mode": "site", "disorder": "first", "fragments": "largest", "contact_cutoff": 4.0,
+                      "overlap_measure": "atoms", "min_overlap": 0.0, "pi_scope": "all", **kw})
 
     @classmethod
     def from_dict(cls, data: dict, base: Limits | None = None) -> Limits:

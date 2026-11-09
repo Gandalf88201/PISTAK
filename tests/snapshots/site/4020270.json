@@ -1,0 +1,246 @@
+{
+ "alerts": [
+  [
+   "G",
+   "noRefinement",
+   {}
+  ]
+ ],
+ "cell_atoms": 240,
+ "geometry": {
+  "contacts": [
+   {
+    "atoms": [
+     "C20A",
+     "H15"
+    ],
+    "codes": [
+     "",
+     "x,-y+3/2,z+1/2"
+    ],
+    "d": 2.693841597,
+    "vdw": 2.8
+   },
+   {
+    "atoms": [
+     "H10",
+     "C20B"
+    ],
+    "codes": [
+     "",
+     "-x+1,y-1/2,-z+1/2"
+    ],
+    "d": 2.712202695,
+    "vdw": 2.8
+   },
+   {
+    "atoms": [
+     "C2A",
+     "C11"
+    ],
+    "codes": [
+     "",
+     "-x+1,-y+1,-z"
+    ],
+    "d": 3.325509641,
+    "vdw": 3.4
+   },
+   {
+    "atoms": [
+     "H20",
+     "C17"
+    ],
+    "codes": [
+     "",
+     "-x+2,y-1/2,-z+1/2"
+    ],
+    "d": 2.731991048,
+    "vdw": 2.8
+   },
+   {
+    "atoms": [
+     "C1",
+     "C14A"
+    ],
+    "codes": [
+     "",
+     "-x+1,-y+1,-z"
+    ],
+    "d": 3.349255962,
+    "vdw": 3.4
+   },
+   {
+    "atoms": [
+     "C16",
+     "C16"
+    ],
+    "codes": [
+     "",
+     "-x+2,-y+2,-z"
+    ],
+    "d": 3.352049096,
+    "vdw": 3.4
+   },
+   {
+    "atoms": [
+     "H5",
+     "C14A"
+    ],
+    "codes": [
+     "",
+     "-x+1,-y+2,-z"
+    ],
+    "d": 2.761920024,
+    "vdw": 2.8
+   },
+   {
+    "atoms": [
+     "C4A",
+     "H17"
+    ],
+    "codes": [
+     "",
+     "x-1,y,z"
+    ],
+    "d": 2.763939436,
+    "vdw": 2.8
+   },
+   {
+    "atoms": [
+     "C8A",
+     "H18"
+    ],
+    "codes": [
+     "",
+     "x-1,y,z"
+    ],
+    "d": 2.798693657,
+    "vdw": 2.8
+   }
+  ],
+  "counts": {
+   "angle": 120,
+   "bond": 70,
+   "contact": 9,
+   "torsion": 200
+  }
+ },
+ "molecules": [
+  {
+   "atoms": 30,
+   "bonds": 35,
+   "centroid": [
+    3.570210292,
+    7.573472735,
+    1.532639434
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C20H10"
+  },
+  {
+   "atoms": 30,
+   "bonds": 35,
+   "centroid": [
+    7.860569676,
+    1.767022735,
+    6.404878353
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C20H10"
+  },
+  {
+   "atoms": 30,
+   "bonds": 35,
+   "centroid": [
+    6.163549644,
+    4.039427265,
+    14.34239614
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C20H10"
+  },
+  {
+   "atoms": 30,
+   "bonds": 35,
+   "centroid": [
+    1.873190261,
+    9.845877265,
+    9.470157222
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C20H10"
+  },
+  {
+   "atoms": 30,
+   "bonds": 35,
+   "centroid": [
+    10.91564291,
+    8.116100971,
+    1.680806433
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C20H10"
+  },
+  {
+   "atoms": 30,
+   "bonds": 35,
+   "centroid": [
+    0.5151370601,
+    2.309650971,
+    6.256711354
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C20H10"
+  },
+  {
+   "atoms": 30,
+   "bonds": 35,
+   "centroid": [
+    -1.181882972,
+    3.496799029,
+    14.19422914
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C20H10"
+  },
+  {
+   "atoms": 30,
+   "bonds": 35,
+   "centroid": [
+    9.218622876,
+    9.303249029,
+    9.61832422
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C20H10"
+  }
+ ],
+ "pairs": [],
+ "skipped_disorder": 0,
+ "space_group": "P 1 21/c 1",
+ "stacks": [],
+ "structure": {
+  "alerts_a": 0.0,
+  "alerts_b": 0.0,
+  "alerts_c": 0.0,
+  "density_calc": 1.373891985,
+  "density_cif": 1.374,
+  "goof": null,
+  "r1": null,
+  "rho_max": null,
+  "rho_min": null,
+  "temperature": 90.0,
+  "volume": 2420.178203,
+  "wr2": null,
+  "z": 8.0,
+  "z_prime": 2.0
+ }
+}

@@ -511,8 +511,9 @@ def test_classify_bonded_never_stack():
 def test_chelate_rings_sharing_the_metal_not_stacked():
     """COD 2210645: the two NiS₂C₂ chelate rings of [Ni(mnt)₂]²⁻ (centrosymmetric, coplanar, Ni in common) were a
     "π-stack" at 0.04 Å (found while writing the paper). Now they are a bonded, parallel intramolecular pair, and the
-    real π-stacked pair of the structure is still there."""
-    a = api.analyse_file(ROOT / "tests" / "data" / "cod" / "2210645.cif", Limits())
+    real π-stacked pair of the structure is still there. The overlap criterion of v1.0 is used (any overlap, atoms):
+    with the default of v1.1 (area ≥ 10 %) the real pair (6 % of the area) is no longer a stack either."""
+    a = api.analyse_file(ROOT / "tests" / "data" / "cod" / "2210645.cif", Limits(overlap_measure="atoms", min_overlap=0.0))
     chelate = [p for p in a.pairs if p.intramolecular and p.contact < 1e-6]  # the two rings share the Ni atom
     assert len(chelate) == 1 and chelate[0].bonded and chelate[0].kind == "parallel" and chelate[0].interplanar < 0.1
     stacks = [p for p in a.pairs if p.kind == "stack"]

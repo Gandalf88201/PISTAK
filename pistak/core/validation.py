@@ -309,7 +309,33 @@ def _refinement(a: Analysis) -> list[Alert]:
         out.append(Alert("residualDensity", "B" if rho > 2.0 else "C", {"value": rho}))
     if not any(math.isfinite(v) for v in (r1, wr2, goof)):
         out.append(Alert("noRefinement", "G"))
+    if a.cif.atoms and not any(np.any(at.su > 0) for at in a.cif.atoms):
+        out.append(Alert("noSU", "G"))  # revisione, voce 54: il Monte Carlo darebbe σ = 0
+    else:
+        out += _fragment_su(a)
     return out
+
+
+def _fragment_su(a: Analysis) -> list[Alert]:
+    """Atomi non H dei frammenti π senza s.u. in un CIF che le ha (gruppi rigidi, frammenti disordinati vincolati): nel
+    Monte Carlo restano fermi e la σ dei descrittori di quei frammenti è sottostimata (revisione 2, voce 62)."""
+    s, cif = a.structure, a.cif
+    if not len(s.cell_origin) or not a.fragments:
+        return []
+    from pistak.core.uncertainty import site_projectors  # import locale: uncertainty importa l'analisi
+
+    fixed = {i for i, p in site_projectors(cif).items() if np.abs(p).max() < 1e-6}  # tutte le coordinate fissate
+    bare = set()
+    for m, frags in zip(s.molecules, a.fragments):
+        for f in frags:
+            for i in f.atoms:
+                if m.el[i] in ("H", "D"):
+                    continue
+                ia = int(s.cell_origin[m.cell_index[i], 0])
+                at = cif.atoms[ia]
+                if ia not in fixed and not np.any(at.su > 0):
+                    bare.add(at.label)
+    return [Alert("fragmentNoSU", "C", {"n": len(bare), "atoms": _labels(sorted(bare))})] if bare else []
 
 
 # ---- disordine e simmetria ------------------------------------------------------------------------------------

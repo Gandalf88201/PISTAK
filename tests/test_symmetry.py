@@ -73,8 +73,12 @@ def test_operations_not_mapping_molecules_merge_nothing():
 
 
 def test_same_columns_in_both_modes():
-    for cif in EXAMPLES:
-        site, canon = analyse_file(cif, Limits.site()), analyse_file(cif, Limits())
+    # dimers_naphthalene: the site's only "stack" (d⊥ 2.8 Å, slip 3.4 Å) has one atom inside the convex hull of the
+    # other naphthalene, in the notch at the ring fusion, and 0.1 % of common area: with the overlap measured on the
+    # rings themselves (v1.1, review item 50) it is not a stack in canonical mode, as intended
+    for cif in [c for c in EXAMPLES if c.name != "dimers_naphthalene.cif"]:
+        # same overlap criterion as the site (any overlap): the default area ≥ 10 % drops the slipped dimers
+        site, canon = analyse_file(cif, Limits.site()), analyse_file(cif, Limits(overlap_measure="atoms", min_overlap=0.0))
         assert [(c.rank, sorted(c.molecules)) for c in site.stacks] == [(c.rank, sorted(c.molecules)) for c in canon.stacks]
 
 
@@ -215,11 +219,12 @@ def test_cif_with_hall_symbol_only():
 # ---- stack criterion -----------------------------------------------------------------------------------
 def test_configurable_stack_criterion():
     cif = EX / "herringbone_anthracene.cif"
-    base = analyse_file(cif, Limits()).pairs[0]
+    atoms = Limits(overlap_measure="atoms", min_overlap=0.0)
+    base = analyse_file(cif, atoms).pairs[0]
     assert base.kind == "stack" and 0 < base.overlap < 1
-    assert analyse_file(cif, Limits(min_overlap=base.overlap + 0.01)).pairs[0].kind == "parallel"
-    assert analyse_file(cif, Limits(max_slip=base.slip - 0.1)).pairs[0].kind == "parallel"
-    assert analyse_file(cif, Limits(max_slip=base.slip + 0.1)).pairs[0].kind == "stack"
+    assert analyse_file(cif, atoms.with_values(min_overlap=base.overlap + 0.01)).pairs[0].kind == "parallel"
+    assert analyse_file(cif, atoms.with_values(max_slip=base.slip - 0.1)).pairs[0].kind == "parallel"
+    assert analyse_file(cif, atoms.with_values(max_slip=base.slip + 0.1)).pairs[0].kind == "stack"
     area = analyse_file(cif, Limits(overlap_measure="area"))
     ratio = area.pairs[0]
     assert ratio.kind == "stack"
@@ -234,5 +239,6 @@ def test_thresholds_from_dict():
     lim = Limits.from_dict({"pair_mode": "SITE", "disorder": "3", "max_dihedral": "15", "overlap_measure": "volume",
                             "max_slip": True, "sconosciuta": 1})
     assert lim.pair_mode == "site" and lim.disorder == "3" and lim.max_dihedral == 15.0
-    assert lim.overlap_measure == "atoms" and lim.max_slip == 0.0  # invalid values ignored
-    assert Limits.site() == Limits(pair_mode="site", disorder="first", fragments="largest", contact_cutoff=4.0)
+    assert lim.overlap_measure == "area" and lim.max_slip == 0.0  # invalid values ignored (defaults kept)
+    assert Limits.site() == Limits(pair_mode="site", disorder="first", fragments="largest", contact_cutoff=4.0,
+                                   overlap_measure="atoms", min_overlap=0.0, pi_scope="all")

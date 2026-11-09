@@ -29,6 +29,11 @@
    "G",
    "noRefinement",
    {}
+  ],
+  [
+   "G",
+   "noSU",
+   {}
   ]
  ],
  "cell_atoms": 48,
@@ -628,16 +633,19 @@
     "interplanar": 2.258000996,
     "lat_slip": 0.08672977284,
     "lat_slip_signed": -0.08672977284,
+    "local_interplanar": 2.258000443,
     "long_slip": 5.444467173,
     "long_slip_signed": -5.444467173,
     "mean_atom_height": 2.258000996,
     "n_vdw_contacts": 30.0,
     "overlap": 0.1428571429,
     "overlap_area": 3.522582075,
-    "overlap_ratio": 0.1886612712,
+    "overlap_ratio": 0.2305857201,
+    "planes_cross": 0.0,
     "slip": 5.445157928,
     "slip_angle": 0.9126383744,
-    "slip_direction": -179.0873616
+    "slip_direction": -179.0873616,
+    "twist": 0.0
    },
    "ring_pairs": [
     {
@@ -808,6 +816,7 @@
     "interplanar": 1.07229641,
     "lat_slip": 5.508507796,
     "lat_slip_signed": -5.508507796,
+    "local_interplanar": null,
     "long_slip": 2.947385,
     "long_slip_signed": -2.947385,
     "mean_atom_height": 2.249274579,
@@ -815,9 +824,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 1.0,
     "slip": 6.247458401,
     "slip_angle": 61.85052332,
-    "slip_direction": -118.1494767
+    "slip_direction": -118.1494767,
+    "twist": 1.975962919
    },
    "ring_pairs": [
     {

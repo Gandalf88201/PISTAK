@@ -29,6 +29,11 @@
    "G",
    "noRefinement",
    {}
+  ],
+  [
+   "G",
+   "noSU",
+   {}
   ]
  ],
  "cell_atoms": 36,
@@ -602,6 +607,7 @@
     "interplanar": 1.289049744,
     "lat_slip": 3.898189512,
     "lat_slip_signed": 3.898189512,
+    "local_interplanar": null,
     "long_slip": 4.645693628,
     "long_slip_signed": -4.645693628,
     "mean_atom_height": 1.289049744,
@@ -609,9 +615,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 6.064515707,
     "slip_angle": 39.99992547,
-    "slip_direction": 140.0000745
+    "slip_direction": 140.0000745,
+    "twist": 0.0
    },
    "ring_pairs": [
     {
@@ -684,6 +692,7 @@
     "interplanar": 1.809098701,
     "lat_slip": 0.2092054295,
     "lat_slip_signed": 0.2092054295,
+    "local_interplanar": null,
     "long_slip": 6.548604344,
     "long_slip_signed": 6.548604344,
     "mean_atom_height": 1.809098701,
@@ -691,9 +700,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 6.551945189,
     "slip_angle": 1.829781166,
-    "slip_direction": 1.829781166
+    "slip_direction": 1.829781166,
+    "twist": 0.0
    },
    "ring_pairs": [
     {
@@ -766,6 +777,7 @@
     "interplanar": 3.098148445,
     "lat_slip": 4.107394941,
     "lat_slip_signed": 4.107394941,
+    "local_interplanar": null,
     "long_slip": 1.902910715,
     "long_slip_signed": 1.902910715,
     "mean_atom_height": 3.098148445,
@@ -773,9 +785,11 @@
     "overlap": 0.0,
     "overlap_area": 0.0,
     "overlap_ratio": 0.0,
+    "planes_cross": 0.0,
     "slip": 4.526782786,
     "slip_angle": 65.14223151,
-    "slip_direction": 65.14223151
+    "slip_direction": 65.14223151,
+    "twist": 0.0
    },
    "ring_pairs": [
     {
@@ -880,6 +894,7 @@
     "interplanar": 2.784756195,
     "lat_slip": 2.780933901,
     "lat_slip_signed": -2.780933901,
+    "local_interplanar": 2.784755572,
     "long_slip": 1.952307964,
     "long_slip_signed": -1.952307964,
     "mean_atom_height": 2.784756195,
@@ -887,9 +902,11 @@
     "overlap": 0.1,
     "overlap_area": 0.009641051753,
     "overlap_ratio": 0.0008114079566,
+    "planes_cross": 0.0,
     "slip": 3.397808079,
     "slip_angle": 54.92987018,
-    "slip_direction": -125.0701298
+    "slip_direction": -125.0701298,
+    "twist": 0.0
    },
    "ring_pairs": [
     {

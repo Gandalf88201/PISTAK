@@ -16,15 +16,19 @@ neighbour_shells = 2       # celle vicine esplorate in ogni direzione (minimo: i
 ring_pair_max_distance = 6.0   # Cg···Cg massimo per elencare una coppia di anelli (fase 2)
 max_cell_atoms = 6000     # il sito, nel browser, si fermava a 2500
 # criterio di stack, oltre ad angolo e distanza: sovrapposizione > min_overlap
-overlap_measure = "atoms"  # atoms: frazione di atomi di un nucleo dentro il contorno dell'altro (sito) | area: area comune / nucleo minore
-min_overlap = 0.0          # il sito: basta un atomo dentro il contorno
+overlap_measure = "area"   # area: area comune dei poligoni degli anelli / frammento minore | atoms: frazione di atomi dentro il contorno dell'altro (sito)
+min_overlap = 0.10         # il sito: atoms e 0 (basta un atomo dentro il contorno), vedi Limits.site()
 max_slip = 0.0             # Å; 0 = nessun limite allo slittamento
 # convenzioni (quelle del sito: pair_mode = "site", disorder = "first")
 pair_mode = "canonical"    # canonical: una coppia per contatto, equivalenza dalle operazioni del gruppo | site: come il sito
 disorder = "major"         # major: componente con occupanza maggiore | first: gruppo 1 | all: tutto | 2, 3…: quel gruppo
 fragments = "all"          # all: tutti i sistemi di anelli planari di ogni molecola | largest: solo il più grande (sito)
 min_fragment_atoms = 5     # atomi minimi di un frammento π secondario (il principale si tiene sempre)
+pi_scope = "organic"       # organic: frammenti π solo in strutture con legami C–C o C–H | all: in tutte
+fragment_merge = "fused"   # fused: anelli condensati | conjugated: anche sistemi complanari collegati (biarili, porfirine)
 long_axis_atoms = ""       # asse lungo da due atomi, per etichetta ("C1,C9"); vuoto = direzione di massima estensione
+max_axis_isotropy = 0.9    # oltre questa isotropia del nucleo l'asse lungo automatico non è definito: slittamenti L/W = NaN
+max_axis_twist = 75.0      # oltre questo angolo tra gli assi lunghi la bisettrice salta: slittamenti L/W = NaN
 # controlli rapidi
 contact_check = "fixed"    # fixed: C···C < 3,0 Å e H···H < 1,8 Å | vdw: somma dei raggi di van der Waals − contact_check_margin
 contact_check_margin = 0.5 # Å sotto la somma dei raggi (solo con contact_check = "vdw"); legami a idrogeno esclusi

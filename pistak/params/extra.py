@@ -5,13 +5,15 @@ riusano invece di ricalcolarli. Chi ne copia uno in un plugin e lo fa dipendere 
 deve togliere `geometric`."""
 from __future__ import annotations
 
+import math
 from functools import partial
 
 import numpy as np
 from scipy.spatial.distance import cdist
 
 from pistak.core.elements import vdw_radius
-from pistak.core.geometry import acute_angle_deg, clip_convex, convex_hull, polygon_area
+from pistak.core.geometry import acute_angle_deg, polygon_area
+from pistak.core.pairs import fragment_polygons, polygons_overlap
 from pistak.params.registry import parameter as _parameter
 
 parameter = partial(_parameter, geometric=True)
@@ -26,16 +28,22 @@ def slip_angle(ctx):
 
 @parameter("long_slip_signed", "Slittamento longitudinale con segno", "Å", "Componente di s (da A verso B) lungo L. Il verso di L è quello dell'asse definito dagli atomi (Soglie ▸ Asse lungo da due atomi), altrimenti una convenzione riproducibile; scambiando A e B cambia segno.", 2, G)
 def long_slip_signed(ctx):
+    if math.isnan(ctx.pair.long_slip):  # asse lungo non definito o assi incrociati (vedi Pair.long_slip)
+        return math.nan
     return float(ctx.slip_vector @ ctx.frame.L)
 
 
 @parameter("lat_slip_signed", "Slittamento laterale con segno", "Å", "Componente di s (da A verso B) lungo W = n × L.", 2, G)
 def lat_slip_signed(ctx):
+    if math.isnan(ctx.pair.lat_slip):
+        return math.nan
     return float(ctx.slip_vector @ ctx.frame.W)
 
 
 @parameter("slip_direction", "Direzione dello slittamento con segno", "°", "Angolo di s nel piano, da L verso W (−180…180°): distingue i quattro quadranti che «Direzione dello slittamento» confonde.", 1, G)
 def slip_direction(ctx):
+    if math.isnan(ctx.pair.long_slip):
+        return math.nan
     a = float(np.degrees(np.arctan2(ctx.slip_vector @ ctx.frame.W, ctx.slip_vector @ ctx.frame.L)))
     return a + 360.0 if a <= -180.0 + 1e-6 else a  # in (−180, 180]: lo zero con segno non decide tra −180 e 180
 
@@ -105,25 +113,55 @@ def n_vdw_contacts(ctx):
     return float((d < ra[:, None] + rb[None, :]).sum())
 
 
-def _hulls(ctx):
+def _polygons(ctx):
+    hull_only = ctx.limits.pair_mode == "site"
+    qa = ctx.proj_a[:, :2]
+    qb = ctx.proj_b[:, :2]
+    return fragment_polygons(ctx.core_a, qa, hull_only), fragment_polygons(ctx.core_b, qb, hull_only)
+
+
+@parameter("overlap_area", "Area di sovrapposizione", "Å²", "Area comune dei due frammenti proiettati sul piano medio: unione dei poligoni dei singoli anelli (nel modo del sito, involucro convesso).", 2, "sovrapposizione")
+def overlap_area(ctx):
+    pa, pb = _polygons(ctx)
+    return polygons_overlap(pa, pb)
+
+
+@parameter("overlap_ratio", "Sovrapposizione / nucleo minore", "", "Area di sovrapposizione divisa per l'area del frammento più piccolo (0–1): la misura del criterio di stack predefinito.", 2, "sovrapposizione")
+def overlap_ratio(ctx):
+    pa, pb = _polygons(ctx)
+    smaller = min(sum(polygon_area(p) for p in pa), sum(polygon_area(p) for p in pb))
+    return polygons_overlap(pa, pb) / smaller if smaller > 0 else 0.0
+
+
+@parameter("twist", "Rotazione tra gli assi lunghi", "°", "Angolo (0–90°) tra gli assi lunghi dei due frammenti proiettati sul piano medio; NaN se uno dei due assi non è definito (nucleo quasi isotropo).", 1, G)
+def twist(ctx):
+    return ctx.pair.twist
+
+
+@parameter("planes_cross", "Piani che si intersecano tra i centroidi", "", "1 se la retta d'intersezione dei due piani passa tra i due centroidi (d·n_A e d·n_B di segno opposto): la distanza interplanare è allora più piccola delle due distanze perpendicolari e va letta con cautela.", 0, "distanze")
+def planes_cross(ctx):
+    return float(ctx.pair.planes_cross)
+
+
+@parameter("local_interplanar", "Distanza interplanare locale", "Å", "Media delle distanze degli atomi di ciascun frammento che cadono, in proiezione, sull'altro frammento dal piano medio dell'altro: la separazione nella zona di sovrapposizione (NaN se non c'è sovrapposizione).", 2, "distanze")
+def local_interplanar(ctx):
+    pa, pb = _polygons(ctx)
     qa = ctx.proj_a[ctx.core_a.atoms, :2]
     qb = ctx.proj_b[ctx.core_b.atoms, :2]
-    return convex_hull(qa), convex_hull(qb)
+    from pistak.core.geometry import points_inside
 
-
-@parameter("overlap_area", "Area di sovrapposizione", "Å²", "Area dell'intersezione dei contorni dei due nuclei, proiettati sul piano medio.", 2, "sovrapposizione")
-def overlap_area(ctx):
-    ha, hb = _hulls(ctx)
-    if len(ha) < 3 or len(hb) < 3:
-        return 0.0
-    return polygon_area(clip_convex(ha, hb))
-
-
-@parameter("overlap_ratio", "Sovrapposizione / nucleo minore", "", "Area di sovrapposizione divisa per l'area del contorno più piccolo (0–1).", 2, "sovrapposizione")
-def overlap_ratio(ctx):
-    ha, hb = _hulls(ctx)
-    smaller = min(polygon_area(ha), polygon_area(hb))
-    return overlap_area(ctx) / smaller if smaller > 0 else 0.0
+    in_a = np.zeros(len(qa), dtype=bool)
+    for pg in pb:
+        in_a |= points_inside(pg, qa)
+    in_b = np.zeros(len(qb), dtype=bool)
+    for pg in pa:
+        in_b |= points_inside(pg, qb)
+    h = []
+    if in_b.any():
+        h += list(np.abs((ctx.pos_b[ctx.core_b.atoms][in_b] - ctx.core_a.centroid) @ ctx.core_a.normal))
+    if in_a.any():
+        h += list(np.abs((ctx.pos_a[ctx.core_a.atoms][in_a] - ctx.core_b.centroid) @ ctx.core_b.normal))
+    return float(np.mean(h)) if h else math.nan
 
 
 @parameter("core_size_a", "Atomi nel nucleo A", "", "", 0, "nuclei")

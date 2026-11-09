@@ -62,11 +62,15 @@ def main() -> None:
                 continue  # coppie intramolecolari: il contatto è tra frammenti, non tra molecole
             par = sp["params"]
             cands = [q for q in an.pairs if q.a == sp["a"] and q.b == sp["b"] and list(q.shift) == list(sp["shift"])]
-            p = min(cands, key=lambda q: abs(q.centroid_distance - par["centroid_distance"]))
+            # l'istantanea non salva gli indici dei frammenti: tra le coppie con le stesse molecole e traslazione (più
+            # frammenti per molecola, es. i quattro isoindoli di H₂Pc) si sceglie quella più vicina in Cg···Cg e d⊥
+            p = min(cands, key=lambda q: abs(q.centroid_distance - par["centroid_distance"]) + abs(q.interplanar - par["interplanar"]))
             A, B = s.molecules[p.a], s.molecules[p.b]
             v = s.shift_vector(p.shift)
             fa, fb = frags[p.a][p.fa], frags[p.b][p.fb]
-            g = geometry(A.pos[fa.atoms], B.pos[fb.atoms] + v, A.pos[A.heavy], B.pos[B.heavy] + v)
+            # per le coppie di polimero PISTAK misura il contatto tra i due frammenti, non tra le unità ripetute (voce 47)
+            ca, cb = (A.pos[fa.atoms], B.pos[fb.atoms] + v) if p.polymer else (A.pos[A.heavy], B.pos[B.heavy] + v)
+            g = geometry(A.pos[fa.atoms], B.pos[fb.atoms] + v, ca, cb)
             n += 1
             for k, val in g.items():
                 worst[k] = max(worst.get(k, 0.0), abs(val - par[k]))

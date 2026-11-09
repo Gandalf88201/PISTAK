@@ -32,7 +32,10 @@ from pistak.core.config import Limits  # noqa: E402
 VARIANTS: list[tuple[str, tuple]] = [
     ("max_dihedral", (10.0, 15.0, 25.0, 30.0)),
     ("max_interplanar", (3.8, 4.0, 4.4, 4.6)),
-    ("contact_cutoff", (4.0, 5.0)),
+    ("contact_cutoff", (4.0, 5.0, 5.5, 6.0)),
+    ("min_overlap", (0.0, 0.05, 0.2, 0.3)),
+    ("fragment_merge", ("conjugated",)),
+    ("pi_scope", ("all",)),
     ("ring_rms", (0.05, 0.15)),
     ("molecule_rms", (0.10, 0.20)),
     ("bond_tolerance", (0.3, 0.5)),

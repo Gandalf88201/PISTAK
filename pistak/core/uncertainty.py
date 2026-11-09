@@ -60,6 +60,9 @@ class Uncertainty:
     #: Parametri con un valore nominale ma mancanti (NaN) in parte dei campioni, per coppia: {chiave: campioni validi}.
     #: Non si scartano in silenzio: la σ viene da meno campioni, e chi fallisce può essere proprio la geometria estrema.
     incomplete: dict[int, dict[str, int]] = field(default_factory=dict)
+    #: Intervallo dei percentili 2,5 e 97,5 dei campioni (95 % centrale), per coppia e parametro: per le grandezze
+    #: limitate (angolo tra i piani vicino a 0°, sovrapposizione vicina a 0 o 1) la media ± σ non lo descrive bene.
+    interval: dict[int, dict[str, tuple[float, float]]] = field(default_factory=dict)
 
     def get(self, pair: Pair | int, key: str) -> float:
         i = pair if isinstance(pair, int) else pair.index
@@ -71,11 +74,38 @@ def has_su(analysis: Analysis, include_cell: bool = True) -> bool:
     return atoms or (include_cell and any(x > 0 for x in analysis.cif.cell_su))
 
 
+_PROJECTORS: dict[int, tuple[object, dict[int, np.ndarray]]] = {}
+
+
+def site_projectors(cif) -> dict[int, np.ndarray]:
+    """Per ogni atomo del CIF su una posizione speciale, la matrice (frazionaria) che proietta uno spostamento sul
+    sottospazio permesso dalla simmetria del sito: la media delle parti rotazionali delle operazioni che mandano il
+    sito in sé (a meno di traslazioni). Gli atomi in posizione generale non compaiono."""
+    hit = _PROJECTORS.get(id(cif))
+    if hit is not None and hit[0] is cif:
+        return hit[1]
+    out: dict[int, np.ndarray] = {}
+    for i, at in enumerate(cif.atoms):
+        rots = []
+        for op in cif.symops:
+            d = op.apply(at.frac) - at.frac
+            if np.all(np.abs(d - np.round(d)) < 1e-4):
+                rots.append(op.r)
+        if len(rots) > 1:
+            out[i] = np.mean(rots, axis=0)
+    _PROJECTORS[id(cif)] = (cif, out)
+    return out
+
+
 def perturbed(analysis: Analysis, rng: np.random.Generator, include_cell: bool = True, scale: float = 1.0) -> Analysis:
     """Una copia dell'analisi con gli atomi spostati secondo le s.u. (moltiplicate per `scale`); stesse coppie."""
     s, cif = analysis.structure, analysis.cif
     su = np.array([a.su for a in cif.atoms]).reshape(-1, 3)
     delta = rng.standard_normal(su.shape) * su * scale
+    # atomi su posizioni speciali: lo spostamento si proietta sulla simmetria del sito (media di R·δ sulle operazioni
+    # che lasciano il sito invariato), così i vincoli come x = y o z = ¼ restano soddisfatti (revisione 2, voce 61)
+    for i, proj in site_projectors(cif).items():
+        delta[i] = proj @ delta[i]
     vectors = s.vectors
     if include_cell and any(x > 0 for x in cif.cell_su):
         c = cif.cell
@@ -102,19 +132,20 @@ def _refit(f: Core, pos: np.ndarray, ij: tuple[int, int] | None) -> Core:
     pl = fit_plane(pos[f.atoms])
     normal = pl.normal if np.dot(pl.normal, f.normal) >= 0 else -pl.normal
     long = pl.long if np.dot(pl.long, f.long) >= 0 else -pl.long
-    core = Core(Plane(pl.centroid, normal, long, pl.rms, pl.aspect), f.atoms, f.kind, f.axis_source)
+    core = Core(Plane(pl.centroid, normal, long, pl.rms, pl.aspect), f.atoms, f.kind, f.axis_source, f.rings)
     if f.axis_source == "atoms" and ij is not None:
         core = core.with_long(pos[ij[1]] - pos[ij[0]]) or core
     return core
 
 
-def _spread(values: np.ndarray, nominal: float, periodic: bool) -> tuple[float, float]:
+def _spread(values: np.ndarray, nominal: float, periodic: bool) -> tuple[float, float, tuple[float, float]]:
     ok = values[np.isfinite(values)]
     if len(ok) < 2:
-        return float("nan"), float("nan")
+        return float("nan"), float("nan"), (float("nan"), float("nan"))
     if periodic:
         ok = nominal + (ok - nominal + 180.0) % 360.0 - 180.0
-    return float(np.std(ok, ddof=1)), float(np.mean(ok))
+    lo, hi = np.percentile(ok, [2.5, 97.5])
+    return float(np.std(ok, ddof=1)), float(np.mean(ok)), (float(lo), float(hi))
 
 
 def monte_carlo(analysis: Analysis, samples: int = 100, seed: int = 0, evaluate: Evaluator = geometry_values,
@@ -138,10 +169,10 @@ def monte_carlo(analysis: Analysis, samples: int = 100, seed: int = 0, evaluate:
             progress(n + 1, samples)
     out = Uncertainty(samples, seed, include_cell, has_su(analysis, include_cell), keys)
     for i, by_key in acc.items():
-        out.sigma[i], out.mean[i], out.valid[i] = {}, {}, {}
+        out.sigma[i], out.mean[i], out.valid[i], out.interval[i] = {}, {}, {}, {}
         for k, vals in by_key.items():
             nom = nominal[i].get(k, math.nan)
-            out.sigma[i][k], out.mean[i][k] = _spread(vals, nom, k in periodic)
+            out.sigma[i][k], out.mean[i][k], out.interval[i][k] = _spread(vals, nom, k in periodic)
             n_ok = out.valid[i][k] = int(np.count_nonzero(np.isfinite(vals)))
             if math.isfinite(nom) and n_ok < samples:
                 out.incomplete.setdefault(i, {})[k] = n_ok

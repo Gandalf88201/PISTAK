@@ -478,7 +478,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--kind", choices=["stack", "parallel", "tilted", "all"], default="stack",
                    help=tr("senza --pair: esporta tutte le coppie di questo tipo (stack)"))
     p.add_argument("--program", choices=["orca", "psi4", "gaussian"], default="orca")
-    p.add_argument("--method", choices=["dft-d", "sapt"], default="dft-d", help=tr("dft-d con counterpoise, oppure sapt (solo psi4)"))
+    p.add_argument("--method", choices=["dft-d", "sapt", "r2scan-3c"], default="dft-d",
+                   help=tr("dft-d con counterpoise, sapt (solo psi4) o r2scan-3c (solo orca)"))
     p.add_argument("--functional", default="B3LYP")
     p.add_argument("--dispersion", choices=["d3bj", "d3zero", "d4", "none"], default="d3bj")
     p.add_argument("--basis", help=tr("base (predefinita: def2-TZVP per dft-d, jun-cc-pVDZ per sapt)"))

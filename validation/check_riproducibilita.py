@@ -40,7 +40,9 @@ def check_mc() -> None:
     print("\n== Monte Carlo: seme ==")
     a = analyse_file(ROOT / "tests" / "data" / "cod" / "2100417.cif", Limits())
     u1, u2, u3 = (monte_carlo(a, 30, seed=s) for s in (7, 7, 8))
-    print(f"  stesso seme, stesse σ: {u1.sigma == u2.sigma}; seme diverso, σ diverse: {u1.sigma != u3.sigma}")
+    # NaN (s_L, s_W non definiti, voce 55) non è uguale a sé stesso: si confrontano le rappresentazioni
+    same = lambda x, y: json.dumps(x, sort_keys=True) == json.dumps(y, sort_keys=True)  # noqa: E731
+    print(f"  stesso seme, stesse σ: {same(u1.sigma, u2.sigma)}; seme diverso, σ diverse: {not same(u1.sigma, u3.sigma)}")
 
 
 CHECKS = {"batch": check_batch, "mc": check_mc}

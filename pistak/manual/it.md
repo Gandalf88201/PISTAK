@@ -355,12 +355,24 @@ Una coppia è:
 
 Due frammenti con un atomo in comune o legati tra loro (stessa regola dei legami: somma dei raggi covalenti più
 `bond_tolerance`) non sono mai un π-stack: succede solo dentro una molecola o una rete estesa, per esempio i due anelli
-di un biarile o due anelli chelati attorno allo stesso metallo. Queste coppie restano parallele o inclinate, con tutti
-i loro parametri, e nell'export JSON hanno `bonded`.
+di un biarile o due anelli chelati attorno allo stesso metallo. Vale lo stesso per due frammenti legati entrambi a uno
+stesso atomo (*bridged*: i due anelli del ferrocene o di un complesso bis(arene), legati al metallo e non tra loro).
+Queste coppie restano parallele o inclinate, con tutti i loro parametri, e nell'export JSON hanno `bonded` o `bridged`.
 
-La sovrapposizione del criterio si misura come frazione di atomi dentro il contorno dell'altro nucleo
-(`overlap_measure = "atoms"`, il sito: basta un atomo) o come area comune / area del nucleo minore (`"area"`, più
-severo e continuo: con `min_overlap = 0.3` servono almeno 30% di area coperta).
+Nelle strutture senza legami C–C o C–H (reti inorganiche, anche carburi, carbonati, cianuri) i frammenti π non si
+cercano (`pi_scope = "organic"`); con `pi_scope = "all"` si cercano comunque.
+
+La sovrapposizione del criterio si misura, per impostazione predefinita, come area comune / area del frammento minore
+(`overlap_measure = "area"`, `min_overlap = 0.10`: almeno il 10% dell'area coperta). Il contorno di un frammento è
+l'unione dei suoi anelli: le baie e le tacche alle fusioni non contano. La misura del sito, la frazione di atomi
+dentro l'involucro convesso dell'altro nucleo (`overlap_measure = "atoms"`, basta un atomo con `min_overlap = 0`), è
+quella di `Limits.site()`.
+
+Quando un frammento non ha una direzione privilegiata nel piano (benzene, coronene, porfirine: isotropia sopra
+`max_axis_isotropy`) o gli assi lunghi dei due frammenti sono quasi perpendicolari (rotazione sopra `max_axis_twist`),
+gli slittamenti longitudinale e laterale non sono definiti e restano vuoti; lo slittamento totale c'è sempre. Con
+`fragment_merge = "conjugated"` i sistemi di anelli complanari uniti da un legame o da atomi sp/sp² (biarili
+complanari, porfirine e ftalocianine senza metallo) diventano un frammento solo.
 
 Le soglie si cambiano da **Analisi ▸ Soglie…** (tutte), dal pannello **Soglie in tempo reale** (quelle del
 criterio), da `user.toml` o dal terminale.
@@ -372,14 +384,18 @@ criterio), da `user.toml` o dal terminale.
 | `max_dihedral` | 20° | sopra, la coppia è inclinata |
 | `max_interplanar` | 4,2 Å | sopra, niente π-stack |
 | `contact_cutoff` | 4,5 Å | due molecole sono vicine se hanno atomi pesanti più vicini di così (sopra `max_interplanar`: con piani paralleli il contatto non è mai più corto della distanza interplanare) |
-| `overlap_measure` | atoms | come si misura la sovrapposizione (atoms / area) |
-| `min_overlap` | 0 | sovrapposizione minima per una π-stack |
+| `overlap_measure` | area | come si misura la sovrapposizione (area / atoms) |
+| `min_overlap` | 0,10 | sovrapposizione minima per una π-stack |
+| `fragment_merge` | fused | frammenti π: sistemi di anelli condensati, o anche sistemi coniugati complanari |
+| `max_axis_isotropy` | 0,9 | sopra, l'asse lungo automatico non è definito |
+| `pi_scope` | organic | dove si cercano i frammenti π: strutture con un legame C–C o C–H (organic) o tutte (all) |
+| `max_axis_twist` | 75° | sopra, L e W della coppia non sono definiti |
 | `max_slip` | 0 Å | slittamento massimo per una π-stack (0 = nessun limite) |
 | `ring_rms` | 0,10 Å | planarità massima di un anello |
 | `molecule_rms` | 0,15 Å | planarità massima del nucleo intero |
 | `max_ring_size` | 8 | atomi massimi in un anello |
 | `bond_tolerance` | 0,4 Å | legame se la distanza è sotto la somma dei raggi covalenti più questo |
-| `same_site` | 0,3 Å | due posizioni più vicine di così sono lo stesso atomo |
+| `same_site` | 0,3 Å | si fondono le immagini dello stesso sito, o atomi ordinati scritti due volte, più vicini di così; restano distinte le posizioni alternative di un atomo sdoppiato (entro 0,05 Å è sempre lo stesso atomo) |
 | `neighbour_shells` | 2 | celle vicine esplorate (minimo: in modalità canonical si allarga da sola) |
 | `ring_pair_max_distance` | 6,0 Å | Cg···Cg massimo per la tabella degli anelli |
 | `max_cell_atoms` | 6000 | limite di atomi nella cella |
@@ -497,7 +513,9 @@ sua σ viene dagli altri: lo dicono il Dettaglio, un avviso nel terminale e il c
 validi per parametro).
 
 Approssimazioni (le stesse dei programmi cristallografici senza matrice di covarianza): coordinate indipendenti,
-posizioni speciali non vincolate, atomi senza s.u. fermi. Una σ grande sugli slittamenti L e W di un nucleo quasi
+atomi senza s.u. fermi. Gli atomi su posizioni speciali si muovono solo entro la simmetria del sito (restano vincoli
+come x = y o z = 0). Un CIF senza nessuna s.u. sulle coordinate dà l'avviso `noSU` (G); gli atomi dei frammenti π
+senza s.u. (gruppi rigidi, disordine vincolato) danno `fragmentNoSU` (C), perché la loro σ sarebbe zero in silenzio. Una σ grande sugli slittamenti L e W di un nucleo quasi
 isotropo dice che l'asse lungo non è definito: conviene fissarlo con due atomi.
 
 ## 12. Confronto e statistiche su più strutture

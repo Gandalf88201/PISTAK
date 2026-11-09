@@ -126,6 +126,15 @@ class Pair:
     #: della stessa rete estesa: due anelli chelati che condividono il metallo, un biarile). Non è mai un π-stack: la
     #: coppia resta parallel o tilted, con tutti i suoi parametri.
     bonded: bool = False
+    #: Vero se i due frammenti, senza essere legati tra loro, sono legati entrambi a uno stesso atomo (il metallo di un
+    #: metallocene o di un complesso bis-arene, il metallo di un chelato e di un legante): come `bonded`, non è mai un
+    #: π-stack (revisione 2, voce 58).
+    bridged: bool = False
+    #: Angolo (0–90°) tra gli assi lunghi proiettati dei due frammenti; NaN se uno dei due assi non è definito.
+    twist: float = math.nan
+    #: Vero se d·n_A e d·n_B hanno segni opposti: la retta d'intersezione dei due piani passa tra i centroidi e la
+    #: «distanza interplanare» d⊥ = |h_A + h_B| / (2 cos θ/2) è più piccola di entrambe le distanze perpendicolari.
+    planes_cross: bool = False
 
     def get(self, key: str, default: float = float("nan")) -> float:
         """Valore di un parametro del registro per questa coppia."""
@@ -155,7 +164,7 @@ def area_overlap(hull_a: np.ndarray, hull_b: np.ndarray) -> float:
 
 def classify(dihedral: float, interplanar: float, overlap: float, slip: float, limits: Limits, bonded: bool = False) -> str:
     """stack | parallel | tilted secondo le soglie. `overlap` è già misurata come chiede `limits.overlap_measure`.
-    Due frammenti legati tra loro (`bonded`) non sono mai uno stack."""
+    Due frammenti legati tra loro o a uno stesso atomo (`bonded`: legati o a ponte) non sono mai uno stack."""
     if dihedral > limits.max_dihedral:
         return "tilted"
     if (not bonded and interplanar <= limits.max_interplanar and overlap > limits.min_overlap
@@ -171,11 +180,33 @@ def stack_overlap(p: Pair, limits: Limits) -> float:
 
 def reclassify(p: Pair, limits: Limits) -> str:
     """Il tipo di una coppia già misurata secondo altre soglie (stadio `pairs`: nessuna geometria da rifare)."""
-    return classify(p.dihedral, p.interplanar, stack_overlap(p, limits), p.slip, limits, p.bonded)
+    return classify(p.dihedral, p.interplanar, stack_overlap(p, limits), p.slip, limits, p.bonded or p.bridged)
 
 
 #: Due posizioni più vicine di così sono lo stesso atomo (frammenti che lo condividono), come `d² ≥ 0,16` di `structure`.
 SAME_ATOM = 0.4
+
+
+def fragments_link(s: Structure, ca: Core, cb: Core, a: int, b: int, v: np.ndarray, limits: Limits) -> str:
+    """"bonded" se i frammenti condividono un atomo o hanno un legame tra loro, "bridged" se un altro atomo (non H) è
+    legato a entrambi, "" altrimenti. Stessa regola dei legami di `structure`. Solo per frammenti della stessa molecola o
+    di reti estese."""
+    if fragments_bonded(s, ca, cb, a, b, v, limits):
+        return "bonded"
+    ma, mb = s.molecules[a], s.molecules[b]
+    pa, pb = ma.pos[ca.atoms], mb.pos[cb.atoms] + v
+    ra = np.array([covalent_radius(ma.el[i]) for i in ca.atoms])
+    rb = np.array([covalent_radius(mb.el[i]) for i in cb.atoms])
+    own_a, own_b = set(int(i) for i in ca.atoms), set(int(i) for i in cb.atoms)
+    cand = [(ma.pos[i], ma.el[i]) for i in range(len(ma)) if ma.el[i] != "H" and i not in own_a and not (a == b and i in own_b)]
+    if a != b or v.any():
+        cand += [(mb.pos[i] + v, mb.el[i]) for i in range(len(mb)) if mb.el[i] != "H" and i not in own_b]
+    for x, el in cand:
+        rx = covalent_radius(el)
+        if (np.linalg.norm(pa - x, axis=1) < ra + rx + limits.bond_tolerance).any() and \
+                (np.linalg.norm(pb - x, axis=1) < rb + rx + limits.bond_tolerance).any():
+            return "bridged"
+    return ""
 
 
 def fragments_bonded(s: Structure, ca: Core, cb: Core, a: int, b: int, v: np.ndarray, limits: Limits) -> bool:
@@ -201,8 +232,84 @@ def _fragment_distance(s: Structure, ca: Core, cb: Core, a: int, b: int, v: np.n
     return float(cdist(s.molecules[a].pos[ca.atoms], s.molecules[b].pos[cb.atoms] + v).min())
 
 
+def fragment_polygons(core: Core, q: np.ndarray, hull_only: bool = False) -> list[np.ndarray]:
+    """I poligoni proiettati (coordinate 2D `q` degli atomi della molecola) che descrivono l'ingombro del frammento: uno
+    per anello, ciascuno convesso; la loro unione segue la forma del frammento (le baie di fenantrene e crisene, la
+    cavità di un macrociclo restano fuori). Senza anelli (frammento «molecola») o con `hull_only` (modo del sito):
+    l'involucro convesso di tutti gli atomi del frammento."""
+    if hull_only or not core.rings:
+        return [convex_hull(q[core.atoms])]
+    small = [convex_hull(q[list(r)]) for r in core.rings if len(r) <= 8]
+    if _self_overlapping(small):
+        # anelli dello stesso frammento che si sovrappongono in proiezione (reti dense di anelli a 4, revisione 2): la
+        # somma delle intersezioni a due a due non è più l'area dell'unione; si usa l'involucro convesso del frammento
+        return [convex_hull(q[core.atoms])]
+    out = list(small)
+    for r in core.rings:
+        if len(r) <= 8:
+            continue
+        # macrociclo (anello interno di porfirine e ftalocianine, `fragment_merge = "conjugated"`): non è convesso e il
+        # suo involucro coprirebbe parte degli anelli pirrolici; il poligono vero, nell'ordine dell'anello, diviso in
+        # triangoli dal centroide (è stellato rispetto al centroide). Si aggiungono solo i triangoli che non coprono
+        # area già presente: due cammini equivalenti dello stesso macrociclo non contano due volte
+        pts = q[list(r)]
+        c = pts.mean(axis=0)
+        for i in range(len(pts)):
+            tri = convex_hull(np.array([c, pts[i], pts[(i + 1) % len(pts)]]))  # antiorario
+            if polygon_area(tri) > 1e-9 and not any(polygon_area(clip_convex(tri, o)) > 1e-6 for o in out):
+                out.append(tri)
+    return out
+
+
+def _self_overlapping(polys: list[np.ndarray], rel: float = 0.02) -> bool:
+    """Vero se due poligoni dello stesso frammento hanno in comune più del 2 % dell'area del minore: non solo un lato
+    (anelli condensati, che in proiezione da coordinate non perfettamente planari si sovrappongono per una scheggia)."""
+    boxes = [(p[:, 0].min(), p[:, 0].max(), p[:, 1].min(), p[:, 1].max()) for p in polys]
+    areas = [polygon_area(p) for p in polys]
+    for i, j in itertools.combinations(range(len(polys)), 2):
+        a, b = boxes[i], boxes[j]
+        if a[1] < b[0] or b[1] < a[0] or a[3] < b[2] or b[3] < a[2]:
+            continue
+        if polygon_area(clip_convex(polys[i], polys[j])) > rel * min(areas[i], areas[j]):
+            return True
+    return False
+
+
+def _union_area(polys: list[np.ndarray]) -> float:
+    """Area dell'unione dei poligoni degli anelli di un frammento: gli anelli di un sistema planare si toccano solo sui
+    lati, quindi è la somma delle aree."""
+    return float(sum(polygon_area(pg) for pg in polys))
+
+
+def polygons_overlap(pa: list[np.ndarray], pb: list[np.ndarray]) -> float:
+    """Area dell'intersezione delle due unioni di poligoni convessi (anelli che si toccano solo sui lati: somma delle
+    intersezioni a due a due, ciascuna calcolata esattamente con il ritaglio di Sutherland–Hodgman)."""
+    return float(sum(polygon_area(clip_convex(a, b)) for a in pa for b in pb if len(a) >= 3 and len(b) >= 3))
+
+
+def _inside_any(polys: list[np.ndarray], pts: np.ndarray) -> np.ndarray:
+    mask = np.zeros(len(pts), dtype=bool)
+    for pg in polys:
+        mask |= points_inside(pg, pts)
+    return mask
+
+
+def axis_twist(ca: Core, cb: Core, n: np.ndarray) -> float:
+    """Angolo (0–90°) tra gli assi lunghi dei due frammenti proiettati sul piano medio di normale `n`."""
+    la = ca.long - n * np.dot(ca.long, n)
+    lb = cb.long - n * np.dot(cb.long, n)
+    c = abs(float(np.dot(la, lb))) / (float(np.linalg.norm(la) * np.linalg.norm(lb)) or 1.0)
+    return float(np.degrees(np.arccos(min(1.0, c))))
+
+
+def axis_defined(core: Core, limits: Limits) -> bool:
+    """L'asse lungo è definito se è dato da due atomi o se il frammento non è quasi isotropo nel piano (un asse Cn con
+    n ≥ 3 normale al piano rende isotropa la dispersione: benzene, trifenilene, coronene, porfirine)."""
+    return core.axis_source == "atoms" or core.plane.aspect <= limits.max_axis_isotropy
+
+
 def _measure(s: Structure, ca: Core, cb0: Core, a: int, b: int, shift: Shift, limits: Limits, contact: float,
-             fa: int, fb: int, fragmented: bool, bonded: bool = False) -> Pair:
+             fa: int, fb: int, fragmented: bool, bonded: bool = False, bridged: bool = False) -> Pair:
     v = s.shift_vector(shift)
     pa, pb = s.molecules[a].pos, s.molecules[b].pos + v
     cb = cb0.moved(v)
@@ -213,19 +320,31 @@ def _measure(s: Structure, ca: Core, cb0: Core, a: int, b: int, shift: Shift, li
     # atan2(|a×b|, |a·b|) invece di arccos(|a·b|): stessa grandezza, ma precisa anche vicino a 0° (arccos lì perde
     # metà delle cifre: 1e-6° su una macchina, 0 su un'altra)
     dihedral = float(np.degrees(np.arctan2(np.linalg.norm(np.cross(ca.normal, cb.normal)), abs(np.dot(ca.normal, cb.normal)))))
-    qa = f.project(pa[ca.atoms])[:, :2]
-    qb = f.project(pb[cb.atoms])[:, :2]
-    hull_a, hull_b = convex_hull(qa), convex_hull(qb)
-    overlap = float(max(points_inside(hull_a, qb).mean(), points_inside(hull_b, qa).mean()))
-    area = float(area_overlap(hull_a, hull_b))
+    site = limits.pair_mode == "site"
+    qa = f.project(pa)[:, :2]
+    qb = f.project(pb)[:, :2]
+    polys_a = fragment_polygons(ca, qa, hull_only=site)
+    polys_b = fragment_polygons(cb, qb, hull_only=site)
+    overlap = float(max(_inside_any(polys_a, qb[cb.atoms]).mean(), _inside_any(polys_b, qa[ca.atoms]).mean()))
+    smaller = min(_union_area(polys_a), _union_area(polys_b))
+    area = float(polygons_overlap(polys_a, polys_b) / smaller) if smaller > 0 else 0.0
     interplanar = abs(z)
     slip = float(np.linalg.norm(sv))
-    kind = classify(dihedral, interplanar, area if limits.overlap_measure == "area" else overlap, slip, limits, bonded)
+    kind = classify(dihedral, interplanar, area if limits.overlap_measure == "area" else overlap, slip, limits, bonded or bridged)
+    long_slip, lat_slip = abs(float(np.dot(sv, f.L))), abs(float(np.dot(sv, f.W)))
+    twist = axis_twist(ca, cb, f.n)
+    defined = axis_defined(ca, limits) and axis_defined(cb, limits)
+    if not site and (not defined or twist > limits.max_axis_twist):
+        long_slip = lat_slip = math.nan  # asse lungo non definito o assi incrociati: la divisione di s in L e W è arbitraria
+    nb = cb.normal if np.dot(ca.normal, cb.normal) >= 0 else -cb.normal
+    # la retta d'intersezione passa tra i centroidi; altezze sotto 10⁻³ Å (frammenti complanari) contano come zero
+    planes_cross = float(np.dot(d, ca.normal)) * float(np.dot(d, nb)) < -1e-6
     return Pair(
         a=a, b=b, shift=shift, kind=kind, interplanar=interplanar,
-        long_slip=abs(float(np.dot(sv, f.L))), lat_slip=abs(float(np.dot(sv, f.W))), slip=slip,
+        long_slip=long_slip, lat_slip=lat_slip, slip=slip,
         dihedral=dihedral, centroid_distance=float(np.linalg.norm(d)), contact=contact, overlap=overlap,
-        fa=fa, fb=fb, fragmented=fragmented, overlap_area=area, bonded=bonded,
+        fa=fa, fb=fb, fragmented=fragmented, overlap_area=area, bonded=bonded, bridged=bridged,
+        twist=twist if defined else math.nan, planes_cross=planes_cross,
     )
 
 
@@ -246,8 +365,9 @@ def measure_pair(s: Structure, cores: Sequence, a: int, b: int, shift: Shift, li
         contact = _heavy_contact(s, a, b, v)
     if max_contact is not None and contact > max_contact:
         return None
-    bonded = (intra or s.molecules[a].extended or s.molecules[b].extended) and fragments_bonded(s, ca, cb0, a, b, v, limits)
-    return _measure(s, ca, cb0, a, b, shift, limits, contact, fa, fb, len(frags[a]) > 1 or len(frags[b]) > 1, bonded)
+    link = fragments_link(s, ca, cb0, a, b, v, limits) if (intra or s.molecules[a].extended or s.molecules[b].extended) else ""
+    return _measure(s, ca, cb0, a, b, shift, limits, contact, fa, fb, len(frags[a]) > 1 or len(frags[b]) > 1,
+                    link == "bonded", link == "bridged")
 
 
 def remeasure(s: Structure, frags: Fragments, pair: Pair, limits: Limits) -> Pair:
@@ -257,7 +377,8 @@ def remeasure(s: Structure, frags: Fragments, pair: Pair, limits: Limits) -> Pai
     v = s.shift_vector(pair.shift)
     by_fragment = pair.intramolecular or pair.polymer
     contact = _fragment_distance(s, ca, cb0, pair.a, pair.b, v) if by_fragment else _heavy_contact(s, pair.a, pair.b, v)
-    q = _measure(s, ca, cb0, pair.a, pair.b, pair.shift, limits, contact, pair.fa, pair.fb, pair.fragmented, pair.bonded)
+    q = _measure(s, ca, cb0, pair.a, pair.b, pair.shift, limits, contact, pair.fa, pair.fb, pair.fragmented, pair.bonded,
+                 pair.bridged)
     q.index, q.count, q.members, q.polymer = pair.index, pair.count, pair.members, pair.polymer
     return q
 
@@ -342,8 +463,9 @@ def iter_neighbour_pairs(s: Structure, cores: Sequence, limits: Limits) -> Itera
                     for fa, fb in itertools.product(range(len(frags[a])), range(len(frags[b]))):
                         dist = _fragment_distance(s, frags[a][fa], frags[b][fb], a, b, v)
                         if dist <= reach:  # come i frammenti secondari delle molecole: contact_cutoff + FRAGMENT_MARGIN
-                            bonded = fragments_bonded(s, frags[a][fa], frags[b][fb], a, b, v, limits)
-                            p = _measure(s, frags[a][fa], frags[b][fb], a, b, sh, limits, dist, fa, fb, fragmented, bonded)
+                            link = fragments_link(s, frags[a][fa], frags[b][fb], a, b, v, limits)
+                            p = _measure(s, frags[a][fa], frags[b][fb], a, b, sh, limits, dist, fa, fb, fragmented,
+                                         link == "bonded", link == "bridged")
                             p.polymer = True
                             yield p
                     continue
@@ -362,8 +484,9 @@ def iter_neighbour_pairs(s: Structure, cores: Sequence, limits: Limits) -> Itera
                 continue
             dist = _fragment_distance(s, frags[a][fa], frags[a][fb], a, a, zero)
             if dist <= reach:
-                bonded = fragments_bonded(s, frags[a][fa], frags[a][fb], a, a, zero, limits)
-                p = _measure(s, frags[a][fa], frags[a][fb], a, a, (0, 0, 0), limits, dist, fa, fb, True, bonded)
+                link = fragments_link(s, frags[a][fa], frags[a][fb], a, a, zero, limits)
+                p = _measure(s, frags[a][fa], frags[a][fb], a, a, (0, 0, 0), limits, dist, fa, fb, True,
+                             link == "bonded", link == "bridged")
                 p.polymer = s.molecules[a].extended
                 yield p
 
@@ -563,6 +686,10 @@ def class_spread(s: Structure, cores: Sequence, limits: Limits, pair: Pair) -> f
     if len(vals) < 2:
         return 0.0
     arr = np.array(vals)
+    nan = np.isnan(arr)
+    if (nan.any(axis=0) & ~nan.all(axis=0)).any():  # NaN in un membro e non in un altro: classe non equivalente
+        return float("nan")
+    arr = arr[:, ~nan.all(axis=0)]  # slittamenti non definiti (asse isotropo) per tutti i membri: non contano
     return float(np.max(arr.max(axis=0) - arr.min(axis=0))) if math.isfinite(arr.sum()) else float("nan")
 
 

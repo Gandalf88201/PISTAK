@@ -15,3 +15,9 @@ Rispetto ai file scaricati sono stati tolti solo i campi di testo `_shelx_res_fi
 | 1550133 | C₂₄H₃₂O₈ | P2₁, Z′ = 1 | 100 K | anelli tutti saturi: nessun nucleo π, nessuna coppia |
 | 7024607 | [Mn₂(C₁₄H₁₃N₅O₉)]ₙ | P1̄, rete 3D | 293 K | polimero di coordinazione: le coppie π si cercano tra frammenti dell'unità ripetuta; una piridina restava spezzata tra due celle (registro, voce 47) |
 | 2210645 | (C₂₅H₂₁NO₂P)₂[Ni(C₄N₂S₂)₂] · 2 H₂O | P1̄, Z = 1 | 293 K | i due anelli chelati NiS₂C₂, complanari e con il Ni in comune, non sono un π-stack (frammenti legati tra loro) |
+| 7033930 | Fe(C₅H₅)₂ (ferrocene) | P2₁/n | 298 K | metallocene: i Cp sono frammenti π senza il metallo (revisione, voce 51) |
+| 4103814 | Cr(η⁶-C₆H₆)(CO)₃ | P2₁/m | 100 K | arene η⁶: l'anello benzenico è il frammento |
+| 2101898 | Ag(C₆H₆)ClO₄ | Cmcm | 18 K | complesso Ag–arene: benzene senza Ag; asse lungo non definito (benzene isotropo) |
+| 2008099 | ftalocianina H₂Pc (β) | P2₁/a | 296 K | base libera: quattro isoindoli (predefinito) o un frammento di 40 atomi (`fragment_merge = "conjugated"`) |
+| 2103883 | ftalocianina di rame | P1̄, Z = 1 | 295 K | metallo-ftalocianina: un frammento di 41 atomi con Cu, colonne di molecole traslate (3,77 Å) |
+| 4020270 | corannulene C₂₀H₁₀ | P2₁/c | 90 K | policiclico a scodella: il sistema fuso non è planare e non si spezza nelle sue parti planari, quindi nessun frammento π (revisione 2, E8) |

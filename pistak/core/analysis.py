@@ -202,7 +202,20 @@ class PairContext:
         return self.frame.project(self.pos_b)
 
 
+def has_organic_bonds(structure: Structure) -> bool:
+    """Vero se una molecola (o unità ripetuta) ha un legame C–C o C–H: la definizione di struttura «organica o
+    metallorganica» di `pi_scope` (un carburo o un cianuro metallico non ne ha)."""
+    for m in structure.molecules:
+        for i, j in m.bonds:
+            pair = {m.el[int(i)], m.el[int(j)]}
+            if pair <= {"C", "H", "D"} and "C" in pair:
+                return True
+    return False
+
+
 def _fragments(structure: Structure, limits: Limits) -> list[list[Core]]:
+    if getattr(limits, "pi_scope", "organic") == "organic" and not has_organic_bonds(structure):
+        return [[] for _ in structure.molecules]
     # anche le reti estese (polimeri): la molecola è l'unità ripetuta, con gli anelli interi
     return [apply_axis(m, pi_fragments(m, limits), limits.long_axis_atoms) for m in structure.molecules]
 

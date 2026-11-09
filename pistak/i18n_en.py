@@ -138,6 +138,7 @@ TEXT: dict[str, str] = {
     "Programma": "Program",
     "DFT-D con correzione counterpoise": "DFT-D with counterpoise correction",
     "SAPT (solo Psi4)": "SAPT (Psi4 only)",
+    "r2SCAN-3c (solo ORCA)": "r2SCAN-3c (ORCA only)",
     "D3(BJ)": "D3(BJ)",
     "D3 (zero)": "D3 (zero)",
     "D4": "D4",
@@ -147,7 +148,7 @@ TEXT: dict[str, str] = {
     "combinazione non disponibile:": "combination not available:",
     "coppie da esportare, numeri della tabella (es. 1 oppure 1,3-5)": "pairs to export, numbers from the table (e.g. 1 or 1,3-5)",
     "def2-TZVP (DFT-D) · jun-cc-pVDZ (SAPT)": "def2-TZVP (DFT-D) · jun-cc-pVDZ (SAPT)",
-    "dft-d con counterpoise, oppure sapt (solo psi4)": "dft-d with counterpoise, or sapt (psi4 only)",
+    "dft-d con counterpoise, sapt (solo psi4) o r2scan-3c (solo orca)": "dft-d with counterpoise, sapt (psi4 only) or r2scan-3c (orca only)",
     "file (una coppia) o cartella (più coppie); senza: su stdout": "file (one pair) or folder (several pairs); without: to stdout",
     "il dimero di una coppia come input per ORCA, Psi4 o Gaussian": "the dimer of a pair as input for ORCA, Psi4 or Gaussian",
     "lascia le distanze X–H del CIF (non normalizzate)": "keep the X–H distances of the CIF (not normalised)",
@@ -475,9 +476,11 @@ TEXT: dict[str, str] = {
     "Numero di coppie di atomi pesanti, uno per molecola, più vicine della somma dei raggi di van der Waals (nella stessa molecola o in un polimero, tra i due frammenti π).":
         "Number of heavy-atom pairs, one per molecule, closer than the sum of the van der Waals radii (within one molecule or in a polymer, between the two π fragments).",
     "Area di sovrapposizione": "Overlap area",
-    "Area dell'intersezione dei contorni dei due nuclei, proiettati sul piano medio.": "Area of the intersection of the outlines of the two cores, projected on the mean plane.",
+    "Area comune dei due frammenti proiettati sul piano medio: unione dei poligoni dei singoli anelli (nel modo del sito, involucro convesso).":
+        "Common area of the two fragments projected on the mean plane: union of the polygons of the individual rings (convex hull in site mode).",
     "Sovrapposizione / nucleo minore": "Overlap / smaller core",
-    "Area di sovrapposizione divisa per l'area del contorno più piccolo (0–1).": "Overlap area divided by the area of the smaller outline (0–1).",
+    "Area di sovrapposizione divisa per l'area del frammento più piccolo (0–1): la misura del criterio di stack predefinito.":
+        "Overlap area divided by the area of the smaller fragment (0–1): the measure of the default stack criterion.",
     "Atomi nel nucleo A": "Atoms in core A",
     "Atomi nel nucleo B": "Atoms in core B",
     "Planarità nucleo A": "Planarity of core A",
@@ -709,4 +712,25 @@ TEXT: dict[str, str] = {
         "No ring is planar, but {n} are unsaturated or nearly planar: deviation from the mean plane {min}–{max} Å, above the {limit} Å threshold. If they are distorted aromatic rings, raise the threshold in Thresholds ▸ Maximum planarity of a ring.",
     "Ci sono {planar} anelli planari, ma i sistemi che formano non sono planari nel complesso (soglia {limit} Å, Soglie ▸ Planarità massima del nucleo).":
         "There are {planar} planar rings, but the systems they form are not planar as a whole (threshold {limit} Å, Thresholds ▸ Maximum planarity of the core).",
+    "1 se la retta d'intersezione dei due piani passa tra i due centroidi (d·n_A e d·n_B di segno opposto): la distanza interplanare è allora più piccola delle due distanze perpendicolari e va letta con cautela.":
+        "1 if the line of intersection of the two planes passes between the two centroids (d·n_A and d·n_B of opposite sign): the interplanar distance is then smaller than both perpendicular distances and must be read with care.",
+    "Angolo (0–90°) tra gli assi lunghi dei due frammenti proiettati sul piano medio; NaN se uno dei due assi non è definito (nucleo quasi isotropo).":
+        "Angle (0–90°) between the long axes of the two fragments projected on the mean plane; NaN if either axis is undefined (nearly isotropic core).",
+    "Angolo massimo tra gli assi lunghi per L/W (°)": "Maximum angle between long axes for L/W (°)",
+    "Distanza interplanare locale": "Local interplanar distance",
+    "Frammenti π": "π fragments",
+    "Isotropia massima per l'asse lungo automatico": "Maximum isotropy for the automatic long axis",
+    "Media delle distanze degli atomi di ciascun frammento che cadono, in proiezione, sull'altro frammento dal piano medio dell'altro: la separazione nella zona di sovrapposizione (NaN se non c'è sovrapposizione).":
+        "Mean distance of the atoms of each fragment that fall, in projection, on the other fragment from the mean plane of the other: the separation in the overlap region (NaN if there is no overlap).",
+    "Piani che si intersecano tra i centroidi": "Planes intersecting between the centroids",
+    "Rotazione tra gli assi lunghi": "Twist between long axes",
+    "anche sistemi complanari collegati da legami o atomi sp/sp² (biarili, porfirine)": "also coplanar systems linked by bonds or sp/sp² atoms (biaryls, porphyrins)",
+    "sistemi di anelli condensati (che condividono un legame)": "fused ring systems (sharing a bond)",
+    "Nessuna coordinata atomica ha una s.u. nel CIF: le incertezze Monte Carlo sarebbero tutte zero e non vanno riportate.":
+        "No atomic coordinate has an s.u. in the CIF: the Monte Carlo uncertainties would all be zero and must not be reported.",
+    "Strutture in cui cercare frammenti π": "Structures in which π fragments are searched",
+    "solo strutture con legami C–C o C–H": "only structures with C–C or C–H bonds",
+    "tutte, anche senza legami C–C o C–H": "all, also without C–C or C–H bonds",
+    "{n} atomi dei frammenti π senza s.u. ({atoms}): nel Monte Carlo restano fermi e le σ dei loro descrittori sono sottostimate.":
+        "{n} atoms of π fragments without s.u. ({atoms}): they stay fixed in the Monte Carlo and the σ of their descriptors are underestimated.",
 }

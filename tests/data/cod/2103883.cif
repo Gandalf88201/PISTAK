@@ -1,0 +1,221 @@
+#------------------------------------------------------------------------------
+#$Date: 2016-02-14 16:26:36 +0200 (Sun, 14 Feb 2016) $
+#$Revision: 176435 $
+#$URL: file:///home/coder/svn-repositories/_RELOADED_COD/cod-reloaded/cif/2/10/38/2103883.cif $
+#------------------------------------------------------------------------------
+#
+# This file is available in the Crystallography Open Database (COD),
+# http://www.crystallography.net/. The original data for this entry
+# were provided by IUCr Journals, http://journals.iucr.org/.
+#
+# The file may be used within the scientific community so long as
+# proper attribution is given to the journal article from which the
+# data were obtained.
+#
+data_2103883
+loop_
+_publ_author_name
+'Hoshino, Akitaka'
+'Takenaka, Yoshiko'
+'Miyaji, Hideki'
+_publ_section_title
+;
+ Redetermination of the crystal structure of \a-copper phthalocyanine
+ grown on KCl
+;
+_journal_issue                   3
+_journal_name_full               'Acta Crystallographica Section B'
+_journal_page_first              393
+_journal_page_last               403
+_journal_paper_doi               10.1107/S010876810300942X
+_journal_volume                  59
+_journal_year                    2003
+_chemical_formula_moiety         'C32 H16 Cu1 N8'
+_chemical_formula_structural     'C32 H16 Cu1 N8'
+_chemical_formula_sum            'C32 H16 Cu N8'
+_chemical_formula_weight         576.07
+_chemical_name_common            'copper phthalocyanine'
+_chemical_name_systematic
+;
+Phthalocyaninato-copper(ii)
+;
+_space_group_IT_number           2
+_symmetry_cell_setting           triclinic
+_symmetry_space_group_name_Hall  '-P 1'
+_symmetry_space_group_name_H-M   'P -1'
+_cell_angle_alpha                96.22(7)
+_cell_angle_beta                 90.62(4)
+_cell_angle_gamma                90.32(8)
+_cell_formula_units_Z            1
+_cell_length_a                   12.886(2)
+_cell_length_b                   3.769(3)
+_cell_length_c                   12.061(3)
+_cell_measurement_temperature    295
+_cell_volume                     582.3(5)
+_computing_data_collection       'R-AXIS (Rigaku, 1996)'
+_computing_structure_refinement  'RIETAN2000 (Izumi, 2002b)'
+_diffrn_ambient_temperature      295
+_diffrn_measurement_device_type  'Rigaku RU-3V'
+_diffrn_radiation_monochromator  'equatorial mounted graphite'
+_exptl_absorpt_coefficient_mu    1.67
+_exptl_absorpt_correction_type   none
+_exptl_crystal_density_diffrn    1.643
+_exptl_crystal_density_method    'not measured'
+_exptl_crystal_F_000             293
+_refine_ls_extinction_method     none
+_refine_ls_goodness_of_fit_all   2.05
+_refine_ls_hydrogen_treatment    undef
+_refine_ls_number_parameters     83
+_refine_ls_number_restraints     68
+_refine_ls_structure_factor_coef Inet
+_refine_ls_weighting_details     'w = 1/y~i~'
+_refine_ls_weighting_scheme      calc
+_cod_data_source_file            bk0130.cif
+_cod_data_source_block           I
+_cod_depositor_comments
+;
+The following automatic conversions were performed:
+
+'_refine_ls_weighting_scheme' value '1/y~i~' was changed to 'calc'.
+New tag '_refine_ls_weighting_details' was created. The value of the
+new tag was set to 'w = 1/y~i~'.
+
+Automatic conversion script
+Id: cif_fix_values 3143 2015-03-26 13:38:13Z robertas 
+;
+_cod_original_formula_sum        'C32 H16 Cu1 N8'
+_cod_database_code               2103883
+loop_
+_symmetry_equiv_pos_site_id
+_symmetry_equiv_pos_as_xyz
+1 x,y,z
+2 -x,-y,-z
+loop_
+_atom_site_label
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+_atom_site_U_iso_or_equiv
+_atom_site_thermal_displace_type
+_atom_site_occupancy
+_atom_site_type_symbol
+Cu1 0 0 0 0.0317 Uiso 1 Cu
+C1 0.2276(19) -0.08(2) 0.036(3) 0.0317 Uiso 1 C
+C2 0.312(3) 0.04(2) 0.115(5) 0.0317 Uiso 1 C
+C3 0.419(4) -0.02(2) 0.117(3) 0.0317 Uiso 1 C
+C4 0.473(3) 0.08(3) 0.217(7) 0.0317 Uiso 1 C
+C5 0.428(7) 0.32(3) 0.299(6) 0.0317 Uiso 1 C
+C6 0.322(3) 0.38(3) 0.297(8) 0.0317 Uiso 1 C
+C7 0.265(5) 0.25(3) 0.204(7) 0.0317 Uiso 1 C
+C8 0.155(5) 0.22(3) 0.182(5) 0.0317 Uiso 1 C
+C9 -0.016(4) 0.38(2) 0.232(3) 0.0317 Uiso 1 C
+C10 -0.089(3) 0.57(4) 0.308(7) 0.0317 Uiso 1 C
+C11 -0.0762(19) 0.77(3) 0.410(7) 0.0317 Uiso 1 C
+C12 -0.163(2) 0.89(3) 0.467(6) 0.0317 Uiso 1 C
+C13 -0.262(4) 0.83(3) 0.417(5) 0.0317 Uiso 1 C
+C14 -0.272(4) 0.70(3) 0.306(5) 0.0317 Uiso 1 C
+C15 -0.186(2) 0.55(3) 0.253(5) 0.0317 Uiso 1 C
+C16 -0.168(2) 0.34(3) 0.143(5) 0.0317 Uiso 1 C
+N1 0.245(2) -0.26(2) -0.067(4) 0.0317 Uiso 1 N
+N2 0.134(2) 0.05(2) 0.077(5) 0.0317 Uiso 1 N
+N3 0.086(4) 0.37(3) 0.256(5) 0.0317 Uiso 1 N
+N4 -0.064(2) 0.25(2) 0.132(3) 0.0317 Uiso 1 N
+loop_
+_atom_type_symbol
+_atom_type_description
+_atom_type_scat_dispersion_real
+_atom_type_scat_dispersion_imag
+_atom_type_scat_source
+Cu Cu -1.9646 .5888 'International Tables for Crystallography (Vol. C)'
+C C .0181 .0091 'International Tables for Crystallography (Vol. C)'
+N N .0311 .0180 'International Tables for Crystallography (Vol. C)'
+H H .0000 .0000 'International Tables for Crystallography (Vol. C)'
+loop_
+_diffrn_radiation_type
+_diffrn_radiation_wavelength
+'Cu K\a~1~' 1.54056
+'Cu K\a~2~' 1.54439
+loop_
+_geom_angle_atom_site_label_1
+_geom_angle_atom_site_label_2
+_geom_angle_atom_site_label_3
+_geom_angle_site_symmetry_1
+_geom_angle_site_symmetry_2
+_geom_angle_site_symmetry_3
+_geom_angle
+_geom_angle_publ_flag
+N2 Cu1 N4 1_555 1_555 2_555 90.9(19) no
+Cu1 N4 C16 1_555 2_555 2_555 126(4) no
+N4 C16 N1 2_555 2_555 1_555 127(6) no
+C16 N1 C1 2_555 1_555 1_555 123(4) no
+N1 C1 N2 1_555 1_555 1_555 127(3) no
+C1 N2 Cu1 1_555 1_555 1_555 126(4) no
+N2 Cu1 N4 1_555 1_555 1_555 89.1(19) no
+Cu1 N4 C9 1_555 1_555 1_555 127(3) no
+N4 C9 N3 1_555 1_555 1_555 127(5) no
+C9 N3 C8 1_555 1_555 1_555 122(6) no
+N3 C8 N2 1_555 1_555 1_555 128(5) no
+C8 N2 Cu1 1_555 1_555 1_555 127(4) no
+C1 N2 C8 1_555 1_555 1_555 107(4) no
+N2 C8 C7 1_555 1_555 1_555 111(6) no
+C8 C7 C2 1_555 1_555 1_555 106(7) no
+C7 C2 C1 1_555 1_555 1_555 106(4) no
+C2 C1 N2 1_555 1_555 1_555 110(4) no
+C3 C2 C7 1_555 1_555 1_555 120(5) no
+C2 C7 C6 1_555 1_555 1_555 120(6) no
+C7 C6 C5 1_555 1_555 1_555 119(7) no
+C6 C5 C4 1_555 1_555 1_555 120(7) no
+C5 C4 C3 1_555 1_555 1_555 120(6) no
+C4 C3 C2 1_555 1_555 1_555 118(5) no
+C9 N4 C16 1_555 1_555 1_555 107(5) no
+N4 C16 C15 1_555 1_555 1_555 110(4) no
+C16 C15 C10 1_555 1_555 1_555 106(5) no
+C15 C10 C9 1_555 1_555 1_555 106(7) no
+C10 C9 N4 1_555 1_555 1_555 111(4) no
+C10 C15 C14 1_555 1_555 1_555 120(6) no
+C15 C14 C13 1_555 1_555 1_555 118(5) no
+C14 C13 C12 1_555 1_555 1_555 120(5) no
+C13 C12 C11 1_555 1_555 1_555 121(7) no
+C12 C11 C10 1_555 1_555 1_555 118(4) no
+C11 C10 C15 1_555 1_555 1_555 121(7) no
+C14 C15 C16 1_555 1_555 1_555 134(4) no
+C15 C16 N1 1_555 1_555 2_555 123(4) no
+N1 C1 C2 1_555 1_555 1_555 123(3) no
+C1 C2 C3 1_555 1_555 1_555 134(5) no
+C11 C10 C9 1_555 1_555 1_555 133(4) no
+C10 C9 N3 1_555 1_555 1_555 121(5) no
+N3 C8 C7 1_555 1_555 1_555 121(7) no
+C8 C7 C6 1_555 1_555 1_555 133(7) no
+loop_
+_geom_bond_atom_site_label_1
+_geom_bond_atom_site_label_2
+_geom_bond_site_symmetry_1
+_geom_bond_site_symmetry_2
+_geom_bond_distance
+_geom_bond_publ_flag
+Cu1 N2 1_555 1_555 1.95(3) no
+Cu1 N4 1_555 1_555 1.96(5) no
+C1 N1 1_555 1_555 1.36(7) no
+C1 N2 1_555 1_555 1.38(5) no
+C1 C2 1_555 1_555 1.48(6) no
+C2 C3 1_555 1_555 1.40(7) no
+C2 C7 1_555 1_555 1.42(11) no
+C3 C4 1_555 1_555 1.39(8) no
+C4 C5 1_555 1_555 1.41(12) no
+C5 C6 1_555 1_555 1.38(10) no
+C6 C7 1_555 1_555 1.38(11) no
+C7 C8 1_555 1_555 1.44(9) no
+C8 N2 1_555 1_555 1.38(9) no
+C8 N3 1_555 1_555 1.34(9) no
+C9 C10 1_555 1_555 1.47(10) no
+C9 N3 1_555 1_555 1.34(7) no
+C9 N4 1_555 1_555 1.38(6) no
+C10 C11 1_555 1_555 1.38(13) no
+C10 C15 1_555 1_555 1.41(6) no
+C11 C12 1_555 1_555 1.36(7) no
+C12 C13 1_555 1_555 1.41(7) no
+C13 C14 1_555 1_555 1.39(8) no
+C14 C15 1_555 1_555 1.38(9) no
+C15 C16 1_555 1_555 1.48(10) no
+C16 N1 1_555 2_555 1.36(6) no
+C16 N4 1_555 1_555 1.38(5) no

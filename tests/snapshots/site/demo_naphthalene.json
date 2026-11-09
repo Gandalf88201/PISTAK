@@ -9,6 +9,11 @@
    "G",
    "noRefinement",
    {}
+  ],
+  [
+   "G",
+   "noSU",
+   {}
   ]
  ],
  "cell_atoms": 18,
@@ -112,6 +117,7 @@
     "interplanar": 3.400004032,
     "lat_slip": 0.8000011103,
     "lat_slip_signed": 0.8000011103,
+    "local_interplanar": 3.400004032,
     "long_slip": 1.500001517,
     "long_slip_signed": 1.500001517,
     "mean_atom_height": 3.400004032,
@@ -119,9 +125,11 @@
     "overlap": 0.3,
     "overlap_area": 5.85076611,
     "overlap_ratio": 0.4924125782,
+    "planes_cross": 0.0,
     "slip": 1.700001861,
     "slip_angle": 28.0724959,
-    "slip_direction": 28.0724959
+    "slip_direction": 28.0724959,
+    "twist": 0.0
    },
    "ring_pairs": [
     {

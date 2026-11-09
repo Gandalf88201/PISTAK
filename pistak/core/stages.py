@@ -26,8 +26,9 @@ STAGES = ("cif", "structure", "fragments", "contacts", "pairs")
 STAGE_FIELDS: dict[str, frozenset[str]] = {
     "cif": frozenset({"disorder"}),
     "structure": frozenset({"bond_tolerance", "same_site", "max_cell_atoms"}),
-    "fragments": frozenset({"ring_rms", "molecule_rms", "max_ring_size", "fragments", "min_fragment_atoms", "long_axis_atoms"}),
-    "contacts": frozenset({"contact_cutoff", "neighbour_shells", "pair_mode"}),
+    "fragments": frozenset({"ring_rms", "molecule_rms", "max_ring_size", "fragments", "min_fragment_atoms", "long_axis_atoms",
+                           "fragment_merge", "pi_scope"}),
+    "contacts": frozenset({"contact_cutoff", "neighbour_shells", "pair_mode", "max_axis_isotropy", "max_axis_twist"}),
     "pairs": frozenset({"max_dihedral", "max_interplanar", "min_overlap", "max_slip", "overlap_measure",
                         "ring_pair_max_distance", "contact_check", "contact_check_margin"}),
 }

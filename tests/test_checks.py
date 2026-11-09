@@ -71,7 +71,7 @@ def test_structure_quantities():
     assert v["density_calc"] == pytest.approx(128.17 * 1.66054 / v["volume"], rel=1e-3)
     assert (v["r1"], v["wr2"], v["goof"]) == (0.0412, 0.1050, 1.03)
     assert math.isnan(v["temperature"])
-    assert codes(a) <= {"shortContact"} and counts(a.alerts)["B"] == 0
+    assert codes(a) <= {"shortContact", "noSU"} and counts(a.alerts)["B"] == 0
 
 
 # ---- single checks --------------------------------------------------------------------------------------

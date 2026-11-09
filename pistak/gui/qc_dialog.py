@@ -19,7 +19,8 @@ from pistak.gui.screen import fit_to_screen
 from pistak.i18n import tr
 from pistak.io.qc import QCOptions
 
-METHOD_TEXT = {"dft-d": "DFT-D con correzione counterpoise", "sapt": "SAPT (solo Psi4)"}
+METHOD_TEXT = {"dft-d": "DFT-D con correzione counterpoise", "sapt": "SAPT (solo Psi4)",
+               "r2scan-3c": "r2SCAN-3c (solo ORCA)"}
 DISP_TEXT = {"d3bj": "D3(BJ)", "d3zero": "D3 (zero)", "d4": "D4", "none": "nessuna"}
 
 
@@ -111,10 +112,14 @@ class QCDialog(QDialog):
     def _sync(self) -> None:
         """SAPT esiste solo in Psi4; con SAPT funzionale, dispersione e counterpoise non servono."""
         sapt = self.method.currentData() == "sapt"
+        r2 = self.method.currentData() == "r2scan-3c"  # composito: funzionale, base e dispersione fissati, gCP al posto del CP
         if sapt and self.program.currentData() != "psi4":
             self.program.setCurrentIndex(self.program.findData("psi4"))
+        if r2 and self.program.currentData() != "orca":
+            self.program.setCurrentIndex(self.program.findData("orca"))
         for w in (self.functional, self.dispersion, self.counterpoise):
-            w.setEnabled(not sapt)
+            w.setEnabled(not sapt and not r2)
+        self.basis.setEnabled(not r2)
         self.sapt_level.setEnabled(sapt)
         d4 = self.dispersion.findData("d4")
         item = self.dispersion.model().item(d4)
