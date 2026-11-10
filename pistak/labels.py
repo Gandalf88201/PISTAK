@@ -52,6 +52,7 @@ ALERT_TEXT = {
     "residualDensity": "Densità elettronica residua alta per una struttura di atomi leggeri: {value} e/Å³.",
     "noRefinement": "Il CIF non riporta R1, wR2 né GoF.",
     "fragmentNoSU": "{n} atomi dei frammenti π senza s.u. ({atoms}): nel Monte Carlo restano fermi e le σ dei loro descrittori sono sottostimate.",
+    "cellConstraints": "Le operazioni di simmetria non lasciano invariata la metrica della cella del CIF: nel Monte Carlo i sei parametri di cella si perturbano indipendenti e le coppie equivalenti per simmetria possono differire in un campione.",
     "noSU": "Nessuna coordinata atomica ha una s.u. nel CIF: le incertezze Monte Carlo sarebbero tutte zero e non vanno riportate.",
     "disorderSkipped": "{n} atomi di componenti disordinate esclusi dall'analisi (regola «{policy}»).",
     "partialOccupancy": "{n} atomi con occupanza parziale nel modello analizzato: {atoms}.",

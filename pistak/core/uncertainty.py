@@ -8,8 +8,9 @@ rimisura ogni coppia, con la stessa topologia dell'analisi (molecole, frammenti,
 la deviazione standard dei suoi valori sui campioni.
 
 Approssimazioni, le stesse dei programmi di cristallografia che non hanno la matrice di covarianza completa: le
-coordinate sono indipendenti tra loro (nessuna correlazione), le s.u. degli atomi su posizioni speciali non sono
-vincolate, gli atomi senza s.u. (spesso gli idrogeni) restano fermi.
+coordinate sono indipendenti tra loro (nessuna correlazione), gli atomi senza s.u. (spesso gli idrogeni) restano
+fermi. Per un atomo su una posizione speciale si estrae una deviata per ogni parametro libero e i vincoli del sito danno
+le altre coordinate (`site_constraints`): ogni parametro libero ha la sua s.u. del CIF.
 """
 from __future__ import annotations
 
@@ -97,19 +98,129 @@ def site_projectors(cif) -> dict[int, np.ndarray]:
     return out
 
 
+def constraint_matrix(proj: np.ndarray, su: np.ndarray) -> np.ndarray:
+    """La matrice C (3×3, frazionaria) che dà lo spostamento di un atomo su una posizione speciale dalle deviate delle
+    sue coordinate: δ = C·δ₀, con δ₀ le deviate indipendenti (s.u. del CIF) di x, y, z. Le colonne delle coordinate
+    libere sono una base del sottospazio V permesso dalla simmetria del sito (l'immagine di `proj`) con 1 sulla
+    coordinata stessa e 0 sulle altre libere; le colonne delle coordinate dipendenti o fissate sono nulle.
+
+    Così ogni parametro libero riceve una sola deviata con la sua s.u. e i vincoli fanno il resto: per (x, x, z)
+    δx = δy = δ₀x e δz = δ₀z, per (x, 2x, z) δy = 2δ₀x, per (x, −x, z) δy = −δ₀x, per uno specchio z = 0 δz = 0.
+    La proiezione `proj` da sola (media di R_g sulle operazioni del sito) mediava due deviate indipendenti: per (x, x, z)
+    lo spostamento lungo x = y aveva σ/√2 invece della s.u. del parametro raffinato (revisione 3, N2). Le coordinate
+    libere si scelgono in ordine x, y, z preferendo quelle con una s.u. nel CIF (un programma può scrivere la s.u. solo
+    sulla coordinata raffinata). Anche C è un proiettore su V (C·v = v per ogni v in V), ma lungo le coordinate
+    dipendenti invece che ortogonale."""
+    n = proj.shape[0]  # 3 per le coordinate, 6 per i parametri di cella (`cell_constraints`)
+    u, sv, _ = np.linalg.svd(proj)
+    k = int(np.sum(sv > 1e-6))
+    if k == 0:
+        return np.zeros((n, n))
+    if k == n:
+        return np.eye(n)
+    basis = u[:, :k]
+    free: list[int] = []
+    for j in sorted(range(n), key=lambda j: (not su[j] > 0, j)):
+        if np.linalg.matrix_rank(basis[free + [j], :], tol=1e-6) == len(free) + 1:
+            free.append(j)
+        if len(free) == k:
+            break
+    out = np.zeros((n, n))
+    out[:, free] = basis @ np.linalg.inv(basis[free, :])
+    out[np.abs(out) < 1e-12] = 0.0
+    return out
+
+
+_CONSTRAINTS: dict[int, tuple[object, dict[int, np.ndarray]]] = {}
+
+
+def site_constraints(cif) -> dict[int, np.ndarray]:
+    """Per ogni atomo del CIF su una posizione speciale, la matrice `constraint_matrix` (dalle s.u. del CIF)."""
+    hit = _CONSTRAINTS.get(id(cif))
+    if hit is not None and hit[0] is cif:
+        return hit[1]
+    out = {i: constraint_matrix(p, np.asarray(cif.atoms[i].su, dtype=float).reshape(3))
+           for i, p in site_projectors(cif).items()}
+    _CONSTRAINTS[id(cif)] = (cif, out)
+    return out
+
+
+def _metric(p: np.ndarray) -> np.ndarray:
+    a, b, c = p[:3]
+    ca, cb, cg = np.cos(np.radians(p[3:]))
+    return np.array([[a * a, a * b * cg, a * c * cb], [a * b * cg, b * b, b * c * ca], [a * c * cb, b * c * ca, c * c]])
+
+
+def _cell_of(g: np.ndarray) -> np.ndarray:
+    a, b, c = np.sqrt(np.diag(g))
+    return np.array([a, b, c, *np.degrees(np.arccos(np.clip([g[1, 2] / (b * c), g[0, 2] / (a * c), g[0, 1] / (a * b)],
+                                                           -1.0, 1.0)))])
+
+
+_CELL: dict[int, tuple[object, np.ndarray | None]] = {}
+#: Tolleranza sulla metrica nominale (frazione del più grande a², b², c²): oltre, la cella del CIF non ha la simmetria
+#: delle operazioni (cella o operazioni sbagliate) e i vincoli non si possono ricavare.
+CELL_METRIC_TOLERANCE = 5e-4
+
+
+def cell_constraints(cif) -> np.ndarray | None:
+    """La matrice dei vincoli (6×6, `constraint_matrix`) dei parametri di cella a, b, c, α, β, γ, ricavata dalle
+    operazioni di simmetria e non dal sistema cristallino: la metrica G deve restare invariata, G = Rᵀ G R per la parte
+    rotazionale R di ogni operazione. La media di Rᵀ G R sulle operazioni proietta una metrica qualunque su quelle
+    permesse; il suo jacobiano nei parametri di cella è il proiettore sui parametri liberi, da cui `constraint_matrix`
+    sceglie le colonne libere (prima quelle con una s.u. nel CIF). Tetragonale: δb = δa, α, β, γ fermi; esagonale e
+    trigonale: δb = δa, γ fermo a 120°; cubico: δb = δc = δa; monoclinico: α e γ fermi; triclino: tutto libero; vale
+    in qualunque impostazione (assi unici, celle romboedriche). None se la metrica nominale non è invariante entro
+    `CELL_METRIC_TOLERANCE` (allora il Monte Carlo perturba i sei parametri indipendenti, come prima, e i controlli
+    rapidi danno l'avviso `cellConstraints`) (revisione 3)."""
+    hit = _CELL.get(id(cif))
+    if hit is not None and hit[0] is cif:
+        return hit[1]
+    c = cif.cell
+    p0 = np.array([c.a, c.b, c.c, c.alpha, c.beta, c.gamma], dtype=float)
+    rots = {tuple(np.asarray(op.r, dtype=float).round(6).ravel()) for op in cif.symops}
+    rots = [np.array(r).reshape(3, 3) for r in rots]
+
+    def project(g: np.ndarray) -> np.ndarray:
+        return np.mean([r.T @ g @ r for r in rots], axis=0)
+
+    g0 = _metric(p0)
+    out: np.ndarray | None
+    if not rots or np.max(np.abs(project(g0) - g0)) > CELL_METRIC_TOLERANCE * np.max(np.diag(g0)):
+        out = None
+    else:
+        jac = np.zeros((6, 6))
+        for j in range(6):
+            h = 1e-6 * max(1.0, abs(p0[j]))
+            dp = np.zeros(6)
+            dp[j] = h
+            jac[:, j] = (_cell_of(project(_metric(p0 + dp))) - _cell_of(project(_metric(p0 - dp)))) / (2 * h)
+        jac[np.abs(jac) < 1e-6] = 0.0
+        out = constraint_matrix(jac, np.asarray(cif.cell_su, dtype=float))
+        out[np.abs(out - np.round(out)) < 1e-6] = np.round(out[np.abs(out - np.round(out)) < 1e-6])
+    _CELL[id(cif)] = (cif, out)
+    return out
+
+
 def perturbed(analysis: Analysis, rng: np.random.Generator, include_cell: bool = True, scale: float = 1.0) -> Analysis:
     """Una copia dell'analisi con gli atomi spostati secondo le s.u. (moltiplicate per `scale`); stesse coppie."""
     s, cif = analysis.structure, analysis.cif
     su = np.array([a.su for a in cif.atoms]).reshape(-1, 3)
     delta = rng.standard_normal(su.shape) * su * scale
-    # atomi su posizioni speciali: lo spostamento si proietta sulla simmetria del sito (media di R·δ sulle operazioni
-    # che lasciano il sito invariato), così i vincoli come x = y o z = ¼ restano soddisfatti (revisione 2, voce 61)
-    for i, proj in site_projectors(cif).items():
-        delta[i] = proj @ delta[i]
+    # atomi su posizioni speciali: una deviata per parametro libero, le altre coordinate dai vincoli del sito, così
+    # x = y o z = ¼ restano soddisfatti (revisione 2, voce 61) e ogni parametro libero ha la sua s.u. (revisione 3, N2)
+    for i, c in site_constraints(cif).items():
+        delta[i] = c @ delta[i]
     vectors = s.vectors
     if include_cell and any(x > 0 for x in cif.cell_su):
         c = cif.cell
-        vals = np.array([c.a, c.b, c.c, c.alpha, c.beta, c.gamma]) + rng.standard_normal(6) * np.array(cif.cell_su) * scale
+        d = rng.standard_normal(6) * np.array(cif.cell_su) * scale
+        # una deviata per parametro di cella libero, gli altri dai vincoli della simmetria (a = b, γ = 120°…): le
+        # coppie equivalenti per simmetria restano equivalenti in ogni campione (revisione 3)
+        cons = cell_constraints(cif)
+        if cons is not None:
+            d = cons @ d
+        vals = np.array([c.a, c.b, c.c, c.alpha, c.beta, c.gamma]) + d
         vectors = cell_vectors(Cell(*map(float, vals)))
     rot = np.array([op.r for op in s.symops])
     d_cell = np.einsum("jab,jb->ja", rot[s.cell_origin[:, 1]], delta[s.cell_origin[:, 0]]) if len(s.cell_origin) else 0

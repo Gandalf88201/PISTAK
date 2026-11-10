@@ -1,0 +1,23 @@
+data_sintetico
+_cell_length_a 12.0
+_cell_length_b 14.0
+_cell_length_c 16.0
+_cell_angle_alpha 90
+_cell_angle_beta 90
+_cell_angle_gamma 90
+loop_
+_symmetry_equiv_pos_as_xyz
+'x,y,z'
+'-x,-y,-z'
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+C1 C 0.688314(94) 0.550143(54) 0.573218(144)
+C2 C 0.635824(71) 0.631178(83) 0.604361(149)
+C3 C 0.530843(109) 0.623892(145) 0.640518(123)
+C4 C 0.478353(134) 0.535571(64) 0.645532(112)
+C5 C 0.530843(109) 0.454536(148) 0.614389(93)
+C6 C 0.635824(119) 0.461823(60) 0.578232(96)

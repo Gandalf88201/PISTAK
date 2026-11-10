@@ -13,7 +13,7 @@ import numpy as np
 
 from pistak.core.cif import Cif, parse_cif
 from pistak.core.config import Limits, load_limits
-from pistak.core.cores import Core, apply_axis, pi_fragments
+from pistak.core.cores import Core, apply_axis, has_pi_ring, pi_fragments
 from pistak.core.errors import InputError
 from pistak.core.pairs import (
     Frame,
@@ -204,7 +204,8 @@ class PairContext:
 
 def has_organic_bonds(structure: Structure) -> bool:
     """Vero se una molecola (o unità ripetuta) ha un legame C–C o C–H: la definizione di struttura «organica o
-    metallorganica» di `pi_scope` (un carburo o un cianuro metallico non ne ha)."""
+    metallorganica» del campione COD del paper (un carburo o un cianuro metallico non ne ha). Da sola non decide più
+    `pi_scope` (revisione 3, N1: vedi `in_pi_scope`)."""
     for m in structure.molecules:
         for i, j in m.bonds:
             pair = {m.el[int(i)], m.el[int(j)]}
@@ -213,8 +214,26 @@ def has_organic_bonds(structure: Structure) -> bool:
     return False
 
 
+def in_pi_scope(structure: Structure, limits: Limits) -> bool:
+    """Si cercano frammenti π in questa struttura? Con `pi_scope = "all"` sempre; con "organic" (predefinito) se una
+    molecola ha un legame C–C o C–H (`has_organic_bonds`) oppure un anello planare di soli non metalli con almeno un
+    atomo di B, C o N (`cores.has_pi_ring`).
+
+    Il solo criterio dei legami C–C/C–H (revisione 2, voce 59) lasciava fuori melammina, acido cianurico, cloruro
+    cianurico, il complesso melammina–cianurato e i loro sali, che non hanno né C–C né C–H ma sono sistemi π classici
+    (revisione 3, N1). L'anello di non metalli li riprende e tiene fuori ciò che il criterio doveva escludere: un
+    carburo (anelli Ta/V/C: contengono metalli), carbonati, nitrati e cianuri (nessun anello di soli non metalli; gli
+    anelli chelati e i quadrati M–C≡N–M contengono il metallo), silicati, fosfati e solfati ciclici e anelli di
+    calcogeni (nessun B, C o N), polialogenuri (gli alogeni non formano anelli π). La planarità esclude gli anelli
+    saturi (l'anello COOPPP di COD 2001345). Il legame C–C/C–H resta in alternativa perché le strutture
+    organiche senza anelli planari (frammenti dal ripiego dello scheletro planare: acetati, DMF) non cambino."""
+    if getattr(limits, "pi_scope", "organic") != "organic":
+        return True
+    return has_organic_bonds(structure) or any(has_pi_ring(m, limits) for m in structure.molecules)
+
+
 def _fragments(structure: Structure, limits: Limits) -> list[list[Core]]:
-    if getattr(limits, "pi_scope", "organic") == "organic" and not has_organic_bonds(structure):
+    if not in_pi_scope(structure, limits):
         return [[] for _ in structure.molecules]
     # anche le reti estese (polimeri): la molecola è l'unità ripetuta, con gli anelli interi
     return [apply_axis(m, pi_fragments(m, limits), limits.long_axis_atoms) for m in structure.molecules]

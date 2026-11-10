@@ -1,7 +1,7 @@
 """Anelli e nuclei π di una molecola.
 
 Per ogni molecola si cerca il nucleo π: il sistema di anelli condensati planari più grande
-(in mancanza, tutta la molecola senza idrogeni, se è planare). Del nucleo si calcolano il piano medio
+(in mancanza, tutta la molecola senza idrogeni, se è planare e sp²/sp). Del nucleo si calcolano il piano medio
 (minimi quadrati), il baricentro e l'asse lungo (direzione di massima estensione nel piano).
 
 Porting di `piCore`/`smallRings` di `src/lib/crystal/pistack.ts`.
@@ -132,6 +132,28 @@ def planar_rings(m: Molecule, limits: Limits) -> list[tuple[list[int], Plane]]:
     return out
 
 
+#: Elementi di cui un anello deve contenerne almeno uno per contare in `pi_scope = "organic"`: tutti i carbocicli ed
+#: eterocicli, le azine e le triazine (melammina, acido cianurico), tetrazoli e pentazoli, borazine e boroxine,
+#: fosfazeni, anelli S–N. Restano fuori gli anelli di soli O, S, Se, Te, P, As, Si, Ge (silicati, fosfati, solfati
+#: ciclici, anelli e gabbie di calcogeni e pnicogeni).
+PI_RING_ELEMENTS = frozenset({"B", "C", "N"})
+#: Non metalli che non chiudono anelli π: idrogeno, alogeni e gas nobili (monovalenti o senza legami; un «anello» con
+#: loro viene da contatti entro la tolleranza dei legami, come i triangoli Br₃ di un polibromuro).
+_NOT_IN_PI_RINGS = frozenset({"H", "D", "F", "Cl", "Br", "I", "At", "He", "Ne", "Ar", "Kr", "Xe", "Rn"})
+
+
+def has_pi_ring(m: Molecule, limits: Limits) -> bool:
+    """Vero se la molecola (o l'unità ripetuta) ha un anello planare (`ring_rms`, al più `max_ring_size` atomi) fatto
+    di soli non metalli e con almeno un atomo di B, C o N: il criterio ad anelli di `pi_scope = "organic"` (revisione 3,
+    N1). Gli anelli con un metallo non contano: i chelati M–O–C–O di un carbonato, i quadrati M–C≡N–M dei cianuri e gli
+    anelli Ta/V/C di un carburo hanno due non metalli adiacenti ma non sono sistemi π."""
+    allowed = [bool(h) and e in NONMETALS and e not in _NOT_IN_PI_RINGS for h, e in zip(m.heavy, m.el)]
+    for r in small_rings(len(m), m.bonds, lambda i: allowed[i], limits.max_ring_size):
+        if any(m.el[i] in PI_RING_ELEMENTS for i in r) and fit_plane(m.pos[r]).rms < limits.ring_rms:
+            return True
+    return False
+
+
 def pi_core(m: Molecule, limits: Limits) -> Core | None:
     """Nucleo π principale di una molecola, o None se non ha parti planari adatte."""
     frags = pi_fragments(m, limits.with_values(fragments="largest"))
@@ -228,7 +250,8 @@ def pi_fragments(m: Molecule, limits: Limits) -> list[Core]:
     più grande. Con `limits.fragments == "largest"` solo il primo, il nucleo π del sito; con "all" anche gli altri
     con almeno `min_fragment_atoms` atomi (la soglia non vale per il primo). Con `fragment_merge == "conjugated"` i
     sistemi complanari collegati da legami o atomi sp/sp² diventano un frammento solo (`_conjugated`). Senza anelli
-    adatti: tutta la molecola senza idrogeni, se è planare e non lineare."""
+    adatti: tutta la molecola senza idrogeni, se è planare, non lineare e sp²/sp (nessun atomo con quattro vicini o
+    più, `_sp2_skeleton`)."""
     systems = _planar_systems(m, limits)
     if getattr(limits, "fragment_merge", "fused") == "conjugated" and systems:
         systems = _conjugated(m, systems, limits)
@@ -238,12 +261,30 @@ def pi_fragments(m: Molecule, limits: Limits) -> list[Core]:
             systems[:1] + [s for s in systems[1:] if len(s[0]) >= limits.min_fragment_atoms]
         return [Core(fit_plane(m.pos[g]), np.array(g), "rings", rings=tuple(tuple(r) for r in rs)) for g, rs in keep]
     allh = np.flatnonzero(m.heavy)
-    if len(allh) < 4:
+    if len(allh) < 4 or not _sp2_skeleton(m, allh):
         return []
     pl = fit_plane(m.pos[allh])
     if pl.rms >= limits.molecule_rms or pl.aspect < MIN_PLANE_ASPECT:  # lineare: normale non definita
         return []
     return [Core(pl, allh, "molecule")]
+
+
+#: Nel ripiego dello scheletro planare un atomo con questi vicini o più (H compresi) è sp³ (o ipervalente): niente π.
+MAX_FALLBACK_NEIGHBOURS = 4
+
+
+def _sp2_skeleton(m: Molecule, atoms: np.ndarray) -> bool:
+    """Vero se nessun atomo dello scheletro ha `MAX_FALLBACK_NEIGHBOURS` vicini legati o più, contando tutti i vicini
+    (idrogeni e metalli compresi): il ripiego tiene solo scheletri sp²/sp (nitrato, carbonato, guanidinio, urea) e
+    scarta le catene sp³ che per caso giacciono in un piano (1,2-dicloroetano, etilendiammina, n-pentano, acido
+    glutarico, etere etilico, THF: revisione 3, N5). Scarta anche le molecole con un metile (acetone, DMF, acetato): il
+    CH₃ ha quattro vicini. Limite: se il CIF non ha gli idrogeni, un CH₂ ha due vicini e passa come sp²; il criterio è
+    affidabile solo con gli H nel modello (lo sono nella quasi totalità delle strutture molecolari depositate)."""
+    count = np.zeros(len(m), dtype=int)
+    for i, j in m.bonds:
+        count[int(i)] += 1
+        count[int(j)] += 1
+    return bool(np.all(count[atoms] < MAX_FALLBACK_NEIGHBOURS))
 
 
 def axis_atoms(m: Molecule, spec: str) -> tuple[int, int] | None:

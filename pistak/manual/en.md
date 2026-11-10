@@ -39,7 +39,12 @@ folder, which are not experimental measurements.
 plane below `ring_rms`) and joins them into fused systems. Each planar system is a *π fragment*: π1 is the largest
 (the "classic" π core), π2, π3… the others, if they have at least `min_fragment_atoms` atoms. For every fragment
 PISTAK computes the centroid (Cg), the mean plane with its normal **n** and the *long axis* **L**, the direction of
-largest extent (or the one defined by two atoms, see [Long axis](#9-analysis-conventions)).
+largest extent (or the one defined by two atoms, see [Long axis](#9-analysis-conventions)). A molecule without planar
+rings becomes a single fragment if its heavy-atom skeleton (at least four atoms) is planar (`molecule_rms`), not
+linear and sp²/sp: no atom may have four or more bonded neighbours, hydrogens included. Nitrate, carbonate,
+guanidinium or urea qualify; a planar sp³ chain (1,2-dichloroethane, pentane, ethylenediamine) does not, and neither
+does a molecule with a methyl group (acetone, DMF). The test needs the hydrogen atoms: in a CIF without them a CH₂
+looks two-coordinated.
 
 **Pair.** Two fragments of neighbouring molecules (heavy atoms closer than `contact_cutoff`, 4.5 Å by default), the
 second one possibly translated into another cell: the translation is written as `[1 0 0]`, `[0 -1 0]`…
@@ -358,8 +363,12 @@ bonded to one atom (*bridged*: the two rings of ferrocene or of a bis(arene) com
 each other). Such pairs stay parallel or tilted, with all their parameters, and are marked `bonded` or `bridged` in
 the JSON export.
 
-In structures with no C–C or C–H bond (inorganic networks, also carbides, carbonates, cyanides) no π fragments are
-sought (`pi_scope = "organic"`); `pi_scope = "all"` searches them anyway.
+By default (`pi_scope = "organic"`) π fragments are sought only in structures with a C–C or C–H bond or with a
+planar ring (r.m.s. below `ring_rms`) made only of non-metal atoms, at least one of them B, C or N. The ring keeps
+melamine, cyanuric acid, cyanuric chloride, their salts and borazines, which have no C–C or C–H bond; it leaves out
+inorganic networks: rings that contain a metal (the Ta/V/C rings of a carbide, chelating carbonates and nitrates, the
+M–C≡N–M squares of cyanides), rings without B, C or N (cyclic silicates, phosphates and sulfates, chalcogen rings) and
+halogen "rings" made by contacts. `pi_scope = "all"` searches every structure.
 
 The overlap of the criterion is measured, by default, as common area / area of the smaller fragment
 (`overlap_measure = "area"`, `min_overlap = 0.10`: at least 10% of the area must be covered). The outline of a
@@ -386,7 +395,7 @@ criterion), from `user.toml` or on the command line.
 | `overlap_measure` | area | how the overlap is measured (area / atoms) |
 | `min_overlap` | 0.10 | minimum overlap for a π-stack |
 | `fragment_merge` | fused | π fragments: fused ring systems, or also conjugated coplanar systems |
-| `pi_scope` | organic | where π fragments are sought: structures with a C–C or C–H bond (organic), or all |
+| `pi_scope` | organic | where π fragments are sought: structures with a C–C or C–H bond or a planar non-metal ring with B, C or N (organic), or all |
 | `max_axis_isotropy` | 0.9 | above it the automatic long axis is undefined |
 | `max_axis_twist` | 75° | above it L and W of the pair are undefined |
 | `max_slip` | 0 Å | maximum slip for a π-stack (0 = no limit) |
@@ -513,9 +522,14 @@ comes from the others: the Detail view, a terminal warning and the JSON field `s
 parameter) say so.
 
 Approximations (the same as crystallographic programs without the full covariance matrix): independent coordinates,
-atoms without s.u. kept fixed. Atoms on special positions move only within their site symmetry (constraints such as
-x = y or z = 0 are kept). A CIF without any coordinate s.u. gives the alert `noSU` (G); atoms of π fragments without s.u.
-(rigid groups, constrained disorder) give `fragmentNoSU` (C), because their σ would silently be zero. A large σ on the L and W slips of a nearly isotropic
+atoms without s.u. kept fixed. An atom on a special position gets one deviate per free parameter, with the s.u. of
+that parameter, and the site constraints give the other coordinates: for (x, x, z) y moves with x, for (x, 2x, z) by
+twice as much, and a coordinate fixed by symmetry (z = 0 on a mirror) does not move. A CIF without any coordinate s.u. gives the alert `noSU` (G); atoms of π fragments without s.u.
+(rigid groups, constrained disorder) give `fragmentNoSU` (C), because their σ would silently be zero. The cell
+parameters follow the same rule: only the free ones are drawn (a tetragonal or hexagonal b moves with a, a fixed 90° or
+120° stays fixed), with the constraints derived from the symmetry operations (the metric must satisfy G = RᵀGR); if
+the CIF cell is not invariant under its own operations the six parameters are drawn independently and the alert
+`cellConstraints` (G) says so. A large σ on the L and W slips of a nearly isotropic
 core says that the long axis is not defined: fix it with two atoms.
 
 ## 12. Comparison and statistics across structures
@@ -810,7 +824,7 @@ reason appears, with the numbers (repeated at the top of **Detail ▸ Structure*
   above `ring_rms`) and they have carbons with four bonds, hence no π electrons. This is the case of many natural
   products and sugars: PISTAK has nothing to measure, and rightly so;
 * *unsaturated or nearly planar rings*: perhaps distorted aromatics; raise `ring_rms` (and `molecule_rms` if needed);
-* *no rings* and a non-planar molecule; *extended bond network without rings* (inorganic solid: no π fragment);
+* *no rings* and a non-planar or sp³ molecule; *extended bond network without rings* (inorganic solid: no π fragment);
 * *π cores too far apart*: they exist, but no pair within `contact_cutoff`.
 
 In every case **Detail ▸ Structure, Geometry and Checks** and the `check` and `geom` commands remain available.

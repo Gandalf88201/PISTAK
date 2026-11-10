@@ -726,11 +726,13 @@ TEXT: dict[str, str] = {
     "Rotazione tra gli assi lunghi": "Twist between long axes",
     "anche sistemi complanari collegati da legami o atomi sp/sp² (biarili, porfirine)": "also coplanar systems linked by bonds or sp/sp² atoms (biaryls, porphyrins)",
     "sistemi di anelli condensati (che condividono un legame)": "fused ring systems (sharing a bond)",
+    "Le operazioni di simmetria non lasciano invariata la metrica della cella del CIF: nel Monte Carlo i sei parametri di cella si perturbano indipendenti e le coppie equivalenti per simmetria possono differire in un campione.":
+        "The symmetry operations do not leave the metric of the CIF cell invariant: in the Monte Carlo the six cell parameters are perturbed independently and symmetry-equivalent pairs may differ within a sample.",
     "Nessuna coordinata atomica ha una s.u. nel CIF: le incertezze Monte Carlo sarebbero tutte zero e non vanno riportate.":
         "No atomic coordinate has an s.u. in the CIF: the Monte Carlo uncertainties would all be zero and must not be reported.",
     "Strutture in cui cercare frammenti π": "Structures in which π fragments are searched",
-    "solo strutture con legami C–C o C–H": "only structures with C–C or C–H bonds",
-    "tutte, anche senza legami C–C o C–H": "all, also without C–C or C–H bonds",
+    "con legami C–C o C–H o un anello planare di non metalli con B, C o N": "with C–C or C–H bonds or a planar non-metal ring with B, C or N",
+    "tutte, anche le inorganiche": "all, inorganic ones too",
     "{n} atomi dei frammenti π senza s.u. ({atoms}): nel Monte Carlo restano fermi e le σ dei loro descrittori sono sottostimate.":
         "{n} atoms of π fragments without s.u. ({atoms}): they stay fixed in the Monte Carlo and the σ of their descriptors are underestimated.",
 }

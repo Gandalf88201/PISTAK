@@ -21,3 +21,5 @@ Rispetto ai file scaricati sono stati tolti solo i campi di testo `_shelx_res_fi
 | 2008099 | ftalocianina H₂Pc (β) | P2₁/a | 296 K | base libera: quattro isoindoli (predefinito) o un frammento di 40 atomi (`fragment_merge = "conjugated"`) |
 | 2103883 | ftalocianina di rame | P1̄, Z = 1 | 295 K | metallo-ftalocianina: un frammento di 41 atomi con Cu, colonne di molecole traslate (3,77 Å) |
 | 4020270 | corannulene C₂₀H₁₀ | P2₁/c | 90 K | policiclico a scodella: il sistema fuso non è planare e non si spezza nelle sue parti planari, quindi nessun frammento π (revisione 2, E8) |
+| 7206203 | (H₂mela)₂[CuCl₅]Cl (mela = melammina) | P2/c | 293 K | nessun legame C–C o C–H, ma l'anello triazinico è un sistema π: con `pi_scope = "organic"` si cercano i frammenti (revisione 3, N1) |
+| 1538535 | Ta₂VC₂ (carburo) | R3̄m | — | rete inorganica con anelli Ta/V/C: nessun frammento π con `pi_scope = "organic"` (revisione 3, N1) |

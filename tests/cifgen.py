@@ -109,6 +109,45 @@ def chain_molecule() -> str:
     return make_cif(pts, cell, ["x, y, z", "-x, -y, -z"], "zigzag", "P -1", origin_frac=(0.1, 0.3, 0.1))
 
 
+def triazine(kind: str) -> list[tuple[str, np.ndarray]]:
+    """s-Triazine C₃N₃ in the xy plane, centred at the origin (ring bonds 1.34 Å), with no C–C or C–H bond:
+    "melamine" (C–NH₂, C–N 1.35 Å, N–H 1.01 Å, H–N–C 120°), "cyanuric_acid" (keto tautomer: C=O 1.22 Å on C, N–H 1.01 Å
+    on the ring N) or "cyanuric_chloride" (C–Cl 1.73 Å). Bond lengths from the published structures, idealized D3h."""
+    out: list[tuple[str, np.ndarray]] = []
+    for k in range(6):
+        ang = k * math.pi / 3
+        u = np.array([math.cos(ang), math.sin(ang), 0.0])
+        ring = 1.34 * u
+        if k % 2 == 0:  # ring carbon and its substituent
+            out.append(("C", ring))
+            if kind == "melamine":
+                n = ring + 1.35 * u
+                out.append(("N", n))
+                for s in (+1, -1):
+                    a = ang + s * math.pi / 3
+                    out.append(("H", n + 1.01 * np.array([math.cos(a), math.sin(a), 0.0])))
+            elif kind == "cyanuric_acid":
+                out.append(("O", ring + 1.22 * u))
+            elif kind == "cyanuric_chloride":
+                out.append(("Cl", ring + 1.73 * u))
+            else:
+                raise ValueError(kind)
+        else:  # ring nitrogen
+            out.append(("N", ring))
+            if kind == "cyanuric_acid":
+                out.append(("H", ring + 1.01 * u))
+    return out
+
+
+def triazine_stack(kind: str, interplanar: float = 3.40, slip: tuple[float, float] = (1.0, 0.6)) -> str:
+    """Layers of one triazine per cell (P1, a = b = 10 Å in the molecular plane) stacked along c: every molecule and
+    its translate along c are a π-stack at `interplanar` Å, offset in the plane by `slip` (Å along a and b)."""
+    c = np.array([slip[0], slip[1], interplanar])
+    lc = float(np.linalg.norm(c))
+    cell = Cell(10.0, 10.0, lc, math.degrees(math.acos(slip[1] / lc)), math.degrees(math.acos(slip[0] / lc)), 90.0)
+    return make_cif(triazine(kind), cell, ["x, y, z"], kind, "P 1", origin_frac=(0.5, 0.5, 0.5))
+
+
 ALL = {
     "herringbone": anthracene_p21a_like,
     "dimers": pyrene_like_dimers,

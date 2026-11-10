@@ -1,0 +1,792 @@
+                                                                                            "sintetico "  PLATON-ADDSYM    Page    1
+====================================================================================================================================
+PLATON(V-200626)-Run for: sintetico                                                                       TIME: Nov  9 12:32:28 2026
+====================================================================================================================================
+                                                                                                              (C) 1980-2026 A.L.Spek
+                                                       ============
+====================================================== Crystal Data ================================================================
+                                                       ============
+                        Input Cell  (Lattice Type: P)   -   Temp =   0K             Reduced Cell     (Acta Cryst.(1976),A32,297-298)
+---------------------------------------------------------------------------------   ------------------------------------------------
+a =      12.00000  Angstrom                alpha =            90 Degree             a  =   12.000     alpha  =   90.00  V  =  2688.0
+b =      14.00000                           beta =            90                    b  =   14.000     beta   =   90.00              
+c =      16.00000                          gamma =            90                    c  =   16.000     gamma  =   90.00              
+
+V =      2688.000 Cubic-Angstrom          d(100) =     12.0000   Angstrom                        Niggli Values                      
+                                          d(010) =     14.0000                             144.000   196.000   256.000
+Lambda(??  ) =   0.00000 Angstrom         d(001) =     16.0000                               0.000     0.000     0.000
+
+                                                ==========================
+=============================================== Orthogonalization Matrices =========================================================
+                                                ==========================
+
+(See e.g. J.D.Dunitz, Xray Analysis and Structure Determination of Organic Molecules, Cornell Univ. Press, 1979, P236)
+
+(XO)   (  12.00000         0         0 ) (X)   ,   (X)   (      1/12         0         0 ) (XO)      Orthogonal Axes AO, BO and CO  
+(YO) = (         0  14.00000         0 )*(Y)   ,   (Y) = (         0   0.07143         0 )*(YO)             are defined as:         
+(ZO)   (         0         0  16.00000 ) (Z)   ,   (Z)   (         0         0   0.06250 ) (ZO)     AO // A, CO // C*, BO // CO X AO
+
+                                                  ====================
+================================================= Space Group Symmetry =============================================================
+                                                  ====================
+
+(See e.g. G. Burns & A.M. Glazer, Space Groups for Solid State Scientists, Academic Press, 1990 or Int. Tables A)
+
+Space Group  H-M:  P-1                                        Laue:   -1
+Space Group Hall: -P 1                             [Schoenflies: Ci^1  ]
+Lattice Type: aP,  Centric,    Triclinic, Multiplicity:   2( 1), No:   2
+
+Non-Sohncke - No Absolute Structure
+
+  Nr            ***** Symmetry Operation(s) *****
+
+   1               X ,              Y ,              Z             
+   2             - X ,            - Y ,            - Z             
+                                                                                            "sintetico "  PLATON-ADDSYM    Page    2
+====================================================================================================================================
+ADDSYM - CHECK  (cf. MISSYM (C): Le Page, Y., J. Appl. Cryst. (1987), 20, 264-269; J. Appl. Cryst. (1988), 21, 983-984)
+------------------------------------------------------------------------------------------------------------------------------------
+- ADDSYM Search on ALL NON-H Atom Types [Max Allowed NonFit 20 % ]                                                                    
+- Number of Input Atoms Included in Search    6 (Unitcell   12)
+- Density based on Input Atom Set = 0.097 g.cm-3 - Vol / Non-H atom =224.0 Ang^3  
+- The Structure Implies the Following Symmetry Elements Subject to the Criteria:
+- Criteria 1.00 Deg (Metric), 0.25 Ang (Rot), 0.45 Ang (Inv), 0.45 Ang (Transl)   
+- Pivot Atom C1          
+
+Symm.  Input  Reduced  (Ang)        (Deg)  %   AvrDev.(Ang)          Input Cell
+Elem Cell_Row Cell_Row   d  Typ Dot Angle Fit  MaxDev.             x     y     z
+--------------------------------------------------------------------------------
+              [ 1 0 0] 12.00  2  1     0               Metric
+
+              [ 0-1 0] 14.00  2  1     0               Metric
+
+              [ 0 0 1] 16.00  2  1     0               Metric
+
+-1   ===================================  100       0  at          0     0     0
+
+         T.R.A.N.S.F.O.R.M.A.T.I.O.N  M.A.T.R.I.X for CELL and HKL DATA
+         ==============================================================
+   Reduced->Convent         Input->Reduced       T = Input->Convent:    a' = T a
+--------------------------------------------------------------------------------
+(     1     0     0 )   (     1     0     0 )   (     1     0     0 )     Det(T)                                                    
+(     0     1     0 ) X (     0    -1     0 ) = (     0    -1     0 )       =                                                       
+(     0     0     1 )   (     0     0    -1 )   (     0     0    -1 )     1.000                                                     
+
+Cell Lattice  a       b       c    Alpha   Beta  Gamma Volume CrystalSystem Laue
+--------------------------------------------------------------------------------
+Input   aP 12.000  14.000  16.000  90.00  90.00  90.00   2688    triclinic    -1
+Reduced  P 12.000  14.000  16.000  90.00  90.00  90.00   2688
+Convent aP 12.000  14.000  16.000  90.00  90.00  90.00   2688    triclinic    -1
+
+:: Lattice Features Additional Metrical Symmetry not Supported by Contents.
+
+:: *** No Obvious Extra Crystallographic Symmetry was Detected ***
+
+:: Note: Rerun in EQUAL Atom Type Mode for more Checks
+                                                                                            "sintetico "  PLATON-GEOMETRY  Page    3
+====================================================================================================================================
+(1:19-Rule Rounded) Coordinates of Unique Residue(s) Identified.  Standard Deviations in the Last Digit are in Parentheses.
+------------------------------------------------------------------------------------------------------------------------------------
+          Site    = Site Symmetry; SSN = Site Symmetry Number; SSOF = SHELX Site Occupation Factor (= S.O.F / SSN).
+*******   Move    = Transformation on Input Data: N.IJK (N = SymOp, IJK = Translation) i.e. 1.555 = nomove
+SYMBOLS:  Type    = D/A = Potential Donor or Acceptor atom, D-H = H on Donor atom, MET = Metal.
+*******   El Type = AK = Alkali Metal, AE = Alkaline Earth, HL = Halogen, AN = Actinide, LN = Lanthanide, TR = Transition Element.
+          ARU     = Asymmetric Residue Unit encoded as sklm.nn, with s = symmetry op, klm = translation, nn = residue #.
+          RESIDUE = collection of ARU's constituting an isolated unit (= molecule, ion).
+          FLAGS   : d = determined, c = calculated, R = riding G = group
+------------------------------------------------------------------------------------------------------------------------------------
+Atom Types  :      C      H
+Cov.Rad(Ang):   0.68   0.35
+Atom Volume :  13.87   5.08
+Atom Number :      6      1
+Atom Weight : 12.010  1.008
+Scat.Fact.f0:  5.999  1.000
+Scat.Fact.f':  0.003  0.000
+Scat.Fact.f":  0.002  0.000
+Mu(a) (MoKa):   0.58   0.37
+Elem. Type  :     --     --
+------------------------------------------------------------------------------------------------------------------------------------
+Sources - Cov. Radii : Manual Cambridge Crystallographic Data Base
+        - Atom Volume: D.W.M. Hofmann (2002). Acta Cryst. B58, 489-493
+        - Atomic Wt. : SHELXL                                                                                                 NOMOVE 
+        - Scat. Fact.: SHELXL (International Tables)
+        - mu/rho     : International Tables C, Table 4.2.4.2, 193-199 - [Multiply by Atom Weight and 1.66054 for Barns/atom values]
+------------------------------------------------------------------------------------------------------------------------------------
+Flags Label         Fractional Coordinates (x,y,z)          Orthogonal Coordinates (XO,YO,ZO)   Site SSN*SSOF =    S.O.F   Move Type
+------------------------------------------------------------------------------------------------------------------------------------
+-     C1         0.68831(16)     0.55014(9)      0.5732(2)  8.2597(19)  7.7020(13)    9.171(3)        1     1          1    -     - 
+-     C2         0.63582(12)    0.63118(14)      0.6044(2)  7.6298(14)    8.837(2)    9.670(3)        1     1          1    -     - 
+-     C3         0.53084(18)      0.6239(2)      0.6405(2)    6.370(2)    8.735(3)   10.248(3)        1     1          1    -     - 
+-     C4           0.4784(2)    0.53557(11)    0.64553(19)    5.741(2)  7.4980(15)   10.328(3)        1     1          1    -     - 
+-     C5         0.53084(18)      0.4545(2)    0.61439(16)    6.370(2)    6.363(3)    9.830(3)        1     1          1    -     - 
+-     C6           0.6358(2)    0.46182(10)    0.57823(16)    7.630(2)  6.4655(14)    9.252(3)        1     1          1    -     - 
+
+-     H1             0.76988        0.55580        0.54513      9.2386      7.7812      8.7220        1     1          1    -     - 
+-     H2             0.67661        0.69980        0.60046      8.1193      9.7972      9.6074        1     1          1    -     - 
+-     H3             0.49006        0.68685        0.66471      5.8807      9.6160     10.6354        1     1          1    -     - 
+-     H4             0.39678        0.52991        0.67362      4.7614      7.4187     10.7780        1     1          1    -     - 
+-     H5             0.49006        0.38591        0.61829      5.8807      5.4028      9.8926        1     1          1    -     - 
+-     H6             0.67661        0.39886        0.55403      8.1193      5.5841      8.8645        1     1          1    -     - 
+                                                                                            "sintetico "  PLATON-GEOMETRY  Page    4
+====================================================================================================================================
+
+   Ordered Structure                                  Unit Cell Contents (Based on Contents of Atom List, that may be Incomplete)
+====================================================================================================================================
+Resd Site  X(cen) Y(cen) Z(cen)  Mol.Wt S.O.F   Z      C     H
+====================================================================================================================================
+  1     1  0.583  0.543  0.609    78.11     1   2      6     6                                                                    
+                              ------------------------------------------------------------------------------------------------------
+        Unit Cell Weight =       156.22               12    12
+
+ Calculated Analysis (%) =                          92.3   7.7
+
+          Moiety_Formula = C6 H6
+
+             Sum_Formula = C6 H6
+
+          Formula_Weight =       78.11 [Note: Based on SHELXL2019 Atomic Weights]
+
+               Formula_Z =           2
+
+            SpaceGroup_Z =           2  ===>  Z' =  2 /  2 =   1.000
+
+      Calculated Density =      0.0965 g cm-3 [= Mg m-3]                              ** WARNING **                               
+                                                                           Please Check the Derived Crystal Data.
+                  F(000) =        84.0 [      84.03]                       They may be Incorrect for Disordered,
+                                                                           Incomplete or Polymeric Structures.
+                mu(MoKa) =        0.05 cm-1 =   0.005 mm-1
+
+
+        Predicted Volume =       227.4[     227.4] Ang**3, 298[298]K - (D.W.M. Hofmann (2002). Acta Cryst. B58, 489-493)
+
+Note on F000: The first number is a pure electron count, the second number between [] is calculated from f,f' & f"
+                                                                                            "sintetico "  PLATON-MOLSYM    Page    5
+====================================================================================================================================
+MOLSYM: Search for (additional) Molecular (Point Group) Symmetry - Hydrogen Atoms Excluded ! - Ordered Residues Only !
+====================================================================================================================================
+
+For Details on the Molecular Symmetry Determination see: T. Pilati & A. Forni, J.Appl.Cryst. (1998), 31, 503-504 & (2000), 33, 417.
+
+For CSM (i.e. Continuous Symmetry Measure), see: H. Zabrodsky et al. (1993) JACS, 115, 8278-8289
+
+ ***** Weighting Mode = ATOMIC *****
+
+--------------------------------------------------------------------------------
+Resd #         Inertial  Moments    Degree Symbol      CSM         RMS  Tol     
+--------------------------------------------------------------------------------
+     1  (    70,       70,      139)   2   D6h      0.0000      0.0005 0.10 Ang.
+
+ Symmetry element     CSM and Max.Diff.  Symmetry element     CSM and Max.Diff. 
+--------------------------------------------------------------------------------
+  1 [E  ] x,y,z           0.0000 0.0000   2 [C6 ] x-y,x,z         0.0000 0.0006 
+  3 [C2 ] -x,-y,z         0.0000 0.0003   4 [Cs ] -x+y,y,z        0.0000 0.0005 
+  5 [Cs ] x-y,-y,z        0.0000 0.0005   6 [C3 ] -y,x-y,z        0.0000 0.0005 
+  7 [Cs ] x,y,-z          0.0000 0.0005   8 [C2 ] -x+y,y,-z       0.0000 0.0006 
+  9 [C2 ] x-y,-y,-z       0.0000 0.0005  10 [Ci ] -x,-y,-z        0.0000 0.0004 
+ 11 [C3 ] -x+y,-x,z       0.0000 0.0005  12 [Cs ] -x,-x+y,z       0.0000 0.0005 
+ 13 [Cs ] x,x-y,z         0.0000 0.0006  14 [S6 ] x-y,x,-z        0.0000 0.0005 
+ 15 [C2 ] -x,-x+y,-z      0.0000 0.0006  16 [C2 ] x,x-y,-z        0.0000 0.0008 
+ 17 [S3 ] -x+y,-x,-z      0.0000 0.0006  18 [C6 ] y,-x+y,z        0.0000 0.0006 
+ 19 [Cs ] -y,-x,z         0.0000 0.0004  20 [Cs ] y,x,z           0.0000 0.0006 
+ 21 [S3 ] -y,x-y,-z       0.0000 0.0006  22 [C2 ] -y,-x,-z        0.0000 0.0004 
+ 23 [C2 ] y,x,-z          0.0000 0.0003  24 [S6 ] y,-x+y,-z       0.0000 0.0005 
+                                                                                            "sintetico "  PLATON-MOLSYM    Page    6
+====================================================================================================================================
+MOLSYM: Search for (additional) Molecular (Point Group) Symmetry - Hydrogen Atoms Excluded ! - Ordered Residues Only !
+====================================================================================================================================
+
+For Details on the Molecular Symmetry Determination see: T. Pilati & A. Forni, J.Appl.Cryst. (1998), 31, 503-504 & (2000), 33, 417.
+
+For CSM (i.e. Continuous Symmetry Measure), see: H. Zabrodsky et al. (1993) JACS, 115, 8278-8289
+
+ ***** Weighting Mode = UNIT   *****
+
+--------------------------------------------------------------------------------
+Resd #         Inertial  Moments    Degree Symbol      CSM         RMS  Tol     
+--------------------------------------------------------------------------------
+     1  (     6,        6,       12)   2   D6h      0.0000      0.0005 0.10 Ang.
+
+ Symmetry element     CSM and Max.Diff.  Symmetry element     CSM and Max.Diff. 
+--------------------------------------------------------------------------------
+  1 [E  ] x,y,z           0.0000 0.0000   2 [C6 ] x-y,x,z         0.0000 0.0006 
+  3 [C2 ] -x,-y,z         0.0000 0.0003   4 [Cs ] -x+y,y,z        0.0000 0.0005 
+  5 [Cs ] x-y,-y,z        0.0000 0.0005   6 [C3 ] -y,x-y,z        0.0000 0.0005 
+  7 [Cs ] x,y,-z          0.0000 0.0005   8 [C2 ] -x+y,y,-z       0.0000 0.0006 
+  9 [C2 ] x-y,-y,-z       0.0000 0.0005  10 [Ci ] -x,-y,-z        0.0000 0.0004 
+ 11 [C3 ] -x+y,-x,z       0.0000 0.0005  12 [Cs ] -x,-x+y,z       0.0000 0.0005 
+ 13 [Cs ] x,x-y,z         0.0000 0.0006  14 [S6 ] x-y,x,-z        0.0000 0.0005 
+ 15 [C2 ] -x,-x+y,-z      0.0000 0.0006  16 [C2 ] x,x-y,-z        0.0000 0.0008 
+ 17 [S3 ] -x+y,-x,-z      0.0000 0.0006  18 [C6 ] y,-x+y,z        0.0000 0.0006 
+ 19 [Cs ] -y,-x,z         0.0000 0.0004  20 [Cs ] y,x,z           0.0000 0.0006 
+ 21 [S3 ] -y,x-y,-z       0.0000 0.0006  22 [C2 ] -y,-x,-z        0.0000 0.0004 
+ 23 [C2 ] y,x,-z          0.0000 0.0003  24 [S6 ] y,-x+y,-z       0.0000 0.0005 
+                                                                                            "sintetico "  PLATON-GEOMETRY  Page    7
+====================================================================================================================================
+Analysis of Bond Distance and Angle Values - Identification of Chiral Center(s) and Their (R/S)-Configuration (Cahn-Ingold-Prelog)
+====================================================================================================================================
+    The Following Tests are done. Faults are Marked Under Note
+    -- V : Valency Check Fault for H, C 
+    -- S : Bond Too Short 
+    -- A : Unusual Bond Angle Values (PLEASE CHECK)
+====================================================================================================================================
+ *** PLEASE NOTE: R/S ASSIGNMENTS ARE TENTATIVE  *** (CIP Special rules NOT Implemented)
+ *** See Angew.Chem.Intern. Ed. Eng.,(1966),5,385 & (1982),21,567 for Authoritative Details for Special Cases
+
+                                                                                       =A.N.G.L.E.S=   =B.O.N.D.S=
+Flag Label  - Connected to  (May be Incomplete for Polymeric Structures)            nra min max  Aver  min   max nrb tnr Hyb RS Note
+------------------------------------------------------------------------------------------------------------------------------------
+-    C1     - C2      C6      H1      ------- ------- ------- ------- ------- ------- 3 120 120 120.0 1.080 1.390  3   3 sp2       
+-    C2     - C1      C3      H2      ------- ------- ------- ------- ------- ------- 3 120 120 120.0 1.080 1.390  3   3 sp2       
+-    C3     - C2      C4      H3      ------- ------- ------- ------- ------- ------- 3 120 120 120.0 1.080 1.390  3   3 sp2       
+-    C4     - C3      C5      H4      ------- ------- ------- ------- ------- ------- 3 120 120 120.0 1.081 1.390  3   3 sp2       
+-    C5     - C4      C6      H5      ------- ------- ------- ------- ------- ------- 3 120 120 120.0 1.080 1.390  3   3 sp2       
+-    C6     - C1      C5      H6      ------- ------- ------- ------- ------- ------- 3 120 120 120.0 1.080 1.390  3   3 sp2       
+
+-    H1     - C1      ------- ------- ------- ------- ------- ------- ------- ------- 0   0   0   0.0 1.080 1.080  1   1           
+-    H2     - C2      ------- ------- ------- ------- ------- ------- ------- ------- 0   0   0   0.0 1.080 1.080  1   1           
+-    H3     - C3      ------- ------- ------- ------- ------- ------- ------- ------- 0   0   0   0.0 1.080 1.080  1   1           
+-    H4     - C4      ------- ------- ------- ------- ------- ------- ------- ------- 0   0   0   0.0 1.081 1.081  1   1           
+-    H5     - C5      ------- ------- ------- ------- ------- ------- ------- ------- 0   0   0   0.0 1.080 1.080  1   1           
+-    H6     - C6      ------- ------- ------- ------- ------- ------- ------- ------- 0   0   0   0.0 1.080 1.080  1   1           
+
+Note: Symmetry Operations Refer to the Coordinates listed in the Fractional Coordinate Table given above
+
+                                                                 SYM         -  Number of the Symmetry Operator.
+X(J) = X(sym) + TX , Y(J) = Y(sym) + TY , Z(J) = Z(sym) + TZ,    Ires        -  Residue Number.
+                                                                 TX, TY, TZ  -  Unit Cell Translations.
+                                                                                            "sintetico "  PLATON-GEOMETRY  Page    8
+====================================================================================================================================
+Analysis of the IntraMolecular Geometry in Terms of Unique Molecule(s)/Ions, with Bond Criterium: d(i-j) < R(i) + R(j) + Tol
+------------------------------------------------------------------------------------------------------------------------------------
+-- Tol = 0.40 Ang. for Normal Bonds + 0.70 for (Earth)alkali-NonMetal Contacts and adjusted by -.40 Ang. for Metal-Metal Distances
+
+Bond Lengths (Angstrom). - (Bonds are ordered on the first label, left to right and  top to bottom) - su in last digit in ().
+====================================================================================================================================
+ C1     -  C2         1.390(3)     C1     -  C6         1.390(2)     C2     -  C3         1.390(3)     C3     -  C4         1.390(3)
+ C4     -  C5         1.390(3)     C5     -  C6         1.390(3)                                                                    
+ 
+ C1     >  H1             1.08     C2     >  H2             1.08     C3     >  H3             1.08     C4     >  H4             1.08
+ C5     >  H5             1.08     C6     >  H6             1.08                                                                    
+
+Bond/Valence Angles (Degrees) - (Angles are ordered on the middle label, left to right and top to bottom) - su in last digit in ().
+====================================================================================================================================
+ C2     -  C1     -  C6         120.0(2)       C1     -  C2     -  C3       120.01(19)       C2     -  C3     -  C4         120.0(2)
+ C3     -  C4     -  C5         120.1(2)       C4     -  C5     -  C6         120.0(2)       C1     -  C6     -  C5         120.0(2)
+ 
+ C2     -  C1     -  H1              120       C6     -  C1     -  H1              120       C1     -  C2     -  H2              120
+ C3     -  C2     -  H2              120       C2     -  C3     -  H3              120       C4     -  C3     -  H3              120
+ C3     -  C4     -  H4              120       C5     -  C4     -  H4              120       C4     -  C5     -  H5              120
+ C6     -  C5     -  H5              120       C1     -  C6     -  H6              120       C5     -  C6     -  H6              120
+
+Torsion/Dihedral Angles (Deg.) - Klyne & Prelog Convention (Dunitz, p241) - (Excl. Minor Disorder & Embedded Bond Angl. > 160. Deg.)
+====================================================================================================================================
+ C6     C1     C2     C3           -0.1(4)    C2     C1     C6     C5            0.0(4)    C1     C2     C3     C4            0.1(4)
+ C2     C3     C4     C5           -0.1(4)    C3     C4     C5     C6            0.0(4)    C4     C5     C6     C1            0.0(4)
+
+ C6     C1     C2     H2              -180    H1     C1     C2     C3               180    H1     C1     C2     H2                 0
+ C2     C1     C6     H6              -180    H1     C1     C6     C5               180    H1     C1     C6     H6                 0
+ C1     C2     C3     H3              -180    H2     C2     C3     C4               180    H2     C2     C3     H3                 0
+ C2     C3     C4     H4               180    H3     C3     C4     C5              -180    H3     C3     C4     H4                 0
+ C3     C4     C5     H5              -180    H4     C4     C5     C6               180    H4     C4     C5     H5                 0
+ C4     C5     C6     H6               180    H5     C5     C6     C1               180    H5     C5     C6     H6                 0
+                                                                                            "sintetico "  PLATON-GEOMETRY  Page    9
+====================================================================================================================================
+Statistics of Bond Length per Bond Type (NOTE: A Indicates 10 Occurrences, B Indicates 11, Etc. and * more than 35)
+====================================================================================================================================
+
+Bond Type   Nr    B.P.  d(min)  d(max)   d(av) Sumrad Note  0.0       0.5       1.0       1.5       2.0       2.5       3.0 Angstrom
+----------------------------------------------------------   I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I-I
+ C3 --  C3   6  0.0028  1.3900  1.3900  1.3900   1.36        ............................6..........................................
+
+ C  --  H    6          1.0800  1.0800  1.0800   1.03        ......................6................................................
+
+
+
+Selected Bond Lengths (Angstrom) - see M.F.C. Ladd & R.A. Palmer, Structure Determination by X-ray Crystallography (1985)
+====================================================================================================================================
+
+                                                 Formal single bonds
+                                                 -------------------
+C4-C4 1.54   C4-C3 1.52   C4-C2 1.46   C4-N3 1.47   C4-N2 1.47   C4-O2 1.43   C3-C3 1.46   C3-C2 1.45   C3-N3 1.40   C3-N2 1.40
+C3-O2 1.36   C2-C2 1.38   C2-N3 1.33   C2-N2 1.33   C2-O2 1.36   N3-N3 1.45   N3-N2 1.45   N3-O2 1.36   N2-N2 1.45   N2-O2 1.41
+
+                                                 Formal double bonds
+                                                 -------------------
+C3-C3 1.34   C3-C2 1.31   C3-N2 1.32   C3-O1 1.22   C2-C2 1.28   C2-N2 1.32   C2-O1 1.16   N3-O1 1.24   N2-N2 1.25   N2-O1 1.21
+
+Formal triple bonds                 Aromatic bonds
+-------------------                 --------------
+C2-C2 1.20   C2-N1 1.16   C3-C3 1.40   C2-N2 1.34   N2-N2 1.35
+
+The notation in the table indicates the connectivity of the atoms
+
+For more detailed standard bond distance tabulations see: J. Chem. Soc. Perkin II, (1987), S1-S19;
+J. Chem. Soc. Dalton Trans. (1989), S1 - S83 or International Tables C, (1992), 707-791.
+                                                                                            "sintetico "  PLATON-GEOMETRY  Page   10
+====================================================================================================================================
+Automatic Search for Rings (3 to 24-Membered) and Planes Determined by 4 or More Connected Atoms (with Deviation < 0.10 Ang.)
+------------------------------------------------------------------------------------------------------------------------------------
+
+Least-Squares Planes - P*X+Q*Y+R*Z=S   ::  First Line Orthogonal(XO,YO,ZO), Second Line Fractional(X,Y,Z)
+====================================       Ring/Plan/Resd/Lspl N Indicates that the Ring/Plane/Residue Involves N Atoms
+                                           Sigref - R.M.S-Error of the Contributing Atoms
+  The Deviation D of an Atom with          Sigpln - Sqrt(Sum(j=1:N)(D(j)**2/(N-3))
+                                           Chisq  - Chi-Squared = Sum(j=1:N)(D(j)**2)/Sigref**2
+  Fractional Coordinates X,Y,Z may be      Pl.Hyp. - Result of the Chi.Sq. Test for Planarity (See Stout & Jensen, p424)
+
+  Calculated via Substitution in
+                                           **** - Atoms Deviating by More Than 1.5 Angstrom and Hydrogen Atoms are NOT Listed
+  D = P*X + Q*Y + R*Z - S (2nd Line)       Note - Weights : UNIT
+                                                - Deviations from planes are in Angstrom Units
+                                                - The Plane determining Atoms have been Marked #
+                                                - DISTANCES TO PLANES ROUNDED TO 3 DECIMALS !!(Use Graphical Interface for more)
+------------------------------------------------------------------------------------------------------------------------------------
+Nr  1        P             Q             R             S     Sigref  0.002     Sigpln  0.001     Chisq       0.4    Pl.Hyp.        
+------------------------------------------------------------------------------------------------------------------------------------
+Ring    0.4227(11)   -0.1574(11)     0.8925(5)    10.464(11) #C1      0.000(3) #C2      0.001(3) #C3      0.000(3) #C4      0.000(3)
+A  6     5.072(13)    -2.204(16)     14.280(9)    10.464(11) #C5      0.000(2) #C6      0.000(3)                                    
+------------------------------------------------------------------------------------------------------------------------------------
+Nr  2        P             Q             R             S     Sigref  0.002     Sigpln  0.001     Chisq       0.4    Pl.Hyp.        
+------------------------------------------------------------------------------------------------------------------------------------
+Resd    0.4227(11)   -0.1574(11)     0.8925(5)    10.464(11) #C1      0.000(3) #C2      0.001(3) #C3      0.000(3) #C4      0.000(3)
+A  6     5.072(13)    -2.204(16)     14.280(9)    10.464(11) #C5      0.000(2) #C6      0.000(3)                                    
+
+(Acute) Angles (Degrees) Between Planes (Numbers I,J from List Above)
+------------------------------------------------------------------------------------------------------------------------------------
+ 1, 2=   0.03(13)                                                                                                                   
+
+
+(Acute) Angles (Degrees) Between Axes, Lines, and Bonds with L.S.-Planes
+------------------------------------------------------------------------------------------------------------------------------------
+ Bond  /  Plane NM --> M      1          2          3          4          5          6          7          8          9         10
+------------------------------------------------------------------------------------------------------------------------------------
+Axes O --->a  / 0M =    25.00(9),  25.00(9),                                                                                        
+           b  / 0M =     9.06(9),   9.06(9),                                                                                        
+           c  / 0M =    63.19(9),  63.19(9),                                                                                        
+           a* / 0M =    25.00(9),  25.00(9),                                                                                        
+           b* / 0M =     9.06(9),   9.06(9),                                                                                        
+           c* / 0M =    63.19(9),  63.19(9),                                                                                        
+C1    -C2     / 0M =    0.03(16),  0.03(16),                                                                                        
+      -C6     / 0M =    0.01(13),  0.01(13),                                                                                        
+C2    -C3     / 0M =    0.04(16),  0.04(16),                                                                                        
+C3    -C4     / 0M =    0.02(16),  0.02(16),                                                                                        
+C4    -C5     / 0M =    0.00(16),  0.00(16),                                                                                        
+C5    -C6     / 0M =    0.01(16),  0.01(16),                                                                                        
+                                                                                            "sintetico "  PLATON-GEOMETRY  Page   11
+====================================================================================================================================
+Ring Puckering Analysis (Cremer & Pople) - (e.s.d. following Norrestam, Acta Cryst. (1981), A37, 764-765)
+------------------------------------------------------------------------------------------------------------------------------------
+
+                   Symmetrical Forms                                                                      References
+                   -----------------                                                                      ----------
+6-Membered Rings : C : Chair     - Th = 0.0                                     J.C.A. Boeyens, J.Cryst.Mol.Struct. 8,(1978),317-320
+                   H : Half-Chair- Th = 50.8; Phi = k X 60 + 30
+                   E : Envelope  - Th = 54.7; Phi = k X 60
+                   S : Screw-Boat- Th = 67.5; Phi = k X 60 + 30
+                   B : Boat      - Th = 90.0; Phi = k X 60
+                   T : Twist-Boat- Th = 90.0; Phi = k X 60 + 30
+
+
+Definitions (All Values Rounded on Esd)
+----------------------------------------
+Dev            - Deviation of Atom I from Cremer&Pople Plane (Defined Differently from Least-Squares Plane)
+Cs(I),C2(I)    - Mirror Plane and 2-Axis Asym. Par. for Atom I (See Duax et al., Topics in Stereochemistry,V-9, (1976) pp.271-383)
+Cs(I-J),C2(I-J)- Asymmetry Parameters for Bond I-J
+Tors(I-J)      - Torsion Angle for Bond I-J
+
+
+
+Descriptors for Torsion Angles                                        Descriptors for Ring Substituents (J.Appl.Cryst.,1983,16,431)
+------------------------------                                        --------------------------------------------------------------
+
+Torsion Angle Range     Full Descriptor     Short Descriptor          Angle Range of Subst.   Full Descriptor     Short Descriptor
+------------------------------------------------------------          ------------------------------------------------------------
+    0   TO   30 Deg     +  Syn-Periplanar       +sp                       0    TO  30 Deg.            Axial            ax
+   30   to   90         +  Syn-Clinal           +sc                      30    to  60           Bisectional            bi
+   90   to  150         + Anti-Clinal           +ac                      60    to  90            Equatorial            eq
+  150   to  180         + Anti-Periplanar       +ap
+    0   to  -30         -  Syn-Periplanar       -sp
+  -30   to  -90         -  Syn-Clinal           -sc
+  -90   to -150         - Anti-Clinal           -ac
+ -150   to -180         - Anti-Periplanar       -ap
+
+
+*** NOTE *** - For Ring Puckering Comparisons: Make Sure that the Absolute Configuration, Pivot Atom and Cyclic Sense Agree.
+             - The "RING AT1 AT2 AT3 ... ATn" Instruction Gives the User Explicit Choice of Pivot Atom (AT1) and Sense (AT2).
+             - Use TRNS Instructions to Obtain the Required Absolute Configuration.
+             - The Values of Theta and Phi [ = Phi(2)] Depend on the Abs. Conf. and the Choice of the First and Second Ring Atom.
+             - Alternatively, Appropriate Phase Shifts may be Applied to the Same Effect (see Below)
+             - C&P Analysis is with reference to the Cremer-Pople plane, not to be confused with the associated LS-plane.
+               See H.Essen & D.Cremer (1984) Acta Cryst. B40, 418-420.
+
+             For Correct Usage of C&P Puckering Parameters see also: D. Cremer (1984) Acta Cryst. B40, 498-500.
+
+                                                                                            "sintetico "  PLATON-GEOMETRY  Page   12
+====================================================================================================================================
+  6-Membered Ring ( 1)   C1     -->   C2     -->   C3     -->   C4     -->   C5     -->   C6     -->                                
+------------------------------------------------------------------------------------------------------------------------------------
+                              sp2          sp2          sp2          sp2          sp2          sp2                                  
+Dev (A) from CPplane     0.000(2)    -0.001(3)     0.000(3)     0.000(3)     0.000(3)     0.000(2)                                  
+Cs(I)-Asym-Par (Deg)       0.1(3)       0.1(3)       0.1(3)       0.1(3)       0.1(3)       0.1(3)                                  
+C2(I)-Asym-Par (Deg)       0.1(3)       0.1(3)       0.1(3)       0.1(3)       0.1(3)       0.1(3)                                  
+Ring Bond Angle(Deg)     120.0(2)   120.01(19)     120.0(2)     120.1(2)     120.0(2)     120.0(2)                                  
+
+Tors(I-J) (Deg)                -0.1(4)       0.1(4)      -0.1(4)       0.0(4)       0.0(4)       0.0(4)                             
+Cs(I-J)-Asym-Par   (Deg)        0.1(4)       0.1(4)       0.1(4)       0.1(4)       0.1(4)       0.1(4)                             
+C2(I-J)-Asym-Par   (Deg)        0.1(4)         0.00       0.1(4)       0.1(4)         0.00       0.1(4)                             
+Ring Bond Distance (Ang)      1.390(3)     1.390(3)     1.390(3)     1.390(3)     1.390(3)     1.390(2)                             
+
+Weighted Average Ring Bond Distance = 1.3900( 11,  0) Ang. - NOTE: 1st esd. Internal, 2nd esd External.                             
+Weighted Average Abs. Torsion Angl. =   0.05( 16,  2) Deg.   see: e.g. Domenicano et al., Acta Cryst.(1975), B31, 221-234.          
+
+
+No C & P - Puckering Analysis since <Tau> =  0.0 <    5.0 Deg.                                                                      
+
+
+
+Centroid Cg1   : x ,y ,z       0.58334(7)      0.54285(6)      0.60938(8)                                                           
+                XO,YO,ZO        7.0000(9)       7.5999(8)      9.7500(12)                                                           
+                                                                                            "sintetico "  PLATON-GEOMETRY  Page   13
+====================================================================================================================================
+Analysis of Short Ring-Interactions with Cg-Cg Distances <   6.0 Ang., Alpha <  20.000 Deg. and Beta < 60.0 Deg.
+====================================================================================================================================
+- Cg(I)    = Plane number I (= ring number in () above)
+- Alpha    = Dihedral Angle between Planes I and J (Deg)
+- Beta     = Angle Cg(I)-->Cg(J) or Cg(I)-->Me vector and normal to plane I (Deg)
+- Gamma    = Angle Cg(I)-->Cg(J) vector and normal to plane J (Deg)
+- Cg-Cg    = Distance between ring Centroids (Ang.)
+- CgI_Perp = Perpendicular distance of Cg(I) on ring J (Ang.)
+- CgJ_Perp = Perpendicular distance of Cg(J) on ring I (Ang.)
+- Slippage = Distance between Cg(I) and Perpendicular Projection of Cg(J) on Ring I (Ang).
+- P,Q,R,S  = J-Plane Parameters for Carth. Coord. (Xo, Yo, Zo)
+
+Cg(I) Res(I)   Cg(J)  [   ARU(J)]       Cg-Cg Transformed J-Plane P, Q, R, S     Alpha  Beta Gamma    CgI_Perp    CgJ_Perp  Slippage
+
+Cg1    [ 1] -> Cg1    [  2666.01]  4.2060(16) -0.4227 0.1574-0.8925  -6.6839  0.03(13)  26.0  26.0  3.7802(12)  3.7803(12)   1.844  
+                                   ----------                                 --------------------------------------------
+                            Min or Max  4.206                                      0.0  26.0  26.0      -3.780      -3.780
+
+[  2666] = 1-X,1-Y,1-Z                   
+
+The Cg(I) refer to the Ring Centre-of-Gravity numbers given in () in the Ring-Analysis above
+
+Cg(I)           x               y               z                    Xo              Yo              Zo
+
+Cg1         0.58334(7)      0.54285(6)      0.60938(8)              7.0000(9)       7.5999(8)      9.7500(12)                       
+                                                                                            "sintetico "  PLATON-INTER     Page   14
+====================================================================================================================================
+Analysis of Short Intra- and Inter-molecular Contacts ,  d(I-J) <  R(I) + R(J) + Tolr, With Tolr =  0.2 Ang. (X - I...J) > 100. Deg.
+------------------------------------------------------------------------------------------------------------------------------------
+Contact Radii :    C    H
+(Angstrom)      1.70 1.20
+
+Default Contact Radii are those given by A.Bondi, J.Phys.Chem. (1964),68,441. (or Coval. Rad. + 0.8 Ang. when not given)
+
+* WARNING * : no Far-Reaching Conclusions should be drawn based on the Default Radii Assigned to Metals
+
+Short "INTRA" Distances between two Atoms that are Separated by less than 4 Bonds are NOT Listed (Except for Potential D/A Contacts)
+
+------------------------------------------------------------------------------------------------------------------------------------
+At(I)[1555.01] At(J)  [  ARU(J) ]       D(I-J)  SumRad  Del  Type    X(I)   Y(I)   Z(I)     X(J)   Y(J)   Z(J)   X         X - I...J
+------------------------------------------------------------------------------------------------------------------------------------
+ C1      ....  C4     [         ]     2.780(3)<< 3.40 -0.62 Intra  0.6883 0.5501 0.5732   0.4784 0.5356 0.6455   H1              180
+ C2      ....  C5     [         ]     2.780(3)<< 3.40 -0.62 Intra  0.6358 0.6312 0.6044   0.5308 0.4545 0.6144   H2              180
+ C3      ....  C6     [         ]     2.780(3)<< 3.40 -0.62 Intra  0.5308 0.6239 0.6405   0.6358 0.4618 0.5782   H3              180
+ C4      ....  C1     [         ]     2.780(3)<< 3.40 -0.62 Intra  0.4784 0.5356 0.6455   0.6883 0.5501 0.5732   H4              180
+ C5      ....  C2     [         ]     2.780(3)<< 3.40 -0.62 Intra  0.5308 0.4545 0.6144   0.6358 0.6312 0.6044   H5              180
+ C6      ....  C3     [         ]     2.780(3)<< 3.40 -0.62 Intra  0.6358 0.4618 0.5782   0.5308 0.6239 0.6405   H6              180
+ H1      ....  H2     [         ]         2.47   2.40  0.07 Intra  0.7699 0.5558 0.5451   0.6766 0.6998 0.6005                      
+ H1      ....  H6     [         ]         2.47   2.40  0.07 Intra  0.7699 0.5558 0.5451   0.6766 0.3989 0.5540                      
+ H2      ....  H1     [         ]         2.47   2.40  0.07 Intra  0.6766 0.6998 0.6005   0.7699 0.5558 0.5451                      
+ H2      ....  H3     [         ]         2.47   2.40  0.07 Intra  0.6766 0.6998 0.6005   0.4901 0.6869 0.6647                      
+ H3      ....  H2     [         ]         2.47   2.40  0.07 Intra  0.4901 0.6869 0.6647   0.6766 0.6998 0.6005                      
+ H3      ....  H4     [         ]         2.47   2.40  0.07 Intra  0.4901 0.6869 0.6647   0.3968 0.5299 0.6736                      
+ H4      ....  H3     [         ]         2.47   2.40  0.07 Intra  0.3968 0.5299 0.6736   0.4901 0.6869 0.6647                      
+ H4      ....  H5     [         ]         2.47   2.40  0.07 Intra  0.3968 0.5299 0.6736   0.4901 0.3859 0.6183                      
+ H5      ....  H4     [         ]         2.47   2.40  0.07 Intra  0.4901 0.3859 0.6183   0.3968 0.5299 0.6736                      
+ H5      ....  H6     [         ]         2.47   2.40  0.07 Intra  0.4901 0.3859 0.6183   0.6766 0.3989 0.5540                      
+ H6      ....  H1     [         ]         2.47   2.40  0.07 Intra  0.6766 0.3989 0.5540   0.7699 0.5558 0.5451                      
+ H6      ....  H5     [         ]         2.47   2.40  0.07 Intra  0.6766 0.3989 0.5540   0.4901 0.3859 0.6183                      
+
+Note: Symmetry Operations Refer to the Coordinates listed in the Fractional Coordinate Table given above
+
+                                                                 SYM         -  Number of the Symmetry Operator.
+X(J) = X(sym) + TX , Y(J) = Y(sym) + TY , Z(J) = Z(sym) + TZ,    Ires        -  Residue Number.
+                                                                 TX, TY, TZ  -  Unit Cell Translations.
+
+:: No Classic Hydrogen Bonds Found                                              
+
+                                                                                            "sintetico "  PLATON-COORDN    Page   15
+====================================================================================================================================
+Analysis of the Coordination Geometry
+------------------------------------------------------------------------------------------------------------------------------------
+
+Distances are calculated from atom I of Unique Molecule Coordinate List to atom J in Asymmetric Residue Unit: ARU.
+
+Phi = Azimuth angle(counter clockwise from XO in XO,YO-Plane), Mu  = Angle between D and XO,YO-plane.
+
+'To-Code' : '--' = Bonded atoms,  '<<' = < sum vdW-radii - 0.2, '.<' = < sum vdW-radii, '..' = > sum vdW-radii.
+
+>>>> NOTICE >>>> : The Symmetry Code Character Added to the Atom Label Applies to the Current Coordination Sphere Only.
+>>>>>>>>>>>>>>>> : Symmetry operations refer to the coordinates listed in the fractional coordinate table given above
+
+                   The List May be Limited to the Shortest Distances.
+                                                                                            "sintetico "  PLATON-VOIDS     Page   16
+====================================================================================================================================
+Search for and Analysis of Solvent Accessible Voids in 'P1' Structure - Grid = 0.20 Ang., Probe Radius =  1.20 Ang., NStep = 6
+van der Waals (or ion) Radii used in the Analysis
+================================================================================
+    C    H
+--------------------------------------------------------------------------------
+ 1.70 1.20
+
+Grid: X-Axis Step =  0.016667 = Points  60, Angstrom Step = 0.20000
+Grid: Y-Axis Step =  0.014286 = Points  70, Angstrom Step = 0.20000
+Grid: Z-Axis Step =  0.012500 = Points  80, Angstrom Step = 0.20000
+
+:: Total Potential Solvent Area Vol   2495.5 Ang^3
+                  per Unit Cell Vol   2688.0 Ang^3 [92.8%]
+
+Note: Expected volumes for solvent molecules are:
+      A hydrogen bonded H2O-molecule      40 Ang^3
+      Small molecules (e.g. Toluene) 100-300 Ang^3
+
+      The maximum number of molecules of a given type
+      in a void can be estimated by deviding the void
+      volume by twice the molecular volume of that
+      molecule as calculated with the MOLVOL routine.
+
+      Values below for gridpoints and volumes in [] 
+      refer to areas where atom centers may reside.
+
+:: Use the CALC SQUEEZE instruction to calculate and optionally correct for
+:: Density identified in solvent accessible areas (Reflection data required)
+
+Void #GridPoint VolPerc.  Vol(A^3)  X(av) Y(av) Z(av) Eigenvector(frac) Sig(Ang)
+--------------------------------------------------------------------------------
+ 1 311940[272043] 93  2496[2176.3] -0.016-0.007-0.005 1 -0.091-0.146 1.000  4.47
+                                                      2 -0.060 1.000 0.109  3.87
+                                                      3 -1.000-0.036-0.055  3.35
+
+       x     y     z              Shortest Contacts within 4.5 Ang. (Excl. H)   
+================================================================================
+  1 -0.016-0.007-0.005       none
+ 
+:: Note: use CALC VOID (not CALC SOLV) for Packing Index. 
+
+     Report the Distance from VOID-CG to Boundary in EigenVector-Directions
+
+ Nr MinEV1 MaxEV1 MinEV2 MaxEV2 MinEV3 MaxEV3 MaxDist (Ang)
+================================================================================
+  1  -8.84   9.00  -7.67   7.65  -6.50   6.30  11.58
+                                                                                            "sintetico "  PLATON-CHECKCIF  Page   17
+====================================================================================================================================
+#===============================================================================
+# PLATON/CHECK-(200626) versus check.def version 260619, Entry: sintetico
+# Data: pm1_benzene_inversione_su0.898_H.cif - TyBond Precision   C-C = 0.0028 A
+#                                                                   Temp =   0 K
+# Audit: ?
+# Refin: ?
+# X-ray MoKa              R(int) = 0.000,  wR2/R(int) =  0.0,  Nref/Npar =   0.0
+# Cell    12.00000    14.00000    16.00000           90           90          90
+# Wavelength 0.71073  Volume Reported               0 Calculated        2688.000
+# SpaceGroup from Symmetry P -1         Hall: -P 1                     triclinic
+#                 Reported  ?                  ?                               ?
+# MoietyFormula C6 H6
+#      Reported  ?                                                               
+#    SumFormula C6 H6
+#      Reported  ?                                                               
+# Mr        =     78.11[Calc],      0.00[Rep]       Volume/NonHatoms =224 Ang**3
+# Dx,gcm-3  =     0.097[Calc],     0.000[Rep] Model_Volume/NonHatoms = 16 Ang**3
+# Z         =         2[Calc],         0[Rep]  Solvent Accessible Volume =   93%
+# Mu (mm-1) =     0.005[Calc],     0.000[Rep]  Xtal Size =  0.000x0.000x0.000 mm
+# F000      =      84.0[Calc],       0.0[Rep]  or F000' =     84.03[Calc]
+# Measured   HKL: Reported      0, Embedded      0, <Mult>  0.0                 
+#===============================================================================
+# For Documentation:https://platonsoft.nl/CIF-VALIDATION.pdf
+#===============================================================================
+#                                                                              *
+#===============================================================================
+#>>> The Following Improvement and Query ALERTS were generated - (Acta-Mode) <<<
+#===============================================================================
+     Format: alert-number_ALERT_alert-type_alert-level text
+
+010_ALERT_1_A No Suitable  (Embedded) Reflection Data Supplied     Please Do !  
+023_ALERT_3_A Resolution (too) Low [sin(theta)/Lambda < 0.6]..       0.00 Ang-1 
+029_ALERT_3_A _diffrn_measured_fraction_theta_full value Low .      0.000 Why?  
+037_ALERT_1_A _diffrn_reflns_theta_full ............ Not Given     Please Do !  
+038_ALERT_1_A _diffrn_measured_fraction_theta_max  Not Given .     Please Do !  
+039_ALERT_1_A _diffrn_measured_fraction_theta_full Not Given .     Please Do !  
+043_ALERT_1_A Calculated and Reported Mol. Weight Differ by ..      78.11 Check 
+044_ALERT_1_A Calculated and Reported Density Dx  Differ by ..     0.0965 Check 
+050_ALERT_1_A Absorption Coefficient mu Not Given ............     Please Do !  
+081_ALERT_1_A No Maximum Shift/Error Given ...................     Please Do !  
+086_ALERT_2_A Unsatisfactory S Value (Too Low or Not Given) ..       0.00 Check 
+095_ALERT_1_A No Residual Density Maximum Given ..............     Please Do !  
+096_ALERT_1_A No Residual Density Minimum Given ..............     Please Do !  
+183_ALERT_1_A Missing _cell_measurement_reflns_used Value ....     Please Do !  
+184_ALERT_1_A Missing _cell_measurement_theta_min   Value ....     Please Do !  
+185_ALERT_1_A Missing _cell_measurement_theta_max   Value ....     Please Do !  
+197_ALERT_1_A Missing _cell_measurement_temperature Datum ....     Please Add   
+198_ALERT_1_A Missing _diffrn_ambient_temperature   Datum ....     Please Add   
+601_ALERT_2_A Unit-Cell Contains Solvent Accessible VOIDS .LE.       2496 Ang**3
+699_ALERT_1_A Missing _exptl_crystal_description Value .......     Please Do !  
+                                                                                            "sintetico "  PLATON-CHECKCIF  Page   18
+====================================================================================================================================
+880_ALERT_1_A No datum for _diffrn_reflns_number supplied ....     Please Do !  
+881_ALERT_1_A No Datum for _diffrn_reflns_av_R_equivalents ...     Please Do !  
+#===============================================================================
+008_ALERT_5_B No _iucr_refine_reflections_details   in the CIF     Please Do !  
+025_ALERT_1_B Hmin..Lmax Data Incomplete or Missing ..........     Please Check 
+210_ALERT_3_B No Anisotropic ADP's Found in CIF ..............     Please Check 
+#===============================================================================
+048_ALERT_1_C MoietyFormula Not Given (or Incomplete) ........     Please Check 
+125_ALERT_4_C No '_symmetry_space_group_name_Hall' Given .....     Please Do !  
+141_ALERT_4_C s.u. on a - Axis Small or Missing ..............    0.00000 Ang.  
+142_ALERT_4_C s.u. on b - Axis Small or Missing ..............    0.00000 Ang.  
+143_ALERT_4_C s.u. on c - Axis Small or Missing ..............    0.00000 Ang.  
+144_ALERT_4_C s.u. on alpha    Small or Missing ..............     0.0000 Degree
+145_ALERT_4_C s.u. on beta     Small or Missing ..............     0.0000 Degree
+146_ALERT_4_C s.u. on gamma    Small or Missing ..............     0.0000 Degree
+201_ALERT_2_C Isotropic non-H Atoms in Main Residue(s) Occ>0.5          6 Report
+              C1      C2      C3      C4      C5      C6                        
+761_ALERT_1_C CIF Contains no X-H Bonds ......................     Please Check 
+762_ALERT_1_C CIF Contains no X-Y-H or H-Y-H Angles ..........     Please Check 
+#===============================================================================
+005_ALERT_5_G No Embedded Refinement Details Found  in the CIF     Please Do !  
+009_ALERT_1_G Reported Radiation type and Wavelength Conflict?     Please Check 
+045_ALERT_1_G Calculated and Reported Z Differ by a Factor ...          0 Check 
+049_ALERT_1_G Calculated Density Less Than 1.0 gcm-3 .........     0.0965 Check 
+104_ALERT_1_G The Reported Crystal System is Inconsistent with        P-1 Check 
+160_ALERT_4_G max(sig)/min(sig) ratio x,y,z > 3 for C1               3.03 Check 
+760_ALERT_1_G CIF Contains no Torsion Angles .................          ? Info  
+808_ALERT_5_G No Parseable SHELXL Style Weighting Scheme Found     Please Check 
+882_ALERT_1_G No Datum for _diffrn_reflns_av_unetI/netI ......     Please Do !  
+883_ALERT_1_G Absent Datum for _atom_sites_solution_primary ..     Please Do !  
+980_ALERT_1_G No Anomalous Scattering Factors Found in CIF ...     Please Check 
+#===============================================================================
+#                                                                              *
+#===============================================================================
+               ALERT_Level and ALERT_Type Summary
+               ==================================
+ 22 ALERT_Level_A = Most Likely a Serious Problem - Resolve or Explain        
+  3 ALERT_Level_B = A Potentially Serious Problem - Consider Carefully        
+ 11 ALERT_Level_C = Check. Ensure it is Not caused by an Omission or Oversight
+ 11 ALERT_Level_G = General Info/Check that it is not Something Unexpected    
+
+ 30 ALERT_Type_1 CIF Construction/Syntax Error, Inconsistent or Missing Data. 
+  3 ALERT_Type_2 Indicator that the Structure Model may be Wrong or Deficient.
+  3 ALERT_Type_3 Indicator that the Structure Quality may be Low.             
+  8 ALERT_Type_4 Improvement, Methodology, Query or Suggestion.               
+  3 ALERT_Type_5 Informative Message, Check.                                  
+#===============================================================================
+
+  28 Missing  Experimental  Info Issue(s) (Out of  65 Tests) -   57 % Satisfied
+   2 Experimental  Data  Related Issue(s) (Out of  36 Tests) -   94 % Satisfied
+   2 Structural  Model   Related Issue(s) (Out of 143 Tests) -   99 % Satisfied
+  15 Unresolved or to be Checked Issue(s) (Out of 288 Tests) -   95 % Satisfied
+
+#                                                                              *
+                                                                                            "sintetico "  PLATON-SUMMARY   Page   19
+====================================================================================================================================
+        Table  0 - Crystal Data and Details of the Structure Determination 
+                   for: sintetico                               
+
+                                   Crystal Data
+
+        Formula                                                      C6 H6   
+        Formula Weight                                               78.11   
+        Crystal System                                           triclinic   
+        Space group                                  P-1          (No.  2)   
+        a, b, c [Angstrom]              12.00000     14.00000     16.00000      
+        alpha, beta, gamma [deg]              90           90           90      
+        V [Ang**3]                                                2688.000      
+        Z                                                                2   
+        D(calc) [g/cm**3]                                            0.097   
+        Mu(MoKa) [ /mm ]                                             0.005   
+        F(000)                                                          84   
+        Crystal Size [mm]                             0.00 x  0.00 x  0.00   
+                               Data Collection
+
+        Temperature (K)                                              *****   
+        Radiation [Angstrom]                             MoKa      0.71073   
+        Theta Min-Max [Deg]                                     0.0,   0.0   
+        Dataset                                999:-99 ; 999:-99 ; 999:-99   
+        Tot., Uniq. Data, R(int)                         0,      0,  0.000   
+        Observed Data [I > 0.0 sigma(I)]                                 0   
+                                  Refinement
+
+        Nref, Npar                                                 0,    0   
+        R, wR2, S                                     0.0000, 0.0000, 0.00   
+        w =                                                                  
+        Max. and Av. Shift/Error                                0.00, 0.00   
+        Min. and Max. Resd. Dens. [e/Ang^3]                     0.00, 0.00
+                                                                                            "sintetico "  PLATON-SUMMARY   Page   20
+====================================================================================================================================
+
+
+                                                          ===========
+********************************************************* N O T I C E **************************************************
+                                                          ===========
+
+- PLATON References : Spek, A.L. (2003). J. Appl. Cryst. 36, 7-13.
+                      Spek, A.L. (2009). Acta Cryst. D65, 148-155.
+                      Spek, A.L. (2015). Acta Cryst. C71, 9-18.
+                      Spek, A.L. (2018). Inorg. Chim. Acta, 470, 232-237.
+                      Spek, A.L. (2020). Acta Cryst. E76, 1-11.
+
+- Output Values (Esd) may have been (re)set to 99, 999 or 9999 to Avoid Format Overflow.
+
+- Derived Parameter SU's (= Esd's) may be Incorrect in Cases where Covariances in the Atom Parameters should have been taken
+  into Account (e.g. Those Involving Atoms That were Refined with Constraints).
+
+- ROUNDING, in particular of the Input Coordinate Data, may give deviating values for derived geometry parameters.
+  However, differences should be within the associated esd-range.
+
+- PLATON is Research Program. The Implementation of Additional Options is Planned. Some of the More Advanced
+  Features are Experimental and may Contain Loose Ends.
+
+- The Communication of Glitches Encountered will be Appreciated: E-mail: a.l.spek@uu.nl
+
+- Recent versions of PLATON may be obtained from: https://platonsoft.nl/xraysoft
+
+- More INFO can be found on : https://platonsoft.nl
+
+
+                                                                                            "sintetico "  PLATON-SUMMARY   Page   21
+====================================================================================================================================
+Page - Index
+================================================================================
+
+Page   1 --- ADDSYM  
+Page   3 --- GEOMETRY
+Page   5 --- MOLSYM  
+Page   7 --- GEOMETRY
+Page  14 --- INTER   
+Page  15 --- COORDN  
+Page  16 --- VOIDS   
+Page  17 --- CHECKCIF
+Page  19 --- SUMMARY 
+
+
+
+================================================================================
+Summary and Remarks : N = NOTE, W = WARNING, E = ERROR
+================================================================================
+W: No Cell estimated standard deviation (CESD) given.
+W: NOMOVE option used.
+:: >>> WARNING: 'CONNECTED INPUT SET' is assumed to be TRUE
+:: >>> The Network Analysis may be INCORRECT when this  assumption is FALSE
+N: Number of Isotropic Non-H Atoms .......................................    6
+W: Low density (check!) of ......................................   0.097 gcm-3
+N: Number of Unspecified Non-H Displacement Parameters set to U = 0.05 ...    6
+N: Number of Unspecified     H Displacement Parameters set to U = 0.05 ...    6
+N: Total Potential Solvent Accessible Void Vol  (SOLV-Map Value) ...  2496 Ang^3
+================================================================================
+
+
+:: Input Xtal Data from File pm1_benzene_inversione_su0.898_H.cif - Data Type CIF  
+
+:: NORMAL END of PLATON :    21 Pages on FILE pm1_benzene_inversione_su0.898_H.lis
+
+:: SPF File spf on :pm1_benzene_inversione_su0.898_H_pl.spf

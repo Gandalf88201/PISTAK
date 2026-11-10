@@ -313,6 +313,11 @@ def _refinement(a: Analysis) -> list[Alert]:
         out.append(Alert("noSU", "G"))  # revisione, voce 54: il Monte Carlo darebbe σ = 0
     else:
         out += _fragment_su(a)
+    if any(x > 0 for x in a.cif.cell_su):
+        from pistak.core.uncertainty import cell_constraints  # import locale: uncertainty importa l'analisi
+
+        if cell_constraints(a.cif) is None:
+            out.append(Alert("cellConstraints", "G"))  # revisione 3: vincoli di cella non ricavabili
     return out
 
 

@@ -182,15 +182,47 @@ def check_mc(samples: int = 4000) -> None:
 
 
 # ---- convergenza e bias su coppie reali ---------------------------------------------------------------------------
-CONVERGE = [("7212873", "stack"), ("2210998", "stack"), ("4032966", "stack")]
+#: Coppie della convergenza (revisione 3, N8): (CIF, etichette del frammento A, del frammento B, Cg···Cg nominale in Å),
+#: le stesse di `paper/scripts/mc_data.py` e `theta_kurtosis.py`. 2014747: 4,5-diazafluoren-9-one coordinato al Cu
+#: sopra la stessa molecola di solvente (θ = 12,2°); 2210998: due nuclei C26H16FN3O, θ = 0 per simmetria; 4032966: due
+#: benzeni di due pillar[5]areni, θ = 0 per simmetria. Sostituisce la coppia acido glutarico/piridina di 7212873, che
+#: dopo la voce 70 (ripiego solo sp²/sp) non è più una coppia π.
+_FLUORENONE_A = ("C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10", "C11", "N1", "N2")
+_FLUORENONE_B = ("C12", "C13", "C14", "C15", "C16", "C17", "C18", "C19", "C20", "C21", "C22", "N3", "N4")
+_PYRIDOQ = ("C10A", "C3", "C3A", "C4", "C4A", "C5", "C5A", "C6", "C7", "C8", "C9", "C9A", "C9B", "N1", "N10", "N2")
+_BENZENE = ("C29", "C30", "C31", "C32", "C33", "C34")
+CONVERGE = [("2014747", _FLUORENONE_A, _FLUORENONE_B, 3.742),
+            ("2210998", _PYRIDOQ, _PYRIDOQ, 5.455),
+            ("4032966", _BENZENE, _BENZENE, 3.852)]
+
+
+def pick_pair(an, frag_a, frag_b, cg: float, tol: float = 0.005):
+    """La coppia π-stack intermolecolare i cui frammenti hanno queste etichette del CIF (in un ordine o nell'altro) e
+    il cui Cg···Cg dista meno di `tol` da `cg`. Deve essercene esattamente una: altrimenti è un errore, non un ripiego
+    silenzioso (la stessa regola di `paper/scripts/mc_data.pick_pair`)."""
+    want = sorted([tuple(sorted(frag_a)), tuple(sorted(frag_b))])
+    hits = []
+    s = an.structure
+    for p in an.pairs:
+        if p.intramolecular:
+            continue
+        la = tuple(sorted(s.molecules[p.a].labels[i] for i in an.fragments[p.a][p.fa].atoms))
+        lb = tuple(sorted(s.molecules[p.b].labels[i] for i in an.fragments[p.b][p.fb].atoms))
+        if sorted([la, lb]) == want and abs(p.centroid_distance - cg) < tol:
+            hits.append(p)
+    if len(hits) != 1:
+        raise RuntimeError(f"{len(hits)} coppie corrispondono a {frag_a} / {frag_b} con Cg···Cg {cg} Å")
+    if hits[0].kind != "stack":
+        raise RuntimeError(f"la coppia {hits[0].index} è {hits[0].kind}, non un π-stack")
+    return hits[0]
 
 
 def check_converge(ns=(50, 100, 200, 500, 1000), seeds: int = 5) -> None:
     print("\n== σ in funzione di N (media e dispersione relativa su", seeds, "semi) ==")
-    for stem, kind in CONVERGE:
+    for stem, frag_a, frag_b, cg in CONVERGE:
         text = (HERE / "cod_cache" / f"{stem}.cif").read_text(encoding="utf-8", errors="replace")
         an = analyse_text(text, stem, Limits())
-        p = next(q for q in an.pairs if q.kind == kind and not q.intramolecular)
+        p = pick_pair(an, frag_a, frag_b, cg)
         t0 = time.time()
         print(f"  {stem}, coppia {p.index} ({p.kind}, interplanare {p.interplanar:.3f} Å, angolo {p.dihedral:.2f}°), "
               f"{len(an.pairs)} coppie nella struttura")

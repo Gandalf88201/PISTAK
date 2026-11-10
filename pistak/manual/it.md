@@ -39,7 +39,12 @@ Il manuale è anche nella finestra: **Aiuto ▸ Manuale** (F1). Le figure usano 
 `ring_rms`) e li unisce in sistemi condensati. Ogni sistema planare è un *frammento π*: π1 è il più grande (il nucleo
 π «classico»), π2, π3… gli altri, se hanno almeno `min_fragment_atoms` atomi. Di ogni frammento si calcolano il
 baricentro (Cg), il piano medio con la sua normale **n** e l'*asse lungo* **L**, la direzione in cui il frammento è
-più esteso (oppure quella definita da due atomi, vedi [Asse lungo](#9-convenzioni-dellanalisi)).
+più esteso (oppure quella definita da due atomi, vedi [Asse lungo](#9-convenzioni-dellanalisi)). Una molecola senza
+anelli planari diventa un frammento solo se il suo scheletro di atomi pesanti (almeno quattro) è planare
+(`molecule_rms`), non lineare e sp²/sp: nessun atomo può avere quattro vicini legati o più, idrogeni compresi.
+Nitrato, carbonato, guanidinio o urea vanno bene; una catena sp³ planare (1,2-dicloroetano, pentano, etilendiammina)
+no, e nemmeno una molecola con un metile (acetone, DMF). Il controllo ha bisogno degli idrogeni: in un CIF senza H un
+CH₂ sembra bicoordinato.
 
 **Coppia.** Due frammenti di molecole vicine (atomi pesanti a meno di `contact_cutoff`, 4,5 Å per impostazione),
 la seconda eventualmente traslata in un'altra cella: la traslazione si scrive come `[1 0 0]`, `[0 -1 0]`…
@@ -359,8 +364,12 @@ di un biarile o due anelli chelati attorno allo stesso metallo. Vale lo stesso p
 stesso atomo (*bridged*: i due anelli del ferrocene o di un complesso bis(arene), legati al metallo e non tra loro).
 Queste coppie restano parallele o inclinate, con tutti i loro parametri, e nell'export JSON hanno `bonded` o `bridged`.
 
-Nelle strutture senza legami C–C o C–H (reti inorganiche, anche carburi, carbonati, cianuri) i frammenti π non si
-cercano (`pi_scope = "organic"`); con `pi_scope = "all"` si cercano comunque.
+Per impostazione (`pi_scope = "organic"`) i frammenti π si cercano solo nelle strutture con un legame C–C o C–H o con
+un anello planare (r.m.s. sotto `ring_rms`) fatto di soli non metalli, almeno uno dei quali B, C o N. L'anello tiene
+melammina, acido cianurico, cloruro cianurico, i loro sali e le borazine, che non hanno legami C–C o C–H; lascia fuori
+le reti inorganiche: anelli con un metallo (gli anelli Ta/V/C di un carburo, carbonati e nitrati chelanti, i quadrati
+M–C≡N–M dei cianuri), anelli senza B, C o N (silicati, fosfati e solfati ciclici, anelli di calcogeni) e «anelli» di
+alogeni dovuti a contatti. Con `pi_scope = "all"` si cercano in tutte le strutture.
 
 La sovrapposizione del criterio si misura, per impostazione predefinita, come area comune / area del frammento minore
 (`overlap_measure = "area"`, `min_overlap = 0.10`: almeno il 10% dell'area coperta). Il contorno di un frammento è
@@ -388,7 +397,7 @@ criterio), da `user.toml` o dal terminale.
 | `min_overlap` | 0,10 | sovrapposizione minima per una π-stack |
 | `fragment_merge` | fused | frammenti π: sistemi di anelli condensati, o anche sistemi coniugati complanari |
 | `max_axis_isotropy` | 0,9 | sopra, l'asse lungo automatico non è definito |
-| `pi_scope` | organic | dove si cercano i frammenti π: strutture con un legame C–C o C–H (organic) o tutte (all) |
+| `pi_scope` | organic | dove si cercano i frammenti π: strutture con un legame C–C o C–H o un anello planare di non metalli con B, C o N (organic) o tutte (all) |
 | `max_axis_twist` | 75° | sopra, L e W della coppia non sono definiti |
 | `max_slip` | 0 Å | slittamento massimo per una π-stack (0 = nessun limite) |
 | `ring_rms` | 0,10 Å | planarità massima di un anello |
@@ -513,9 +522,14 @@ sua σ viene dagli altri: lo dicono il Dettaglio, un avviso nel terminale e il c
 validi per parametro).
 
 Approssimazioni (le stesse dei programmi cristallografici senza matrice di covarianza): coordinate indipendenti,
-atomi senza s.u. fermi. Gli atomi su posizioni speciali si muovono solo entro la simmetria del sito (restano vincoli
-come x = y o z = 0). Un CIF senza nessuna s.u. sulle coordinate dà l'avviso `noSU` (G); gli atomi dei frammenti π
-senza s.u. (gruppi rigidi, disordine vincolato) danno `fragmentNoSU` (C), perché la loro σ sarebbe zero in silenzio. Una σ grande sugli slittamenti L e W di un nucleo quasi
+atomi senza s.u. fermi. Un atomo su una posizione speciale riceve una deviata per ogni parametro libero, con la s.u.
+di quel parametro, e i vincoli del sito danno le altre coordinate: per (x, x, z) y si muove con x, per (x, 2x, z) del
+doppio, e una coordinata fissata dalla simmetria (z = 0 su uno specchio) resta ferma. Un CIF senza nessuna s.u. sulle coordinate dà l'avviso `noSU` (G); gli atomi dei frammenti π
+senza s.u. (gruppi rigidi, disordine vincolato) danno `fragmentNoSU` (C), perché la loro σ sarebbe zero in silenzio. I
+parametri di cella seguono la stessa regola: si estraggono solo quelli liberi (in una cella tetragonale o esagonale b
+si muove con a, un angolo fisso di 90° o 120° resta fermo), con i vincoli ricavati dalle operazioni di simmetria (la
+metrica deve soddisfare G = RᵀGR); se la cella del CIF non è invariante per le sue operazioni i sei parametri si
+estraggono indipendenti e lo dice l'avviso `cellConstraints` (G). Una σ grande sugli slittamenti L e W di un nucleo quasi
 isotropo dice che l'asse lungo non è definito: conviene fissarlo con due atomi.
 
 ## 12. Confronto e statistiche su più strutture
@@ -811,7 +825,7 @@ altre viste delle coppie compare il motivo, con i numeri (lo ripetono la cima di
   `ring_rms`) e hanno carboni con quattro legami, quindi niente elettroni π. È il caso di molti prodotti naturali e
   zuccheri: PISTAK non ha nulla da misurare, ed è giusto così;
 * *anelli insaturi o quasi planari*: forse aromatici distorti; alza `ring_rms` (e se serve `molecule_rms`);
-* *nessun anello* e molecola non planare; *rete di legami estesa senza anelli* (solido inorganico: nessun frammento π);
+* *nessun anello* e molecola non planare o sp³; *rete di legami estesa senza anelli* (solido inorganico: nessun frammento π);
 * *nuclei π troppo lontani*: ci sono, ma nessuna coppia entro `contact_cutoff`.
 
 In ogni caso restano disponibili **Dettaglio ▸ Struttura, Geometria e Controlli** e i comandi `check` e `geom`.

@@ -109,11 +109,13 @@ class Limits:
     fragment_merge: str = field(default="fused", metadata={"label": "Frammenti π", "choices": {
         "fused": "sistemi di anelli condensati (che condividono un legame)",
         "conjugated": "anche sistemi complanari collegati da legami o atomi sp/sp² (biarili, porfirine)"}})
-    #: Strutture senza legami C–C o C–H (reti inorganiche, carburi, cianuri metallici): per impostazione nessun frammento
-    #: π, perché i loro anelli planari non sono sistemi π e la loro unità ripetuta dipende dalla cella (revisione 2).
+    #: Strutture inorganiche (reti, carburi, carbonati, cianuri metallici): per impostazione nessun frammento π, perché i
+    #: loro anelli planari non sono sistemi π e la loro unità ripetuta dipende dalla cella (revisione 2). «organic»: un
+    #: legame C–C o C–H, oppure un anello planare di soli non metalli con B, C o N (melammina, acido cianurico,
+    #: borazine: revisione 3, N1; `analysis.in_pi_scope`).
     pi_scope: str = field(default="organic", metadata={"label": "Strutture in cui cercare frammenti π", "choices": {
-        "organic": "solo strutture con legami C–C o C–H",
-        "all": "tutte, anche senza legami C–C o C–H"}})
+        "organic": "con legami C–C o C–H o un anello planare di non metalli con B, C o N",
+        "all": "tutte, anche le inorganiche"}})
     long_axis_atoms: str = field(default="", metadata={"label": "Asse lungo da due atomi (etichette, es. C1,C9; vuoto = automatico)", "free": True})
     #: Sopra questa isotropia ((λ2/λ3)^½ nel piano, la radice del rapporto degli autovalori) l'asse lungo automatico non è definito (benzene, coronene, porfirine:
     #: un asse Cn con n ≥ 3 rende isotropa la dispersione nel piano) e gli slittamenti L/W valgono NaN.

@@ -24,7 +24,7 @@ pair_mode = "canonical"    # canonical: una coppia per contatto, equivalenza dal
 disorder = "major"         # major: componente con occupanza maggiore | first: gruppo 1 | all: tutto | 2, 3…: quel gruppo
 fragments = "all"          # all: tutti i sistemi di anelli planari di ogni molecola | largest: solo il più grande (sito)
 min_fragment_atoms = 5     # atomi minimi di un frammento π secondario (il principale si tiene sempre)
-pi_scope = "organic"       # organic: frammenti π solo in strutture con legami C–C o C–H | all: in tutte
+pi_scope = "organic"       # organic: frammenti π se c'è un legame C–C o C–H o un anello planare di non metalli con B, C o N | all: in tutte
 fragment_merge = "fused"   # fused: anelli condensati | conjugated: anche sistemi complanari collegati (biarili, porfirine)
 long_axis_atoms = ""       # asse lungo da due atomi, per etichetta ("C1,C9"); vuoto = direzione di massima estensione
 max_axis_isotropy = 0.9    # oltre questa isotropia del nucleo l'asse lungo automatico non è definito: slittamenti L/W = NaN

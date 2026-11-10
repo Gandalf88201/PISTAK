@@ -1,0 +1,77 @@
+{
+ "alerts": [
+  [
+   "B",
+   "noHydrogens",
+   {}
+  ],
+  [
+   "C",
+   "partialOccupancy",
+   {
+    "atoms": "C1, C2, Ta1, Ta2, V1, V2",
+    "n": 6
+   }
+  ],
+  [
+   "G",
+   "addsymDisorder",
+   {
+    "n": 27
+   }
+  ],
+  [
+   "G",
+   "noRefinement",
+   {}
+  ],
+  [
+   "G",
+   "noSU",
+   {}
+  ]
+ ],
+ "cell_atoms": 27,
+ "geometry": {
+  "contacts": [],
+  "counts": {
+   "angle": 58,
+   "bond": 13,
+   "torsion": 186
+  }
+ },
+ "molecules": [
+  {
+   "atoms": 27,
+   "bonds": 66,
+   "centroid": [
+    0.3383333333,
+    2.148705252,
+    14.13611111
+   ],
+   "core": null,
+   "extended": true,
+   "formula": "C9Ta9V9"
+  }
+ ],
+ "pairs": [],
+ "skipped_disorder": 0,
+ "space_group": "R -3 m :H",
+ "stacks": [],
+ "structure": {
+  "alerts_a": 0.0,
+  "alerts_b": 1.0,
+  "alerts_c": 1.0,
+  "density_calc": 12.42710128,
+  "density_cif": null,
+  "goof": null,
+  "r1": null,
+  "rho_max": null,
+  "rho_min": null,
+  "temperature": null,
+  "volume": 175.1301385,
+  "wr2": null,
+  "z": 3.0,
+  "z_prime": 0.08333333333
+ }
+}

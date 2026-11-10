@@ -166,13 +166,15 @@ def test_metallocene_rings_are_bridged_not_stacked():
 
 
 def test_structures_without_organic_bonds_have_no_fragments():
-    """No C–C or C–H bond: no π fragment by default; pi_scope = 'all' restores the search (and Limits.site())."""
-    from pistak.core.analysis import has_organic_bonds
+    """No C–C or C–H bond and no planar non-metal ring with B, C or N (here a planar Si₃O₃ ring, as in a
+    cyclosilicate): no π fragment by default; pi_scope = 'all' restores the search (and Limits.site()). A B₃N₃ ring
+    (borazine type) is in scope since round 3 (N1): see `test_triazines_and_borazines_are_in_scope`."""
+    from pistak.core.analysis import has_organic_bonds, in_pi_scope
 
     text = """data_k
-_cell_length_a 5
-_cell_length_b 5
-_cell_length_c 5
+_cell_length_a 7
+_cell_length_b 7
+_cell_length_c 7
 _cell_angle_alpha 90
 _cell_angle_beta 90
 _cell_angle_gamma 90
@@ -184,14 +186,15 @@ _atom_site_fract_x
 _atom_site_fract_y
 _atom_site_fract_z
 """
-    # a planar B3N3 ring (borazine without H): planar ring, no carbon
+    # a planar Si3O3 ring (Si–O 1.64 Å, cell edge 7 Å: radius 1.64 Å = 0.2343 in fractions): planar ring, no B, C or N
     import math as _m
     for k in range(6):
-        el = "B" if k % 2 == 0 else "N"
-        text += f"{el}{k + 1} {el} {0.5 + 0.287 * _m.cos(_m.pi * k / 3):.5f} {0.5 + 0.287 * _m.sin(_m.pi * k / 3):.5f} 0.5\n"
-    a = api.analyse_text(text, "bn", Limits())
-    assert not has_organic_bonds(a.structure) and all(not f for f in a.fragments)
-    b = api.analyse_text(text, "bn", Limits(pi_scope="all"))
+        el = "Si" if k % 2 == 0 else "O"
+        text += f"{el}{k + 1} {el} {0.5 + 0.2343 * _m.cos(_m.pi * k / 3):.5f} {0.5 + 0.2343 * _m.sin(_m.pi * k / 3):.5f} 0.5\n"
+    a = api.analyse_text(text, "sio", Limits())
+    assert not has_organic_bonds(a.structure) and not in_pi_scope(a.structure, a.limits)
+    assert all(not f for f in a.fragments)
+    b = api.analyse_text(text, "sio", Limits(pi_scope="all"))
     assert any(f for f in b.fragments)
 
 
