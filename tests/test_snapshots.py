@@ -37,6 +37,11 @@ REL_TOL, ABS_TOL = 1e-7, 1e-6
 
 
 MODES = {"site": Limits.site, "canonical": Limits}
+#: Casi esclusi da una modalità, con il motivo (registro, voce 72).
+#: 1538535 (carburo Ta/V/C, R-3m, a = 3,045 Å): con Limits.site() (coppie contatto per contatto, pi_scope "all") dà
+#: 6 coppie su macOS e 7 su Linux; le coppie cadono esattamente su traslazioni del reticolo (Cg···Cg = a, 2a) e un
+#: contatto finisce dall'una o dall'altra parte di un pareggio. La modalità predefinita è identica sulle due piattaforme.
+EXCLUDED = {("site", "1538535.cif")}
 
 
 def _cases() -> list[tuple[str, Path, Path, str]]:
@@ -46,7 +51,7 @@ def _cases() -> list[tuple[str, Path, Path, str]]:
     if extra:
         cifs += [("local/", p) for p in sorted(Path(extra).expanduser().glob("*.cif")) if not p.name.startswith(".")]
     return [(f"{where}{mode}/{p.name}", p, SNAP_DIR / f"{where}{mode}" / f"{p.stem}.json", mode)
-            for mode in MODES for where, p in cifs]
+            for mode in MODES for where, p in cifs if (mode, p.name) not in EXCLUDED]
 
 
 def _num(x) -> float | None:
