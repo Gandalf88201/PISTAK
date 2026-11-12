@@ -50,7 +50,7 @@ def _recut(s, limits, rng):
         n = len(m)
         parent = list(range(n))
 
-        def find(x):
+        def find(x, parent=parent):
             while parent[x] != x:
                 parent[x] = parent[parent[x]]
                 x = parent[x]

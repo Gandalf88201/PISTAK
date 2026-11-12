@@ -301,7 +301,7 @@ def in_lattice(basis: np.ndarray, t) -> bool:
     return not any(v)
 
 
-def same_network(s: "Structure", a: int, b: int, shift) -> bool:
+def same_network(s: Structure, a: int, b: int, shift) -> bool:
     """Vero se la molecola `a` (cella 0) e la molecola `b` traslata di `shift` sono lo stesso insieme di atomi legati:
     la stessa molecola discreta, o la stessa rete estesa (catena, strato, rete 3D). Non dipende da come è stata
     tagliata l'unità ripetuta di una rete (revisione 5, N1): due unità traslate di una catena lungo a sono la stessa

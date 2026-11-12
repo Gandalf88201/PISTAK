@@ -368,8 +368,8 @@ def axis_twist(ca: Core, cb: Core, n: np.ndarray) -> float:
     """Angolo (0–90°) tra gli assi lunghi dei due frammenti proiettati sul piano medio di normale `n`."""
     la = ca.long - n * np.dot(ca.long, n)
     lb = cb.long - n * np.dot(cb.long, n)
-    c = abs(float(np.dot(la, lb))) / (float(np.linalg.norm(la) * np.linalg.norm(lb)) or 1.0)
-    return float(np.degrees(np.arccos(min(1.0, c))))
+    # atan2 e non arccos: vicino a 0° l'arccos perde precisione (rumore di 1e-6° diverso tra processori)
+    return float(np.degrees(np.arctan2(float(np.linalg.norm(np.cross(la, lb))), abs(float(np.dot(la, lb))))))
 
 
 def axis_defined(core: Core, limits: Limits) -> bool:

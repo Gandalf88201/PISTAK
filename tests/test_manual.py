@@ -70,7 +70,7 @@ def test_library_example(lang, tmp_path, monkeypatch, capsys):
     md = text(lang)
     section = md[md.index("## 18."):md.index("## 19.")]
     code = re.findall(r"```python\n(.*?)```", section, re.S)[0]
-    code = code.replace('"examples/', f'"{ROOT}/examples/').replace("samples=200", "samples=20")
+    code = code.replace('"examples/', f'"{ROOT.as_posix()}/examples/').replace("samples=200", "samples=20")
     monkeypatch.chdir(tmp_path)  # export.write_json writes a.json here
     exec(compile(code, f"manual-{lang}", "exec"), {})
     out = capsys.readouterr().out

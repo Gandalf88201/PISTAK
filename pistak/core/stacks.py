@@ -121,7 +121,7 @@ def find_stacks(s: Structure, edges: list[tuple]) -> list[StackColumn]:
         while k < len(order):
             u = order[k]
             k += 1
-            for w, sh, p, e in adj.get(u, []):
+            for w, sh, _p, e in adj.get(u, []):
                 comp_edges.append(e)
                 want = (pos[u][0] + sh[0], pos[u][1] + sh[1], pos[u][2] + sh[2])
                 if w not in pos:
