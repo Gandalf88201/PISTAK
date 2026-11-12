@@ -110,7 +110,7 @@ unchanged), *deferred* (left to the author), *open*.
 | 71 | Monte Carlo | cell parameters: only the free ones are drawn, constraints derived from the symmetry operations (G = RᵀGR); alert `cellConstraints` when the CIF cell is not invariant. COD sample: all 200 cells consistent (no alert); cell deviates change in 8 structures, only 7102228 has π-stacked pairs (σ changes ≤ 0.8 %); medians over the 99 π-stacked pairs unchanged | corrected |
 | 72 | reproducibility | compatibility-mode snapshot of the carbide COD 1538535 (R-3m): 6 pairs on macOS, 7 on Linux (contacts exactly on lattice translations, a tie decided by the last binary digit); that snapshot is excluded, the default-mode snapshot is kept and identical on both platforms; root cause still open | open (worked around) |
 
-## Round 4 of the paper review (10–11 November 2026): items 73–87 (v1.3.0, not yet released)
+## Rounds 4 and 5 of the paper review (10–12 November 2026): items 73–90 (v1.3.0, 12 November 2026)
 
 - **73** Fallback long axis for nearly isotropic fragments (single rings): long axis of the whole molecule projected
   onto the fragment plane (`axis_fallback = "molecule"`, default), of the fragment with its substituents, or none.
@@ -156,3 +156,11 @@ unchanged), *deferred* (left to the author), *open*.
   fragment the atom is listed in. A random re-cut of the repeat units of the 98 network structures of the sample
   (three cuts each; `paper/scripts/recut_invariance.py`) changed 22 of them with the previous rules (12 cuts with a
   different motif rank) and none now. Test: `tests/test_round5.py`.
+- **89** (12 November 2026) The twist between the long axes is computed with atan2 instead of arccos, which near 0°
+  gave a noise of 1.2 × 10⁻⁶° that differed between x86 and arm64 (a snapshot failed on macOS arm64). No snapshot
+  changes and the independent check gives the same largest differences. Also: the manual-example test passes the path
+  in posix form (on Windows "D:\a\…" became a control character), and three ruff style fixes.
+- **90** (12 November 2026) The comparison window runs its batch in a Python `threading.Thread` instead of
+  QThreadPool, and its progress and result signals use explicit queued connections to methods of the window. The GUI
+  job of the CI on Linux had crashed (segmentation fault) in three of four runs while the pool of processes was being
+  created; it then passed twice in two runs. `run_batch` uses the "spawn" start method on every system.

@@ -628,7 +628,7 @@ anelli (`validation/platon_polimeri/`, con `LEGGIMI.md` e il confronto completo 
 - Test sintetici: catena di poli(p-fenilene) con stack noto a 3,6 Å (trovato, segnato polimero, non esportato) e asse
   2₁ lungo la catena (le due coppie equivalenti diventano una ×2 solo con le immagini dei frammenti).
 
-## Revisione del paper, round 4 (10–11 novembre 2026): voci 73–87 (v1.3.0, non ancora rilasciata)
+## Revisione del paper, round 4 e 5 (10–12 novembre 2026): voci 73–90 (v1.3.0, 12 novembre 2026)
 
 Rapporto: `PISTAK_review_round4.md` (voci G, M, E, T, F, S, L, P). Qui le modifiche al codice; test in
 `tests/test_round4.py` (25 test). Suite completa: 507 superati, 5 saltati; ruff e `i18n_check` puliti.
@@ -719,6 +719,18 @@ Rapporto: `PISTAK_review_round4.md` (voci G, M, E, T, F, S, L, P). Qui le modifi
   10 883 (la differenza è tutta nelle strutture con reti); motivi 204/103/13/2 (aggregati finiti, colonne,
   strati, reti 3D) invece di 128/96/23/10; bonded 362, bridged 712, clamped 4. Monte Carlo ripetuto sulle 25
   strutture con rete e coppia π-stacked: conteggi invariati; 265/271 coppie stabili in tutti i 500 campioni.
+- **89 Torsione tra gli assi con atan2** (12 novembre 2026, primo passaggio della CI su Windows e macOS). `axis_twist`
+  usava l'arccos del coseno: vicino a 0° l'arccos perde precisione e dava un rumore di 1,2·10⁻⁶° diverso tra x86 e
+  arm64 (istantanea di 7123350 su macOS arm64). Ora atan2(|L_A × L_B|, |L_A · L_B|). Nessuna istantanea cambia; il
+  confronto indipendente (`paper/scripts/geometry_oracle.py`) dà le stesse differenze massime. Nella stessa revisione:
+  il test dell'esempio del manuale inserisce il percorso in forma posix (su Windows «D:\a\…» diventava un carattere di
+  controllo) e tre correzioni di stile segnalate da ruff.
+- **90 Finestra di confronto: analisi in un thread di Python** (12 novembre 2026). La CI su Linux chiudeva
+  `test_comparison_window_all_in_english` con un segmentation fault, in tre esecuzioni su quattro, mentre il lavoro
+  in QThreadPool creava il ProcessPoolExecutor. Il lavoro gira ora in un `threading.Thread`; avanzamento e risultati
+  arrivano alla finestra con connessioni esplicitamente in coda verso metodi della finestra (l'avanzamento andava a una
+  lambda senza oggetto di contesto, che toccava i widget). `run_batch` usa il contesto «spawn» su ogni sistema, come
+  già su macOS e Windows. Dopo la modifica il lavoro gui della CI è passato due volte su due.
 
 Snapshot: quelli del modo del sito differiscono solo per le chiavi nuove (valori identici); quelli predefiniti sono
 stati rigenerati (assi di ripiego, limite di rotazione, classi complete). Nuovi CIF di prova: 7239588, 7123350, 2108505, 7044129.
