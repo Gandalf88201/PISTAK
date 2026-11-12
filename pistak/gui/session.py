@@ -12,6 +12,7 @@ si fondono nell'ultima. Dopo una rianalisi per nuove soglie selezione e filtri r
 """
 from __future__ import annotations
 
+import gc
 from collections.abc import Callable
 from pathlib import Path
 
@@ -183,6 +184,11 @@ class Session(QObject):
 
         task.signals.done.connect(finish)
         task.signals.failed.connect(fail)
+        # Prima di avviare un thread: raccogliere qui, nel thread principale, i cicli di oggetti già irraggiungibili.
+        # Se il ciclo contiene una finestra (per esempio quella sostituita al cambio di lingua o di tema) e il garbage
+        # collector lo raccoglie nel thread secondario, PySide rimanda la distruzione al thread principale e su Linux
+        # il programma si chiudeva (segmentation fault in runDeletionInMainThread; registro, voce 91).
+        gc.collect()
         self._pool.start(task)
 
     def _set_busy(self, busy: bool, label: str) -> None:
