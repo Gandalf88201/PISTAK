@@ -15,7 +15,7 @@ Esempio d'uso come libreria::
     for pair in result.pairs:
         print(pair.kind, pair.interplanar, pair.long_slip, pair.lat_slip, pair.get("beta"))
 """
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 
 #: Caricati alla prima richiesta (PEP 562): il nucleo porta con sé scipy, e la finestra grafica deve potersi
 #: mostrare prima di averlo importato.

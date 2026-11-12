@@ -628,7 +628,7 @@ anelli (`validation/platon_polimeri/`, con `LEGGIMI.md` e il confronto completo 
 - Test sintetici: catena di poli(p-fenilene) con stack noto a 3,6 Å (trovato, segnato polimero, non esportato) e asse
   2₁ lungo la catena (le due coppie equivalenti diventano una ×2 solo con le immagini dei frammenti).
 
-## Revisione del paper, round 4 e 5 (10–12 novembre 2026): voci 73–90 (v1.3.0, 12 novembre 2026)
+## Revisione del paper, round 4 e 5 (10–12 novembre 2026): voci 73–91 (v1.3.0 e v1.3.1, 12 novembre 2026)
 
 Rapporto: `PISTAK_review_round4.md` (voci G, M, E, T, F, S, L, P). Qui le modifiche al codice; test in
 `tests/test_round4.py` (25 test). Suite completa: 507 superati, 5 saltati; ruff e `i18n_check` puliti.
@@ -731,6 +731,15 @@ Rapporto: `PISTAK_review_round4.md` (voci G, M, E, T, F, S, L, P). Qui le modifi
   arrivano alla finestra con connessioni esplicitamente in coda verso metodi della finestra (l'avanzamento andava a una
   lambda senza oggetto di contesto, che toccava i widget). `run_batch` usa il contesto «spawn» su ogni sistema, come
   già su macOS e Windows. Dopo la modifica il lavoro gui della CI è passato due volte su due.
+- **91 Finestre raccolte nel thread principale** (12 novembre 2026, v1.3.1). La voce 90 non bastava: sulla v1.3.0 il
+  lavoro gui della CI si chiudeva ancora con un segmentation fault. Sotto gdb (ramo `ci-gui-crash`, 12 esecuzioni dei
+  test dell'interfaccia, 2 chiuse) l'errore è in `Shiboken::BindingManager::runDeletionInMainThread`, chiamato come
+  pending call nel thread principale. Una finestra lasciata in un ciclo di riferimenti (dal test precedente; nel
+  programma, quella sostituita al cambio di lingua o di tema) veniva raccolta dal garbage collector nel thread
+  secondario della finestra di confronto; PySide ne rimandava la distruzione al thread principale, dove il programma si
+  chiudeva. Ora `gc.collect()` nel thread principale prima di avviare il thread della finestra di confronto e i lavori
+  della sessione; nei test (`tests/conftest.py`) dopo ogni test con finestre. Con la correzione 30 esecuzioni su 30
+  sotto gdb senza errori.
 
 Snapshot: quelli del modo del sito differiscono solo per le chiavi nuove (valori identici); quelli predefiniti sono
 stati rigenerati (assi di ripiego, limite di rotazione, classi complete). Nuovi CIF di prova: 7239588, 7123350, 2108505, 7044129.

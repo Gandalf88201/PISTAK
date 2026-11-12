@@ -7,6 +7,7 @@ chiedono alla finestra principale di aprire quel file e quella coppia.
 """
 from __future__ import annotations
 
+import gc
 import math
 import threading
 from pathlib import Path
@@ -182,6 +183,11 @@ class CollectionWindow(QMainWindow):
         queued = Qt.ConnectionType.QueuedConnection
         self._job.signals.progress.connect(self._progress, queued)
         self._job.signals.done.connect(self._finished, queued)
+        # Prima di avviare un thread: raccogliere qui, nel thread principale, i cicli di oggetti già irraggiungibili.
+        # Se il ciclo contiene una finestra (per esempio quella sostituita al cambio di lingua o di tema) e il garbage
+        # collector lo raccoglie nel thread secondario, PySide rimanda la distruzione al thread principale e su Linux
+        # il programma si chiudeva (segmentation fault in runDeletionInMainThread; registro, voce 91).
+        gc.collect()
         self._job.start()
 
     def _progress(self, i: int, n: int, name: str) -> None:

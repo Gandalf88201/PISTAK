@@ -1,3 +1,4 @@
+import gc
 import os
 import sys
 import tempfile
@@ -33,3 +34,12 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.gui)
         if module in MODULE_MARKS:
             item.add_marker(getattr(pytest.mark, MODULE_MARKS[module]))
+
+
+@pytest.fixture(autouse=True)
+def _collect_after_gui_test(request):
+    """Dopo ogni test con finestre, raccoglie i cicli irraggiungibili nel thread principale: le finestre lasciate dal
+    test non devono essere distrutte dal garbage collector in un thread secondario del test seguente (registro, voce 91)."""
+    yield
+    if request.node.get_closest_marker("gui") is not None:
+        gc.collect()

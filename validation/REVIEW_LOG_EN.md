@@ -110,7 +110,7 @@ unchanged), *deferred* (left to the author), *open*.
 | 71 | Monte Carlo | cell parameters: only the free ones are drawn, constraints derived from the symmetry operations (G = RᵀGR); alert `cellConstraints` when the CIF cell is not invariant. COD sample: all 200 cells consistent (no alert); cell deviates change in 8 structures, only 7102228 has π-stacked pairs (σ changes ≤ 0.8 %); medians over the 99 π-stacked pairs unchanged | corrected |
 | 72 | reproducibility | compatibility-mode snapshot of the carbide COD 1538535 (R-3m): 6 pairs on macOS, 7 on Linux (contacts exactly on lattice translations, a tie decided by the last binary digit); that snapshot is excluded, the default-mode snapshot is kept and identical on both platforms; root cause still open | open (worked around) |
 
-## Rounds 4 and 5 of the paper review (10–12 November 2026): items 73–90 (v1.3.0, 12 November 2026)
+## Rounds 4 and 5 of the paper review (10–12 November 2026): items 73–91 (v1.3.0 and v1.3.1, 12 November 2026)
 
 - **73** Fallback long axis for nearly isotropic fragments (single rings): long axis of the whole molecule projected
   onto the fragment plane (`axis_fallback = "molecule"`, default), of the fragment with its substituents, or none.
@@ -164,3 +164,10 @@ unchanged), *deferred* (left to the author), *open*.
   QThreadPool, and its progress and result signals use explicit queued connections to methods of the window. The GUI
   job of the CI on Linux had crashed (segmentation fault) in three of four runs while the pool of processes was being
   created; it then passed twice in two runs. `run_batch` uses the "spawn" start method on every system.
+- **91** (12 November 2026, v1.3.1) Item 90 was not enough: the GUI job still crashed on v1.3.0. Under gdb (branch
+  `ci-gui-crash`; 2 of 12 runs crashed) the fault is in `Shiboken::BindingManager::runDeletionInMainThread`, run as a
+  pending call in the main thread. A window left in a reference cycle (by the previous test; in the program, the one
+  replaced on a change of language or theme) was garbage-collected in the comparison window's worker thread, and PySide
+  deferred its destruction to the main thread, where the program crashed. The main thread now runs `gc.collect()`
+  before starting the comparison window's thread and the session's jobs, and the tests do so after every GUI test.
+  With the fix, 30 runs of 30 under gdb pass.
