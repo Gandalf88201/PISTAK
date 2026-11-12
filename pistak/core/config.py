@@ -93,6 +93,11 @@ class Limits:
         "area": "area comune / area del nucleo minore"}})
     min_overlap: float = field(default=0.10, metadata={"label": "Sovrapposizione minima per uno stack (sopra questo valore)", "min": 0, "max": 1, "step": 0.05})
     max_slip: float = field(default=0.0, metadata={"label": "Slittamento massimo per uno stack (Å, 0 = nessun limite)", "min": 0, "max": 20, "step": 0.1})
+    #: Sotto questa distanza interplanare due frammenti della stessa molecola o della stessa rete estesa non sono un
+    #: π-stack ma una coppia «vincolata» (`Pair.clamped`): la separazione è imposta dall'impalcatura covalente o di
+    #: coordinazione che li unisce, non da un contatto tra sistemi π (i due chelati di COD 7239588 a 3,10 Å: revisione 4,
+    #: M6.4). Tra molecole diverse non vale: lì distanze così corte sono contatti veri (TCNQ, radicali). 0 = nessun limite.
+    min_interplanar: float = field(default=3.2, metadata={"label": "Distanza interplanare minima per uno stack nella stessa molecola o rete (Å, 0 = nessun limite)", "min": 0, "max": 4, "step": 0.05})
     # ---- coppie e disordine ------------------------------------------------------------------------------
     pair_mode: str = field(default="canonical", metadata={"label": "Coppie", "choices": {
         "canonical": "una per contatto, equivalenti per simmetria del gruppo",
@@ -116,12 +121,27 @@ class Limits:
     pi_scope: str = field(default="organic", metadata={"label": "Strutture in cui cercare frammenti π", "choices": {
         "organic": "con legami C–C o C–H o un anello planare di non metalli con B, C o N",
         "all": "tutte, anche le inorganiche"}})
+    #: Molecole planari senza anelli come frammenti π (nitrato, guanidinio, carbonato: scheletro sp²/sp planare,
+    #: `cores._sp2_skeleton`). Spento per impostazione dalla revisione 4: nel campione COD di 500 strutture dava due
+    #: «π-stack» nitrato–arene a 3,08 e 3,16 Å, contatti anione–π che non sono ciò che un lettore intende per π-stacking
+    #: (decisione dell'autore, 10 novembre 2026). Il modo del sito lo tiene acceso.
+    ringless_fragments: str = field(default="none", metadata={"label": "Molecole planari senza anelli come frammenti π", "choices": {
+        "none": "no: solo sistemi di anelli",
+        "planar": "sì: scheletri planari sp²/sp (nitrato, guanidinio)"}})
     long_axis_atoms: str = field(default="", metadata={"label": "Asse lungo da due atomi (etichette, es. C1,C9; vuoto = automatico)", "free": True})
     #: Sopra questa isotropia ((λ2/λ3)^½ nel piano, la radice del rapporto degli autovalori) l'asse lungo automatico non è definito (benzene, coronene, porfirine:
     #: un asse Cn con n ≥ 3 rende isotropa la dispersione nel piano) e gli slittamenti L/W valgono NaN.
     max_axis_isotropy: float = field(default=0.9, metadata={"label": "Isotropia massima per l'asse lungo automatico", "min": 0.5, "max": 1, "step": 0.01})
-    #: Sopra questo angolo tra gli assi lunghi proiettati la bisettrice salta di 90° per variazioni infinitesime: L/W NaN.
-    max_axis_twist: float = field(default=75.0, metadata={"label": "Angolo massimo tra gli assi lunghi per L/W (°)", "min": 0, "max": 90, "step": 1})
+    #: Ripiego per i frammenti quasi isotropi (un anello benzenico, una piridina): l'asse lungo di tutta la molecola o
+    #: del frammento con i suoi sostituenti, proiettato sul piano del frammento (`cores.fallback_axis`, revisione 4, M1.1).
+    axis_fallback: str = field(default="molecule", metadata={"label": "Asse lungo dei frammenti isotropi", "choices": {
+        "molecule": "asse lungo di tutta la molecola, proiettato sul piano del frammento",
+        "substituents": "asse del frammento con gli atomi legati ai suoi",
+        "none": "nessuno: slittamenti L/W non definiti"}})
+    #: Sopra questo angolo tra gli assi lunghi proiettati gli slittamenti nel sistema della coppia valgono NaN: la
+    #: bisettrice L dista metà di questo angolo da ciascun asse (15° al massimo con 30°), oltre non descrive più nessuna
+    #: delle due molecole; restano gli slittamenti nel sistema di ciascun frammento (revisione 4, M1.2–M1.3; era 75°).
+    max_axis_twist: float = field(default=30.0, metadata={"label": "Angolo massimo tra gli assi lunghi per L/W (°)", "min": 0, "max": 90, "step": 1})
     # ---- controlli rapidi --------------------------------------------------------------------------------
     contact_check: str = field(default="fixed", metadata={"label": "Controllo dei contatti corti", "choices": {
         "fixed": "soglie fisse (C···C sotto 3,0 Å, H···H sotto 1,8 Å)",
@@ -138,7 +158,9 @@ class Limits:
     def site(cls, **kw) -> Limits:
         """Le soglie e le convenzioni dell'analizzatore del sito (per i confronti di parità)."""
         return cls(**{"pair_mode": "site", "disorder": "first", "fragments": "largest", "contact_cutoff": 4.0,
-                      "overlap_measure": "atoms", "min_overlap": 0.0, "pi_scope": "all", **kw})
+                      "overlap_measure": "atoms", "min_overlap": 0.0, "pi_scope": "all", "axis_fallback": "none",
+                      "ringless_fragments": "planar",
+                      "min_interplanar": 0.0, **kw})
 
     @classmethod
     def from_dict(cls, data: dict, base: Limits | None = None) -> Limits:

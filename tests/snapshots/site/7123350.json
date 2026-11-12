@@ -1,0 +1,1692 @@
+{
+ "alerts": [
+  [
+   "C",
+   "partialOccupancy",
+   {
+    "atoms": "C22, C23, C24, C25, C26, C27 (+7)",
+    "n": 13
+   }
+  ],
+  [
+   "G",
+   "disorderSkipped",
+   {
+    "n": 13,
+    "policy": "first"
+   }
+  ]
+ ],
+ "cell_atoms": 512,
+ "geometry": {
+  "contacts": [
+   {
+    "atoms": [
+     "H9",
+     "C22"
+    ],
+    "codes": [
+     "",
+     "-x,-y+1,-z"
+    ],
+    "d": 2.600568135,
+    "vdw": 2.8
+   },
+   {
+    "atoms": [
+     "C13",
+     "F1"
+    ],
+    "codes": [
+     "",
+     "-x,-y+2,-z+1"
+    ],
+    "d": 2.995656852,
+    "vdw": 3.17
+   },
+   {
+    "atoms": [
+     "H21A",
+     "F3"
+    ],
+    "codes": [
+     "",
+     "x,-y+1,z-1/2"
+    ],
+    "d": 2.407277017,
+    "vdw": 2.57
+   },
+   {
+    "atoms": [
+     "H28",
+     "H28"
+    ],
+    "codes": [
+     "",
+     "-x+1/2,-y+3/2,-z"
+    ],
+    "d": 2.040617712,
+    "vdw": 2.2
+   },
+   {
+    "atoms": [
+     "O4",
+     "H30B"
+    ],
+    "codes": [
+     "",
+     "-x+1/2,-y+3/2,-z+1"
+    ],
+    "d": 2.504805525,
+    "vdw": 2.62
+   },
+   {
+    "atoms": [
+     "C28",
+     "C29"
+    ],
+    "codes": [
+     "",
+     "-x+1/2,-y+3/2,-z+1"
+    ],
+    "d": 3.306908573,
+    "vdw": 3.4
+   },
+   {
+    "atoms": [
+     "H30C",
+     "F3"
+    ],
+    "codes": [
+     "",
+     ""
+    ],
+    "d": 2.489420962,
+    "vdw": 2.57
+   },
+   {
+    "atoms": [
+     "H19",
+     "F2"
+    ],
+    "codes": [
+     "",
+     "-x,y,-z+3/2"
+    ],
+    "d": 2.497259515,
+    "vdw": 2.57
+   },
+   {
+    "atoms": [
+     "H2",
+     "C17"
+    ],
+    "codes": [
+     "",
+     "-x,-y+2,-z+1"
+    ],
+    "d": 2.728448543,
+    "vdw": 2.8
+   },
+   {
+    "atoms": [
+     "C21",
+     "F3"
+    ],
+    "codes": [
+     "",
+     "x,-y+1,z-1/2"
+    ],
+    "d": 3.112666245,
+    "vdw": 3.17
+   },
+   {
+    "atoms": [
+     "H16",
+     "O4"
+    ],
+    "codes": [
+     "",
+     "-x+1/2,y+1/2,-z+1/2"
+    ],
+    "d": 2.563693943,
+    "vdw": 2.62
+   },
+   {
+    "atoms": [
+     "H9",
+     "C23"
+    ],
+    "codes": [
+     "",
+     "-x,-y+1,-z"
+    ],
+    "d": 2.749091883,
+    "vdw": 2.8
+   },
+   {
+    "atoms": [
+     "C19",
+     "F2"
+    ],
+    "codes": [
+     "",
+     "-x,y,-z+3/2"
+    ],
+    "d": 3.126413047,
+    "vdw": 3.17
+   },
+   {
+    "atoms": [
+     "C9",
+     "C22"
+    ],
+    "codes": [
+     "",
+     "-x,-y+1,-z"
+    ],
+    "d": 3.37743349,
+    "vdw": 3.4
+   },
+   {
+    "atoms": [
+     "C1",
+     "F1"
+    ],
+    "codes": [
+     "",
+     "-x,-y+2,-z+1"
+    ],
+    "d": 3.165447627,
+    "vdw": 3.17
+   },
+   {
+    "atoms": [
+     "H13B",
+     "C19"
+    ],
+    "codes": [
+     "",
+     "-x,-y+2,-z+1"
+    ],
+    "d": 2.795960836,
+    "vdw": 2.8
+   }
+  ],
+  "counts": {
+   "angle": 118,
+   "bond": 68,
+   "contact": 16,
+   "torsion": 154
+  }
+ },
+ "molecules": [
+  {
+   "atoms": 109,
+   "bonds": 120,
+   "centroid": [
+    -0.3550798602,
+    8.870776595,
+    4.098120895
+   ],
+   "core": {
+    "atoms": [
+     0,
+     1,
+     3,
+     5,
+     6,
+     9,
+     10,
+     13,
+     15,
+     19,
+     21,
+     26,
+     30,
+     37,
+     42
+    ],
+    "centroid": [
+     -3.127761514,
+     8.846405828,
+     3.41064199
+    ],
+    "kind": "rings",
+    "long": [
+     -0.184230543,
+     0.8001295273,
+     0.5708343425
+    ],
+    "normal": [
+     -0.1454263622,
+     -0.596573345,
+     0.7892727141
+    ],
+    "rms": 0.02115393924
+   },
+   "extended": false,
+   "formula": "C56H40Cu1N4O8"
+  },
+  {
+   "atoms": 109,
+   "bonds": 120,
+   "centroid": [
+    13.33292014,
+    2.899876595,
+    4.098120895
+   ],
+   "core": {
+    "atoms": [
+     0,
+     1,
+     3,
+     5,
+     6,
+     9,
+     10,
+     13,
+     15,
+     19,
+     21,
+     26,
+     30,
+     37,
+     42
+    ],
+    "centroid": [
+     10.56023849,
+     2.875505828,
+     3.41064199
+    ],
+    "kind": "rings",
+    "long": [
+     -0.184230543,
+     0.8001295273,
+     0.5708343425
+    ],
+    "normal": [
+     -0.1454263622,
+     -0.596573345,
+     0.7892727141
+    ],
+    "rms": 0.02115393924
+   },
+   "extended": false,
+   "formula": "C56H40Cu1N4O8"
+  },
+  {
+   "atoms": 109,
+   "bonds": 120,
+   "centroid": [
+    -1.065239581,
+    3.071023405,
+    12.29436268
+   ],
+   "core": {
+    "atoms": [
+     0,
+     1,
+     3,
+     5,
+     6,
+     9,
+     10,
+     13,
+     15,
+     19,
+     21,
+     26,
+     30,
+     37,
+     42
+    ],
+    "centroid": [
+     1.707442073,
+     3.095394172,
+     12.98184159
+    ],
+    "kind": "rings",
+    "long": [
+     -0.184230543,
+     0.8001295273,
+     0.5708343425
+    ],
+    "normal": [
+     -0.1454263622,
+     -0.596573345,
+     0.7892727141
+    ],
+    "rms": 0.02115393924
+   },
+   "extended": false,
+   "formula": "C56H40Cu1N4O8"
+  },
+  {
+   "atoms": 109,
+   "bonds": 120,
+   "centroid": [
+    12.62276042,
+    9.041923405,
+    12.29436268
+   ],
+   "core": {
+    "atoms": [
+     0,
+     1,
+     3,
+     5,
+     6,
+     9,
+     10,
+     13,
+     15,
+     19,
+     21,
+     26,
+     30,
+     37,
+     42
+    ],
+    "centroid": [
+     15.39544207,
+     9.066294172,
+     12.98184159
+    ],
+    "kind": "rings",
+    "long": [
+     -0.184230543,
+     0.8001295273,
+     0.5708343425
+    ],
+    "normal": [
+     -0.1454263622,
+     -0.596573345,
+     0.7892727141
+    ],
+    "rms": 0.02115393924
+   },
+   "extended": false,
+   "formula": "C56H40Cu1N4O8"
+  },
+  {
+   "atoms": 6,
+   "bonds": 5,
+   "centroid": [
+    3.546934241,
+    8.57759591,
+    12.99049682
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C2H3N1"
+  },
+  {
+   "atoms": 6,
+   "bonds": 5,
+   "centroid": [
+    21.6985866,
+    8.57759591,
+    11.59822855
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C2H3N1"
+  },
+  {
+   "atoms": 6,
+   "bonds": 5,
+   "centroid": [
+    17.23493424,
+    2.60669591,
+    12.99049682
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C2H3N1"
+  },
+  {
+   "atoms": 6,
+   "bonds": 5,
+   "centroid": [
+    8.010586598,
+    2.60669591,
+    11.59822855
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C2H3N1"
+  },
+  {
+   "atoms": 6,
+   "bonds": 5,
+   "centroid": [
+    22.40874632,
+    3.36420409,
+    3.401986759
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C2H3N1"
+  },
+  {
+   "atoms": 6,
+   "bonds": 5,
+   "centroid": [
+    4.257093961,
+    3.36420409,
+    4.794255031
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C2H3N1"
+  },
+  {
+   "atoms": 6,
+   "bonds": 5,
+   "centroid": [
+    8.720746319,
+    9.33510409,
+    3.401986759
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C2H3N1"
+  },
+  {
+   "atoms": 6,
+   "bonds": 5,
+   "centroid": [
+    17.94509396,
+    9.33510409,
+    4.794255031
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "C2H3N1"
+  },
+  {
+   "atoms": 7,
+   "bonds": 6,
+   "centroid": [
+    -1.065239581,
+    8.90677447,
+    12.29436268
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "F6P1"
+  },
+  {
+   "atoms": 7,
+   "bonds": 6,
+   "centroid": [
+    12.62276042,
+    2.93587447,
+    12.29436268
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "F6P1"
+  },
+  {
+   "atoms": 7,
+   "bonds": 6,
+   "centroid": [
+    -0.3550798602,
+    3.03502553,
+    4.098120895
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "F6P1"
+  },
+  {
+   "atoms": 7,
+   "bonds": 6,
+   "centroid": [
+    13.33292014,
+    9.00592553,
+    4.098120895
+   ],
+   "core": null,
+   "extended": false,
+   "formula": "F6P1"
+  }
+ ],
+ "pairs": [
+  {
+   "a": 0,
+   "b": 1,
+   "count": 8,
+   "kind": "parallel",
+   "members": [
+    [
+     0,
+     1,
+     [
+      -1,
+      1,
+      0
+     ]
+    ],
+    [
+     0,
+     1,
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    [
+     1,
+     0,
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    [
+     1,
+     0,
+     [
+      1,
+      -1,
+      0
+     ]
+    ],
+    [
+     2,
+     3,
+     [
+      -1,
+      0,
+      0
+     ]
+    ],
+    [
+     2,
+     3,
+     [
+      0,
+      -1,
+      0
+     ]
+    ],
+    [
+     3,
+     2,
+     [
+      0,
+      1,
+      0
+     ]
+    ],
+    [
+     3,
+     2,
+     [
+      1,
+      0,
+      0
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.6981345647,
+    "axis_aspect_b": 0.6981345647,
+    "beta": 83.95950884,
+    "cc_contact": 4.410242163,
+    "centroid_distance": 14.93361948,
+    "contact": 3.49093235,
+    "core_contact": 10.19941146,
+    "core_rms_a": 0.02115393924,
+    "core_rms_b": 0.02115393924,
+    "core_size_a": 15.0,
+    "core_size_b": 15.0,
+    "count": 8.0,
+    "dihedral": 2.140976392e-14,
+    "fragment_a": 1.0,
+    "fragment_b": 1.0,
+    "gamma": 83.95950884,
+    "height_a_over_b": 1.57148374,
+    "height_b_over_a": 1.57148374,
+    "interplanar": 1.57148374,
+    "lat_slip": 12.93307811,
+    "lat_slip_a": null,
+    "lat_slip_b": null,
+    "lat_slip_signed": 12.93307811,
+    "local_interplanar": null,
+    "long_slip": 7.299241067,
+    "long_slip_a": null,
+    "long_slip_b": null,
+    "long_slip_signed": 7.299241067,
+    "mean_atom_height": 1.57148374,
+    "n_vdw_contacts": 0.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "per_molecule": 4.0,
+    "planes_cross": 0.0,
+    "slip": 14.85070469,
+    "slip_angle": 60.56024966,
+    "slip_direction": 60.56024966,
+    "twist": 0.0
+   },
+   "ring_pairs": [],
+   "shift": [
+    -1,
+    1,
+    0
+   ]
+  },
+  {
+   "a": 0,
+   "b": 2,
+   "count": 4,
+   "kind": "parallel",
+   "members": [
+    [
+     0,
+     2,
+     [
+      0,
+      0,
+      -1
+     ]
+    ],
+    [
+     1,
+     3,
+     [
+      0,
+      -1,
+      -1
+     ]
+    ],
+    [
+     2,
+     0,
+     [
+      0,
+      0,
+      1
+     ]
+    ],
+    [
+     3,
+     1,
+     [
+      0,
+      1,
+      1
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.6981345647,
+    "axis_aspect_b": 0.6981345647,
+    "beta": 74.76891965,
+    "cc_contact": 3.37743349,
+    "centroid_distance": 10.89658747,
+    "contact": 3.37743349,
+    "core_contact": 5.239512697,
+    "core_rms_a": 0.02115393924,
+    "core_rms_b": 0.02115393924,
+    "core_size_a": 15.0,
+    "core_size_b": 15.0,
+    "count": 4.0,
+    "dihedral": 2.576543771e-14,
+    "fragment_a": 1.0,
+    "fragment_b": 1.0,
+    "gamma": 74.76891965,
+    "height_a_over_b": 2.862671018,
+    "height_b_over_a": 2.862671018,
+    "interplanar": 2.862671018,
+    "lat_slip": 4.178516198,
+    "lat_slip_a": null,
+    "lat_slip_b": null,
+    "lat_slip_signed": -4.178516198,
+    "local_interplanar": null,
+    "long_slip": 9.647835798,
+    "long_slip_a": null,
+    "long_slip_b": null,
+    "long_slip_signed": -9.647835798,
+    "mean_atom_height": 2.862671018,
+    "n_vdw_contacts": 2.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "per_molecule": 2.0,
+    "planes_cross": 0.0,
+    "slip": 10.51383532,
+    "slip_angle": 23.41762896,
+    "slip_direction": -156.582371,
+    "twist": 8.537736463e-07
+   },
+   "ring_pairs": [
+    {
+     "alpha": 68.83475993,
+     "beta": 75.09025078,
+     "cg": 4.743802115,
+     "closest": 3.37743349,
+     "gamma": 12.82894821,
+     "rings": [
+      2,
+      8
+     ],
+     "sizes": [
+      6,
+      6
+     ],
+     "slippage": 4.584089268
+    },
+    {
+     "alpha": 68.83475993,
+     "beta": 12.82894821,
+     "cg": 4.743802115,
+     "closest": 3.37743349,
+     "gamma": 75.09025078,
+     "rings": [
+      8,
+      2
+     ],
+     "sizes": [
+      6,
+      6
+     ],
+     "slippage": 1.053319302
+    }
+   ],
+   "shift": [
+    0,
+    0,
+    -1
+   ]
+  },
+  {
+   "a": 0,
+   "b": 2,
+   "count": 4,
+   "kind": "parallel",
+   "members": [
+    [
+     0,
+     2,
+     [
+      0,
+      1,
+      0
+     ]
+    ],
+    [
+     1,
+     3,
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    [
+     2,
+     0,
+     [
+      0,
+      -1,
+      0
+     ]
+    ],
+    [
+     3,
+     1,
+     [
+      0,
+      0,
+      0
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.6981345647,
+    "axis_aspect_b": 0.6981345647,
+    "beta": 75.2242054,
+    "cc_contact": 3.58296647,
+    "centroid_distance": 12.38195929,
+    "contact": 3.453361662,
+    "core_contact": 6.9173325,
+    "core_rms_a": 0.02115393924,
+    "core_rms_b": 0.02115393924,
+    "core_size_a": 15.0,
+    "core_size_b": 15.0,
+    "count": 4.0,
+    "dihedral": 2.576543771e-14,
+    "fragment_a": 1.0,
+    "fragment_b": 1.0,
+    "gamma": 75.2242054,
+    "height_a_over_b": 3.157861306,
+    "height_b_over_a": 3.157861306,
+    "interplanar": 3.157861306,
+    "lat_slip": 7.25204486,
+    "lat_slip_a": null,
+    "lat_slip_b": null,
+    "lat_slip_signed": -7.25204486,
+    "local_interplanar": null,
+    "long_slip": 9.526209799,
+    "long_slip_a": null,
+    "long_slip_b": null,
+    "long_slip_signed": 9.526209799,
+    "mean_atom_height": 3.157861306,
+    "n_vdw_contacts": 0.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "per_molecule": 2.0,
+    "planes_cross": 0.0,
+    "slip": 11.97250299,
+    "slip_angle": 37.28103333,
+    "slip_direction": -37.28103333,
+    "twist": 8.537736463e-07
+   },
+   "ring_pairs": [
+    {
+     "alpha": 69.71278749,
+     "beta": 74.37813571,
+     "cg": 4.972415243,
+     "closest": 3.614580423,
+     "gamma": 11.68413444,
+     "rings": [
+      0,
+      6
+     ],
+     "sizes": [
+      6,
+      6
+     ],
+     "slippage": 4.788733607
+    },
+    {
+     "alpha": 69.71278749,
+     "beta": 11.68413444,
+     "cg": 4.972415243,
+     "closest": 3.614580423,
+     "gamma": 74.37813571,
+     "rings": [
+      6,
+      0
+     ],
+     "sizes": [
+      6,
+      6
+     ],
+     "slippage": 1.006994315
+    }
+   ],
+   "shift": [
+    0,
+    1,
+    0
+   ]
+  },
+  {
+   "a": 0,
+   "b": 3,
+   "count": 4,
+   "kind": "parallel",
+   "members": [
+    [
+     0,
+     3,
+     [
+      -1,
+      0,
+      -1
+     ]
+    ],
+    [
+     1,
+     2,
+     [
+      0,
+      0,
+      -1
+     ]
+    ],
+    [
+     2,
+     1,
+     [
+      0,
+      0,
+      1
+     ]
+    ],
+    [
+     3,
+     0,
+     [
+      1,
+      0,
+      1
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.6981345647,
+    "axis_aspect_b": 0.6981345647,
+    "beta": 63.932182,
+    "cc_contact": 3.809874331,
+    "centroid_distance": 10.09058868,
+    "contact": 3.270558904,
+    "core_contact": 6.163085194,
+    "core_rms_a": 0.02115393924,
+    "core_rms_b": 0.02115393924,
+    "core_size_a": 15.0,
+    "core_size_b": 15.0,
+    "count": 4.0,
+    "dihedral": 2.586340551e-14,
+    "fragment_a": 1.0,
+    "fragment_b": 1.0,
+    "gamma": 63.932182,
+    "height_a_over_b": 4.434154758,
+    "height_b_over_a": 4.434154758,
+    "interplanar": 4.434154758,
+    "lat_slip": 8.754561916,
+    "lat_slip_a": null,
+    "lat_slip_b": null,
+    "lat_slip_signed": 8.754561916,
+    "local_interplanar": null,
+    "long_slip": 2.348594731,
+    "long_slip_a": null,
+    "long_slip_b": null,
+    "long_slip_signed": -2.348594731,
+    "mean_atom_height": 4.434154758,
+    "n_vdw_contacts": 0.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "per_molecule": 2.0,
+    "planes_cross": 0.0,
+    "slip": 9.064118906,
+    "slip_angle": 74.98280043,
+    "slip_direction": 105.0171996,
+    "twist": 0.0
+   },
+   "ring_pairs": [],
+   "shift": [
+    -1,
+    0,
+    -1
+   ]
+  },
+  {
+   "a": 0,
+   "b": 3,
+   "count": 4,
+   "kind": "parallel",
+   "members": [
+    [
+     0,
+     3,
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    [
+     1,
+     2,
+     [
+      1,
+      0,
+      0
+     ]
+    ],
+    [
+     2,
+     1,
+     [
+      -1,
+      0,
+      0
+     ]
+    ],
+    [
+     3,
+     0,
+     [
+      0,
+      0,
+      0
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.6981345647,
+    "axis_aspect_b": 0.6981345647,
+    "beta": 76.89031504,
+    "cc_contact": 3.809874331,
+    "centroid_distance": 20.85102596,
+    "contact": 3.270558904,
+    "core_contact": 15.34988547,
+    "core_rms_a": 0.02115393924,
+    "core_rms_b": 0.02115393924,
+    "core_size_a": 15.0,
+    "core_size_b": 15.0,
+    "count": 4.0,
+    "dihedral": 2.586340551e-14,
+    "fragment_a": 1.0,
+    "fragment_b": 1.0,
+    "gamma": 76.89031504,
+    "height_a_over_b": 4.729345046,
+    "height_b_over_a": 4.729345046,
+    "interplanar": 4.729345046,
+    "lat_slip": 20.18512297,
+    "lat_slip_a": null,
+    "lat_slip_b": null,
+    "lat_slip_signed": -20.18512297,
+    "local_interplanar": null,
+    "long_slip": 2.226968732,
+    "long_slip_a": null,
+    "long_slip_b": null,
+    "long_slip_signed": 2.226968732,
+    "mean_atom_height": 4.729345046,
+    "n_vdw_contacts": 0.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "per_molecule": 2.0,
+    "planes_cross": 0.0,
+    "slip": 20.30759905,
+    "slip_angle": 83.70417735,
+    "slip_direction": -83.70417735,
+    "twist": 0.0
+   },
+   "ring_pairs": [],
+   "shift": [
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "a": 0,
+   "b": 1,
+   "count": 8,
+   "kind": "parallel",
+   "members": [
+    [
+     0,
+     1,
+     [
+      -1,
+      0,
+      0
+     ]
+    ],
+    [
+     0,
+     1,
+     [
+      0,
+      1,
+      0
+     ]
+    ],
+    [
+     1,
+     0,
+     [
+      0,
+      -1,
+      0
+     ]
+    ],
+    [
+     1,
+     0,
+     [
+      1,
+      0,
+      0
+     ]
+    ],
+    [
+     2,
+     3,
+     [
+      -1,
+      -1,
+      0
+     ]
+    ],
+    [
+     2,
+     3,
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    [
+     3,
+     2,
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    [
+     3,
+     2,
+     [
+      1,
+      1,
+      0
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.6981345647,
+    "axis_aspect_b": 0.6981345647,
+    "beta": 68.17185736,
+    "cc_contact": 4.410242163,
+    "centroid_distance": 14.93361948,
+    "contact": 3.49093235,
+    "core_contact": 10.27939624,
+    "core_rms_a": 0.02115393924,
+    "core_rms_b": 0.02115393924,
+    "core_size_a": 15.0,
+    "core_size_b": 15.0,
+    "count": 8.0,
+    "dihedral": 2.140976392e-14,
+    "fragment_a": 1.0,
+    "fragment_b": 1.0,
+    "gamma": 68.17185736,
+    "height_a_over_b": 5.552675831,
+    "height_b_over_a": 5.552675831,
+    "interplanar": 5.552675831,
+    "lat_slip": 13.67817214,
+    "lat_slip_a": null,
+    "lat_slip_b": null,
+    "lat_slip_signed": 13.67817214,
+    "local_interplanar": null,
+    "long_slip": 2.255745722,
+    "long_slip_a": null,
+    "long_slip_b": null,
+    "long_slip_signed": -2.255745722,
+    "mean_atom_height": 5.552675831,
+    "n_vdw_contacts": 0.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "per_molecule": 4.0,
+    "planes_cross": 0.0,
+    "slip": 13.86292833,
+    "slip_angle": 80.63531541,
+    "slip_direction": 99.36468459,
+    "twist": 0.0
+   },
+   "ring_pairs": [],
+   "shift": [
+    -1,
+    0,
+    0
+   ]
+  },
+  {
+   "a": 0,
+   "b": 3,
+   "count": 4,
+   "kind": "parallel",
+   "members": [
+    [
+     0,
+     3,
+     [
+      0,
+      0,
+      -1
+     ]
+    ],
+    [
+     1,
+     2,
+     [
+      1,
+      0,
+      -1
+     ]
+    ],
+    [
+     2,
+     1,
+     [
+      -1,
+      0,
+      1
+     ]
+    ],
+    [
+     3,
+     0,
+     [
+      0,
+      0,
+      1
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.6981345647,
+    "axis_aspect_b": 0.6981345647,
+    "beta": 66.46996295,
+    "cc_contact": 3.816928257,
+    "centroid_distance": 21.07895578,
+    "contact": 3.816928257,
+    "core_contact": 16.56809129,
+    "core_rms_a": 0.02115393924,
+    "core_rms_b": 0.02115393924,
+    "core_size_a": 15.0,
+    "core_size_b": 15.0,
+    "count": 4.0,
+    "dihedral": 2.586340551e-14,
+    "fragment_a": 1.0,
+    "fragment_b": 1.0,
+    "gamma": 66.46996295,
+    "height_a_over_b": 8.415346849,
+    "height_b_over_a": 8.415346849,
+    "interplanar": 8.415346849,
+    "lat_slip": 17.85668834,
+    "lat_slip_a": null,
+    "lat_slip_b": null,
+    "lat_slip_signed": -17.85668834,
+    "local_interplanar": null,
+    "long_slip": 7.392090076,
+    "long_slip_a": null,
+    "long_slip_b": null,
+    "long_slip_signed": -7.392090076,
+    "mean_atom_height": 8.415346849,
+    "n_vdw_contacts": 0.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "per_molecule": 2.0,
+    "planes_cross": 0.0,
+    "slip": 19.32625971,
+    "slip_angle": 67.51203077,
+    "slip_direction": -112.4879692,
+    "twist": 0.0
+   },
+   "ring_pairs": [],
+   "shift": [
+    0,
+    0,
+    -1
+   ]
+  },
+  {
+   "a": 0,
+   "b": 3,
+   "count": 4,
+   "kind": "parallel",
+   "members": [
+    [
+     0,
+     3,
+     [
+      -1,
+      0,
+      0
+     ]
+    ],
+    [
+     1,
+     2,
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    [
+     2,
+     1,
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    [
+     3,
+     0,
+     [
+      1,
+      0,
+      0
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.6981345647,
+    "axis_aspect_b": 0.6981345647,
+    "beta": 48.08616478,
+    "cc_contact": 3.816928257,
+    "centroid_distance": 13.03948684,
+    "contact": 3.816928257,
+    "core_contact": 9.925429815,
+    "core_rms_a": 0.02115393924,
+    "core_rms_b": 0.02115393924,
+    "core_size_a": 15.0,
+    "core_size_b": 15.0,
+    "count": 4.0,
+    "dihedral": 2.586340551e-14,
+    "fragment_a": 1.0,
+    "fragment_b": 1.0,
+    "gamma": 48.08616478,
+    "height_a_over_b": 8.710537137,
+    "height_b_over_a": 8.710537137,
+    "interplanar": 8.710537137,
+    "lat_slip": 6.426127283,
+    "lat_slip_a": null,
+    "lat_slip_b": null,
+    "lat_slip_signed": 6.426127283,
+    "local_interplanar": null,
+    "long_slip": 7.270464077,
+    "long_slip_a": null,
+    "long_slip_b": null,
+    "long_slip_signed": 7.270464077,
+    "mean_atom_height": 8.710537137,
+    "n_vdw_contacts": 0.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "per_molecule": 2.0,
+    "planes_cross": 0.0,
+    "slip": 9.703337557,
+    "slip_angle": 41.47242206,
+    "slip_direction": 41.47242206,
+    "twist": 0.0
+   },
+   "ring_pairs": [],
+   "shift": [
+    -1,
+    0,
+    0
+   ]
+  },
+  {
+   "a": 0,
+   "b": 2,
+   "count": 4,
+   "kind": "parallel",
+   "members": [
+    [
+     0,
+     2,
+     [
+      0,
+      1,
+      -1
+     ]
+    ],
+    [
+     1,
+     3,
+     [
+      0,
+      0,
+      -1
+     ]
+    ],
+    [
+     2,
+     0,
+     [
+      0,
+      -1,
+      1
+     ]
+    ],
+    [
+     3,
+     1,
+     [
+      0,
+      0,
+      1
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.6981345647,
+    "axis_aspect_b": 0.6981345647,
+    "beta": 26.24781157,
+    "cc_contact": 3.58296647,
+    "centroid_distance": 11.13496043,
+    "contact": 3.453361662,
+    "core_contact": 10.08351861,
+    "core_rms_a": 0.02115393924,
+    "core_rms_b": 0.02115393924,
+    "core_size_a": 15.0,
+    "core_size_b": 15.0,
+    "count": 4.0,
+    "dihedral": 2.576543771e-14,
+    "fragment_a": 1.0,
+    "fragment_b": 1.0,
+    "gamma": 26.24781157,
+    "height_a_over_b": 9.986830589,
+    "height_b_over_a": 9.986830589,
+    "interplanar": 9.986830589,
+    "lat_slip": 4.923610227,
+    "lat_slip_a": null,
+    "lat_slip_b": null,
+    "lat_slip_signed": -4.923610227,
+    "local_interplanar": 10.02258515,
+    "long_slip": 0.0928490091,
+    "long_slip_a": null,
+    "long_slip_b": null,
+    "long_slip_signed": -0.0928490091,
+    "mean_atom_height": 9.986830589,
+    "n_vdw_contacts": 0.0,
+    "overlap": 0.06666666667,
+    "overlap_area": 0.5638399213,
+    "overlap_ratio": 0.02426124877,
+    "per_molecule": 2.0,
+    "planes_cross": 0.0,
+    "slip": 4.924485618,
+    "slip_angle": 88.91964928,
+    "slip_direction": -91.08035072,
+    "twist": 8.537736463e-07
+   },
+   "ring_pairs": [
+    {
+     "alpha": 69.71278749,
+     "beta": 74.37813571,
+     "cg": 4.972415243,
+     "closest": 3.614580423,
+     "gamma": 11.68413444,
+     "rings": [
+      1,
+      7
+     ],
+     "sizes": [
+      6,
+      6
+     ],
+     "slippage": 4.788733607
+    },
+    {
+     "alpha": 69.71278749,
+     "beta": 11.68413444,
+     "cg": 4.972415243,
+     "closest": 3.614580423,
+     "gamma": 74.37813571,
+     "rings": [
+      7,
+      1
+     ],
+     "sizes": [
+      6,
+      6
+     ],
+     "slippage": 1.006994315
+    }
+   ],
+   "shift": [
+    0,
+    1,
+    -1
+   ]
+  },
+  {
+   "a": 0,
+   "b": 2,
+   "count": 4,
+   "kind": "parallel",
+   "members": [
+    [
+     0,
+     2,
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    [
+     1,
+     3,
+     [
+      0,
+      -1,
+      0
+     ]
+    ],
+    [
+     2,
+     0,
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    [
+     3,
+     1,
+     [
+      0,
+      1,
+      0
+     ]
+    ]
+   ],
+   "params": {
+    "axis_aspect_a": 0.6981345647,
+    "axis_aspect_b": 0.6981345647,
+    "beta": 32.3278236,
+    "cc_contact": 3.37743349,
+    "centroid_distance": 12.16803972,
+    "contact": 3.37743349,
+    "core_contact": 10.24078403,
+    "core_rms_a": 0.02115393924,
+    "core_rms_b": 0.02115393924,
+    "core_size_a": 15.0,
+    "core_size_b": 15.0,
+    "count": 4.0,
+    "dihedral": 2.576543771e-14,
+    "fragment_a": 1.0,
+    "fragment_b": 1.0,
+    "gamma": 32.3278236,
+    "height_a_over_b": 10.28202088,
+    "height_b_over_a": 10.28202088,
+    "interplanar": 10.28202088,
+    "lat_slip": 6.506950832,
+    "lat_slip_a": null,
+    "lat_slip_b": null,
+    "lat_slip_signed": -6.506950832,
+    "local_interplanar": null,
+    "long_slip": 0.02877698998,
+    "long_slip_a": null,
+    "long_slip_b": null,
+    "long_slip_signed": -0.02877698998,
+    "mean_atom_height": 10.28202088,
+    "n_vdw_contacts": 2.0,
+    "overlap": 0.0,
+    "overlap_area": 0.0,
+    "overlap_ratio": 0.0,
+    "per_molecule": 2.0,
+    "planes_cross": 0.0,
+    "slip": 6.507014464,
+    "slip_angle": 89.74661107,
+    "slip_direction": -90.25338893,
+    "twist": 8.537736463e-07
+   },
+   "ring_pairs": [
+    {
+     "alpha": 68.83475993,
+     "beta": 75.09025078,
+     "cg": 4.743802115,
+     "closest": 3.37743349,
+     "gamma": 12.82894821,
+     "rings": [
+      3,
+      9
+     ],
+     "sizes": [
+      6,
+      6
+     ],
+     "slippage": 4.584089268
+    },
+    {
+     "alpha": 68.83475993,
+     "beta": 12.82894821,
+     "cg": 4.743802115,
+     "closest": 3.37743349,
+     "gamma": 75.09025078,
+     "rings": [
+      9,
+      3
+     ],
+     "sizes": [
+      6,
+      6
+     ],
+     "slippage": 1.053319302
+    }
+   ],
+   "shift": [
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "skipped_disorder": 13,
+ "space_group": "C 1 2/c 1",
+ "stacks": [],
+ "structure": {
+  "alerts_a": 0.0,
+  "alerts_b": 0.0,
+  "alerts_c": 1.0,
+  "density_calc": 1.471918504,
+  "density_cif": 1.472,
+  "goof": 1.034,
+  "r1": 0.0473,
+  "rho_max": 0.852,
+  "rho_min": -0.348,
+  "temperature": 123.0,
+  "volume": 5359.009697,
+  "wr2": 0.1325,
+  "z": 4.0,
+  "z_prime": 0.5
+ }
+}

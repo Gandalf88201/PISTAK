@@ -52,8 +52,9 @@ def constant_texts() -> set[str]:
     out |= {text for f in fields(Limits) for text in f.metadata.get("choices", {}).values()}
     from pistak.gui import periodic_dialog, qc_dialog
     from pistak.gui.views.detail_view import GEOMETRY_KINDS
-    from pistak.labels import ALERT_LEVELS, ALERT_TEXT, EXTENDED_NOTE, NO_PAIRS_HINT, NO_PAIRS_TEXT
+    from pistak.labels import ALERT_LEVELS, ALERT_TEXT, EXTENDED_NOTE, FLAG_TEXT, NO_PAIRS_HINT, NO_PAIRS_TEXT
 
+    out |= set(FLAG_TEXT.values())
     out |= set(qc_dialog.METHOD_TEXT.values()) | set(qc_dialog.DISP_TEXT.values())
     out |= set(periodic_dialog.TASK_TEXT.values()) | set(periodic_dialog.DISP_TEXT.values())
     out |= set(ALERT_TEXT.values()) | set(ALERT_LEVELS.values()) | set(NO_PAIRS_TEXT.values()) | {NO_PAIRS_HINT, EXTENDED_NOTE} | {title for title, _u, _d in GEOMETRY_KINDS.values()}

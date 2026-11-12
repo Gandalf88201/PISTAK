@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from pistak.core.cif import Cell
-from pistak.core.cores import Core, axis_atoms
+from pistak.core.cores import FALLBACK_SOURCES, Core, axis_atoms, fallback_axis
 from pistak.core.geometry import Plane, fit_plane
 from pistak.core.pairs import Pair, remeasure
 from pistak.core.structure import cell_vectors
@@ -31,7 +31,8 @@ if TYPE_CHECKING:
     from pistak.core.analysis import Analysis
 
 #: Parametri della geometria della coppia, già nei campi di `Pair`: quelli del Monte Carlo senza registro.
-GEOMETRY_KEYS = ("interplanar", "long_slip", "lat_slip", "slip", "dihedral", "centroid_distance", "contact", "overlap")
+GEOMETRY_KEYS = ("interplanar", "long_slip", "lat_slip", "slip", "dihedral", "centroid_distance", "contact", "overlap",
+                 "long_slip_a", "lat_slip_a", "long_slip_b", "lat_slip_b")
 #: Parametri angolari periodici (−180…180°): la dispersione si misura attorno al valore nominale.
 PERIODIC = {"slip_direction"}
 
@@ -64,6 +65,8 @@ class Uncertainty:
     #: Intervallo dei percentili 2,5 e 97,5 dei campioni (95 % centrale), per coppia e parametro: per le grandezze
     #: limitate (angolo tra i piani vicino a 0°, sovrapposizione vicina a 0 o 1) la media ± σ non lo descrive bene.
     interval: dict[int, dict[str, tuple[float, float]]] = field(default_factory=dict)
+    #: Vero se gli spostamenti vengono da una matrice di covarianza data dall'utente e non dalle s.u. indipendenti.
+    covariance: bool = False
 
     def get(self, pair: Pair | int, key: str) -> float:
         i = pair if isinstance(pair, int) else pair.index
@@ -202,15 +205,48 @@ def cell_constraints(cif) -> np.ndarray | None:
     return out
 
 
-def perturbed(analysis: Analysis, rng: np.random.Generator, include_cell: bool = True, scale: float = 1.0) -> Analysis:
-    """Una copia dell'analisi con gli atomi spostati secondo le s.u. (moltiplicate per `scale`); stesse coppie."""
+def covariance_factor(cov: np.ndarray) -> np.ndarray:
+    """Il fattore F (3N×3N) con F·Fᵀ = `cov`: F·z, con z deviate normali standard indipendenti, ha covarianza `cov`.
+    Dalla decomposizione agli autovalori, non da Cholesky: la matrice di un raffinamento con vincoli (posizioni
+    speciali, atomi fissati) è singolare; gli autovalori negativi per arrotondamento si azzerano."""
+    cov = np.asarray(cov, dtype=float)
+    values, vectors = np.linalg.eigh((cov + cov.T) / 2)
+    return vectors * np.sqrt(np.clip(values, 0.0, None))
+
+
+def read_covariance(path, cif) -> np.ndarray:
+    """Legge la matrice di covarianza delle coordinate frazionarie degli atomi del CIF (revisione 4, M4.5): 3N×3N,
+    righe e colonne nell'ordine x₁, y₁, z₁, x₂, … degli atomi di `cif.atoms` (quelli tenuti dalla regola di
+    disordine, nell'ordine del CIF), in unità frazionarie al quadrato. File `.npy` di NumPy o testo con 3N righe di 3N
+    numeri. Il CIF non la contiene: va esportata dal programma di raffinamento. ValueError se la forma non è quella
+    attesa, se non è simmetrica o se la diagonale è negativa."""
+    from pathlib import Path
+
+    path = Path(path)
+    cov = np.load(path) if path.suffix == ".npy" else np.loadtxt(path)
+    n = 3 * len(cif.atoms)
+    if cov.shape != (n, n):
+        raise ValueError(f"covariance matrix {cov.shape}: expected {n}×{n} (3 × {len(cif.atoms)} atoms of the CIF block)")
+    if not np.allclose(cov, cov.T, rtol=1e-6, atol=1e-14) or (np.diag(cov) < 0).any():
+        raise ValueError("covariance matrix: not symmetric or negative variances")
+    return cov
+
+
+def perturbed(analysis: Analysis, rng: np.random.Generator, include_cell: bool = True, scale: float = 1.0,
+              factor: np.ndarray | None = None) -> Analysis:
+    """Una copia dell'analisi con gli atomi spostati secondo le s.u. (moltiplicate per `scale`); stesse coppie. Con
+    `factor` (`covariance_factor` della matrice di covarianza) gli spostamenti sono correlati come nel raffinamento; i
+    vincoli delle posizioni speciali sono allora già nella matrice e non si applicano di nuovo."""
     s, cif = analysis.structure, analysis.cif
     su = np.array([a.su for a in cif.atoms]).reshape(-1, 3)
-    delta = rng.standard_normal(su.shape) * su * scale
-    # atomi su posizioni speciali: una deviata per parametro libero, le altre coordinate dai vincoli del sito, così
-    # x = y o z = ¼ restano soddisfatti (revisione 2, voce 61) e ogni parametro libero ha la sua s.u. (revisione 3, N2)
-    for i, c in site_constraints(cif).items():
-        delta[i] = c @ delta[i]
+    if factor is not None:
+        delta = (factor @ rng.standard_normal(factor.shape[1])).reshape(-1, 3) * scale
+    else:
+        delta = rng.standard_normal(su.shape) * su * scale
+        # atomi su posizioni speciali: una deviata per parametro libero, le altre coordinate dai vincoli del sito, così
+        # x = y o z = ¼ restano soddisfatti (revisione 2, voce 61) e ogni parametro libero ha la sua s.u. (revisione 3, N2)
+        for i, c in site_constraints(cif).items():
+            delta[i] = c @ delta[i]
     vectors = s.vectors
     if include_cell and any(x > 0 for x in cif.cell_su):
         c = cif.cell
@@ -234,18 +270,28 @@ def perturbed(analysis: Analysis, rng: np.random.Generator, include_cell: bool =
     frags = []
     for m_old, m_new, fs in zip(s.molecules, mols, analysis.fragments or [[c] if c else [] for c in analysis.cores]):
         ij = axis_atoms(m_old, spec) if spec else None
-        frags.append([_refit(f, m_new.pos, ij) for f in fs])
+        frags.append([_refit(f, m_new, ij, analysis.limits) for f in fs])
     return replace(analysis, structure=s2, fragments=frags, cores=[f[0] if f else None for f in frags], uncertainty=None,
                    cache=None)
 
 
-def _refit(f: Core, pos: np.ndarray, ij: tuple[int, int] | None) -> Core:
+def _refit(f: Core, m, ij: tuple[int, int] | None, limits=None) -> Core:
+    """Lo stesso frammento sulla geometria perturbata `m`: piano e asse ricalcolati con il verso di quelli nominali.
+    L'asse definito da due atomi e quello di ripiego (molecola o sostituenti) si ricalcolano dalle nuove posizioni; se in
+    un campione il ripiego non è più definito (isotropia oltre la soglia) resta la direzione nominale."""
+    pos = m.pos
     pl = fit_plane(pos[f.atoms])
     normal = pl.normal if np.dot(pl.normal, f.normal) >= 0 else -pl.normal
     long = pl.long if np.dot(pl.long, f.long) >= 0 else -pl.long
     core = Core(Plane(pl.centroid, normal, long, pl.rms, pl.aspect), f.atoms, f.kind, f.axis_source, f.rings)
     if f.axis_source == "atoms" and ij is not None:
         core = core.with_long(pos[ij[1]] - pos[ij[0]]) or core
+    elif f.axis_source in FALLBACK_SOURCES:
+        hit = fallback_axis(m, core, limits.with_values(axis_fallback=f.axis_source, max_axis_isotropy=1.0)) if limits else None
+        v = hit[0] if hit is not None else f.long
+        core = core.with_long(v if np.dot(v, f.long) >= 0 else -v, source=f.axis_source) or core
+    elif f.axis_source == "atoms":
+        core = core.with_long(f.long) or core
     return core
 
 
@@ -261,15 +307,23 @@ def _spread(values: np.ndarray, nominal: float, periodic: bool) -> tuple[float, 
 
 def monte_carlo(analysis: Analysis, samples: int = 100, seed: int = 0, evaluate: Evaluator = geometry_values,
                 include_cell: bool = True, progress: Callable[[int, int], None] | None = None,
-                periodic: set[str] = PERIODIC) -> Uncertainty:
-    """σ di tutti i valori di `evaluate` per ogni coppia dell'analisi, su `samples` geometrie perturbate."""
+                periodic: set[str] = PERIODIC, covariance: np.ndarray | None = None) -> Uncertainty:
+    """σ di tutti i valori di `evaluate` per ogni coppia dell'analisi, su `samples` geometrie perturbate.
+
+    Il valore riportato di ogni descrittore resta quello nominale (dalle coordinate del CIF); `Uncertainty.mean` è la
+    media dei campioni, che per le grandezze non negative vicine a zero (θ, |s|) è spostata verso l'alto e non va
+    usata come stima. Il generatore è `numpy.random.default_rng(seed)`: stesso seme, stessi risultati. `covariance`:
+    matrice di covarianza delle coordinate frazionarie (`read_covariance`) al posto delle s.u. indipendenti."""
     rng = np.random.default_rng(seed)
+    factor = covariance_factor(covariance) if covariance is not None else None
+    if factor is not None and factor.shape[0] != 3 * len(analysis.cif.atoms):
+        raise ValueError(f"covariance matrix {covariance.shape}: expected 3 × {len(analysis.cif.atoms)} atoms")
     nominal = {p.index: evaluate(analysis, p) for p in analysis.pairs}
     keys = list(next(iter(nominal.values()), {}))
     acc = {p.index: {k: np.full(samples, np.nan) for k in keys} for p in analysis.pairs}
     same = {p.index: 0 for p in analysis.pairs}
     for n in range(samples):
-        a2 = perturbed(analysis, rng, include_cell)
+        a2 = perturbed(analysis, rng, include_cell, factor=factor)
         for p in analysis.pairs:
             q = remeasure(a2.structure, a2.fragments, p, a2.limits)
             same[p.index] += q.kind == p.kind
@@ -278,7 +332,8 @@ def monte_carlo(analysis: Analysis, samples: int = 100, seed: int = 0, evaluate:
                     acc[p.index][k][n] = v
         if progress:
             progress(n + 1, samples)
-    out = Uncertainty(samples, seed, include_cell, has_su(analysis, include_cell), keys)
+    out = Uncertainty(samples, seed, include_cell, has_su(analysis, include_cell) or factor is not None, keys)
+    out.covariance = factor is not None
     for i, by_key in acc.items():
         out.sigma[i], out.mean[i], out.valid[i], out.interval[i] = {}, {}, {}, {}
         for k, vals in by_key.items():

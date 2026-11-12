@@ -343,3 +343,25 @@ def test_closed_views_do_not_receive_uncertainties(world, monkeypatch):
     QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
     s.uncertaintyChanged.emit()
     assert errors == []
+
+
+def test_table_prints_no_interplanar_distance_without_overlap(app):
+    """Round 4, E8: as in the terminal, the table of the window shows a dash in place of the "interplanar distance" of a
+    pair that is not π-stacked and has no projected overlap; the value stays available for sorting."""
+    from PySide6.QtCore import Qt
+
+    from pistak.gui.views.table_view import PairModel
+    from pistak.labels import is_interplanar
+
+    a = api.analyse_file(Path(__file__).resolve().parent / "data" / "cod" / "2103883.cif", Limits())  # CuPc: 1 stack, 4 without overlap
+    model = PairModel()
+    model.set_data(a.pairs, ["interplanar", "contact"])
+    col = model.columnCount() - 2
+    shown = {p.index: model.data(model.index(r, col), Qt.ItemDataRole.DisplayRole) for r, p in enumerate(a.pairs)}
+    stack = next(p for p in a.pairs if p.kind == "stack")
+    side = [p for p in a.pairs if not is_interplanar(p)]
+    assert shown[stack.index] == f"{stack.interplanar:.2f}"
+    assert side and all(shown[p.index] == "–" for p in side)
+    r = a.pairs.index(side[0])
+    assert model.data(model.index(r, col), Qt.ItemDataRole.UserRole) == side[0].interplanar  # still sortable
+    assert model.data(model.index(r, col + 1), Qt.ItemDataRole.DisplayRole) != "–"  # other columns unchanged

@@ -55,10 +55,12 @@ def reanalyse(analysis: Analysis, limits: Limits) -> Analysis:
     return finish(new)
 
 
-def uncertainty(analysis: Analysis, samples: int = 100, seed: int = 0, keys=None, include_cell: bool = True, progress=None):
+def uncertainty(analysis: Analysis, samples: int = 100, seed: int = 0, keys=None, include_cell: bool = True, progress=None,
+                covariance=None):
     """σ dei parametri dalle s.u. del CIF con un Monte Carlo (vedi `pistak.core.uncertainty`); il risultato va anche
-    in `analysis.uncertainty`."""
+    in `analysis.uncertainty`. `covariance`: matrice di covarianza delle coordinate frazionarie (3N×3N, atomi
+    nell'ordine del CIF, `pistak.core.uncertainty.read_covariance`) da usare al posto delle s.u. indipendenti."""
     from pistak.params.uncertainty import uncertainty as _mc
 
     ensure_plugins()
-    return _mc(analysis, samples, seed, keys, include_cell, progress)
+    return _mc(analysis, samples, seed, keys, include_cell, progress, covariance=covariance)

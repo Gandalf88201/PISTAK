@@ -10,8 +10,13 @@ Acta Cryst. B66, 380, 2010; il C–H secondo l'ibridazione del carbonio, vedi `X
 e l'energia d'interazione ne risente. Gli atomi pesanti restano dove li mette il cristallo (geometria sperimentale,
 nessuna ottimizzazione).
 
-Le parole chiave seguono le versioni correnti dei programmi (ORCA 5–6, Psi4 1.7–1.9, Gaussian 16): conviene
-controllarle con quella installata.
+Le parole chiave seguono le versioni correnti dei programmi (ORCA 6, Psi4 1.9, Gaussian 16): conviene controllarle
+con quella installata. Per ORCA si usano solo parole chiave semplici che ORCA 6 accetta come ORCA 5 (funzionale,
+`D3BJ`/`D3ZERO`/`D4`, base def2, `TightSCF`, `DefGrid2`, `r2SCAN-3c`), `%pal`, `%maxcore`, gli atomi fantasma `El :` e
+`$new_job`. Metodo predefinito: B3LYP-D3(BJ)/def2-TZVP con counterpoise (`QCOptions`); per SAPT: SAPT0/jun-cc-pVDZ.
+
+Carica e molteplicità: il CIF non le contiene. Si prendono dalle opzioni (predefinito: monomeri neutri, singoletti) e
+l'input avverte quando il predefinito non può essere giusto o va controllato (`charge_warnings`).
 
 Come gli altri export (`pistak.io.export`), i file hanno commenti e nomi fissi in inglese, uguali in ogni lingua
 dell'interfaccia.
@@ -159,6 +164,39 @@ def unmoved_hydrogens(el: list[str], moved: int) -> int:
     return sum(e == "H" for e in el) - moved
 
 
+def electrons(el: list[str], charge: int) -> int:
+    """Elettroni di una molecola con la carica data (D conta come H)."""
+    from pistak.core.elements import atomic_number
+
+    return sum(atomic_number("H" if e == "D" else e) for e in el) - charge
+
+
+def charge_warnings(analysis: Analysis, monomers) -> list[str]:
+    """Avvertenze su carica e molteplicità (revisione 4, M3.3). Il CIF non dice la carica di una molecola né il suo
+    stato di spin: PISTAK non li ricava, li prende dalle opzioni (predefinito: neutra, singoletto) e controlla solo ciò
+    che si può controllare senza chimica, cioè che il numero di elettroni sia compatibile con la molteplicità (elettroni
+    pari ↔ molteplicità dispari). In più avverte nei due casi in cui il predefinito è spesso sbagliato: un monomero con
+    un metallo (carica e spin del complesso vanno scelti) e una struttura con più specie chimiche diverse (un sale: i
+    due ioni hanno cariche opposte che il CIF non riporta)."""
+    from pistak.core.elements import NONMETALS
+
+    out = []
+    for name, mol, q, mult in monomers:
+        n = electrons(list(mol.el), q)
+        if (n + mult) % 2 == 0:  # n pari vuole molteplicità dispari, n dispari pari
+            out.append(f"WARNING: molecule {name} has {n} electrons with charge {q}: multiplicity {mult} is impossible; "
+                       "set the charge or the multiplicity of this molecule")
+        metals = sorted({e for e in mol.el if e not in NONMETALS})
+        if metals:
+            out.append(f"WARNING: molecule {name} contains {', '.join(metals)}: its charge ({q}) and spin state "
+                       f"(multiplicity {mult}) are not derived from the CIF, set them")
+    species = {tuple(m.formula()) for m in analysis.structure.molecules if not m.extended}
+    if len(species) > 1 and all(q == 0 for _, _, q, _ in monomers):
+        out.append(f"WARNING: the structure contains {len(species)} different chemical species (a salt, a solvate or a "
+                   "cocrystal): if they are ions, set the charges of the two molecules (both are 0 here)")
+    return out
+
+
 def dimer(analysis: Analysis, pair: Pair, options: QCOptions | None = None) -> Dimer:
     """Le due molecole della coppia, pronte per l'input (B traslata, idrogeni normalizzati se richiesto)."""
     options = options or QCOptions()
@@ -201,6 +239,7 @@ def dimer(analysis: Analysis, pair: Pair, options: QCOptions | None = None) -> D
     qa, qb = options.charges
     ma, mb = options.multiplicities
     m = options.total_multiplicity()
+    notes += charge_warnings(analysis, (("A", A, qa, ma), ("B", B, qb, mb)))
     notes.append(f"charge {qa + qb}, multiplicity {m}" + (" (high-spin coupling of the monomers: set it explicitly for "
                                                         "radical pairs)" if not options.dimer_multiplicity and m > 1 else ""))
     return Dimer(Monomer(list(A.el), pos_a, list(A.labels), qa, ma), Monomer(list(B.el), pos_b, list(B.labels), qb, mb),

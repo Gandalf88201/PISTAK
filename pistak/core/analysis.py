@@ -13,7 +13,7 @@ import numpy as np
 
 from pistak.core.cif import Cif, parse_cif
 from pistak.core.config import Limits, load_limits
-from pistak.core.cores import Core, apply_axis, has_pi_ring, pi_fragments
+from pistak.core.cores import Core, apply_axis, apply_fallback_axis, has_pi_ring, pi_fragments
 from pistak.core.errors import InputError
 from pistak.core.pairs import (
     Frame,
@@ -236,7 +236,8 @@ def _fragments(structure: Structure, limits: Limits) -> list[list[Core]]:
     if not in_pi_scope(structure, limits):
         return [[] for _ in structure.molecules]
     # anche le reti estese (polimeri): la molecola è l'unità ripetuta, con gli anelli interi
-    return [apply_axis(m, pi_fragments(m, limits), limits.long_axis_atoms) for m in structure.molecules]
+    return [apply_fallback_axis(m, apply_axis(m, pi_fragments(m, limits), limits.long_axis_atoms), limits)
+            for m in structure.molecules]
 
 
 def _contacts(structure: Structure, fragments: list[list[Core]], limits: Limits, text: str | None,

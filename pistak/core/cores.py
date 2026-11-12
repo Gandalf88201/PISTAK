@@ -31,7 +31,10 @@ class Core:
     plane: Plane
     atoms: np.ndarray
     kind: str  # "rings" | "molecule"
-    #: Da dove viene l'asse lungo: "pca" (direzione di massima estensione) | "atoms" (definito dall'utente).
+    #: Da dove viene l'asse lungo: "pca" (direzione di massima estensione degli atomi del frammento) | "atoms"
+    #: (definito dall'utente con due atomi) | "molecule" (asse lungo di tutta la molecola, proiettato sul piano del
+    #: frammento) | "substituents" (asse del frammento con i suoi sostituenti): gli ultimi due sono il ripiego per i
+    #: frammenti quasi isotropi (`fallback_axis`, revisione 4, M1.1).
     axis_source: str = "pca"
     #: Gli anelli del frammento (indici nella molecola): i loro poligoni, proiettati, danno la sovrapposizione delle
     #: coppie (unione di poligoni convessi, non l'involucro convesso del frammento). Vuoto: si usa l'involucro.
@@ -57,14 +60,15 @@ class Core:
         """Lo stesso nucleo traslato di `v` (la molecola vicina in un'altra cella)."""
         return replace(self, plane=replace(self.plane, centroid=self.plane.centroid + v))
 
-    def with_long(self, direction: np.ndarray) -> Core | None:
-        """Lo stesso nucleo con l'asse lungo lungo `direction` (proiettata sul piano); None se è quasi normale al piano."""
+    def with_long(self, direction: np.ndarray, source: str = "atoms") -> Core | None:
+        """Lo stesso nucleo con l'asse lungo lungo `direction` (proiettata sul piano); None se è quasi normale al piano.
+        `source` dice da dove viene l'asse (`axis_source`)."""
         n = self.plane.normal
         v = np.asarray(direction, dtype=float) - n * np.dot(direction, n)
         norm = np.linalg.norm(v)
         if norm < 1e-3 * max(1.0, float(np.linalg.norm(direction))):
             return None
-        return replace(self, plane=replace(self.plane, long=v / norm), axis_source="atoms")
+        return replace(self, plane=replace(self.plane, long=v / norm), axis_source=source)
 
 
 def small_rings(n: int, bonds: np.ndarray, allowed, max_size: int = 8) -> list[list[int]]:
@@ -250,8 +254,8 @@ def pi_fragments(m: Molecule, limits: Limits) -> list[Core]:
     più grande. Con `limits.fragments == "largest"` solo il primo, il nucleo π del sito; con "all" anche gli altri
     con almeno `min_fragment_atoms` atomi (la soglia non vale per il primo). Con `fragment_merge == "conjugated"` i
     sistemi complanari collegati da legami o atomi sp/sp² diventano un frammento solo (`_conjugated`). Senza anelli
-    adatti: tutta la molecola senza idrogeni, se è planare, non lineare e sp²/sp (nessun atomo con quattro vicini o
-    più, `_sp2_skeleton`)."""
+    adatti e solo con `ringless_fragments = "planar"`: tutta la molecola senza idrogeni, se è planare, non lineare e
+    sp²/sp (nessun atomo con quattro vicini o più, `_sp2_skeleton`)."""
     systems = _planar_systems(m, limits)
     if getattr(limits, "fragment_merge", "fused") == "conjugated" and systems:
         systems = _conjugated(m, systems, limits)
@@ -260,6 +264,8 @@ def pi_fragments(m: Molecule, limits: Limits) -> list[Core]:
         keep = systems[:1] if limits.fragments == "largest" else \
             systems[:1] + [s for s in systems[1:] if len(s[0]) >= limits.min_fragment_atoms]
         return [Core(fit_plane(m.pos[g]), np.array(g), "rings", rings=tuple(tuple(r) for r in rs)) for g, rs in keep]
+    if getattr(limits, "ringless_fragments", "none") != "planar":
+        return []  # predefinito dalla revisione 4: senza anelli nessun frammento π (vedi `Limits.ringless_fragments`)
     allh = np.flatnonzero(m.heavy)
     if len(allh) < 4 or not _sp2_skeleton(m, allh):
         return []
@@ -314,4 +320,64 @@ def apply_axis(m: Molecule, frags: list[Core], spec: str) -> list[Core]:
     out = list(frags)
     for k in targets:
         out[k] = frags[k].with_long(direction) or frags[k]
+    return out
+
+
+#: Origini dell'asse lungo che non dipendono dall'isotropia del frammento (`pairs.axis_defined`).
+FALLBACK_SOURCES = ("molecule", "substituents")
+
+
+def fallback_atoms(m: Molecule, core: Core, mode: str) -> np.ndarray:
+    """Gli atomi (non H) che definiscono l'asse di ripiego di un frammento: tutta la molecola (`mode = "molecule"`)
+    oppure il frammento con gli atomi legati direttamente ai suoi (`"substituents"`)."""
+    heavy = m.heavy
+    if mode == "molecule":
+        return np.flatnonzero(heavy)
+    own = set(int(i) for i in core.atoms)
+    out = set(own)
+    for i, j in m.bonds:
+        i, j = int(i), int(j)
+        if i in own and heavy[j]:
+            out.add(j)
+        elif j in own and heavy[i]:
+            out.add(i)
+    return np.array(sorted(out))
+
+
+def fallback_axis(m: Molecule, core: Core, limits: Limits) -> tuple[np.ndarray, float] | None:
+    """Asse lungo di ripiego per un frammento quasi isotropo (revisione 4, M1.1): la direzione di massima estensione,
+    nel piano del frammento, degli atomi di `fallback_atoms` proiettati su quel piano, con la sua isotropia
+    (λ2/λ3)^½ in proiezione. None se anche questa supera `max_axis_isotropy` (benzene, mesitilene, C₆F₆: nessun asse
+    lungo nemmeno con i sostituenti) o se la molecola è una rete estesa nel modo "molecule" (la sua unità ripetuta è un
+    taglio arbitrario)."""
+    mode = getattr(limits, "axis_fallback", "molecule")
+    if mode not in FALLBACK_SOURCES or (mode == "molecule" and m.extended):
+        return None
+    idx = fallback_atoms(m, core, mode)
+    if len(idx) <= len(core.atoms):
+        return None
+    n = core.normal
+    d = m.pos[idx] - m.pos[idx].mean(axis=0)
+    d = d - np.outer(d @ n, n)  # nel piano del frammento
+    values, vectors = np.linalg.eigh(d.T @ d)  # crescente: ~0 (lungo n), λ2, λ3
+    if values[2] <= 0:
+        return None
+    aspect = float(np.sqrt(max(0.0, values[1]) / values[2]))
+    if aspect > limits.max_axis_isotropy:
+        return None
+    v = vectors[:, 2]
+    return (v if v[np.argmax(np.abs(v))] >= 0 else -v), aspect
+
+
+def apply_fallback_axis(m: Molecule, frags: list[Core], limits: Limits) -> list[Core]:
+    """Dà l'asse di ripiego (`fallback_axis`) ai frammenti il cui asse automatico non è definito (isotropia sopra
+    `max_axis_isotropy`); gli altri, e quelli con l'asse definito dall'utente, restano come sono. `axis_source` dice
+    quale asse è stato usato, così valori basati sull'anello e sulla molecola non si mescolano in silenzio."""
+    out = []
+    for f in frags:
+        if f.axis_source == "pca" and f.plane.aspect > limits.max_axis_isotropy:
+            hit = fallback_axis(m, f, limits)
+            if hit is not None:
+                f = f.with_long(hit[0], source=getattr(limits, "axis_fallback", "molecule")) or f
+        out.append(f)
     return out

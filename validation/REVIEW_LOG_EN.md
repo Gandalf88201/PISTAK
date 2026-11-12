@@ -109,3 +109,50 @@ unchanged), *deferred* (left to the author), *open*.
 | 70 | fragments | the planar-skeleton fallback accepts only sp²/sp skeletons (no atom with four or more neighbours, H included); fallback fragments 55 → 10 in the COD sample, pairs 4450 → 4284, π-stacked pairs 102 → 99 (all three removed involved sp³ solvents); `check_incertezze.py converge` selects its pairs explicitly | corrected |
 | 71 | Monte Carlo | cell parameters: only the free ones are drawn, constraints derived from the symmetry operations (G = RᵀGR); alert `cellConstraints` when the CIF cell is not invariant. COD sample: all 200 cells consistent (no alert); cell deviates change in 8 structures, only 7102228 has π-stacked pairs (σ changes ≤ 0.8 %); medians over the 99 π-stacked pairs unchanged | corrected |
 | 72 | reproducibility | compatibility-mode snapshot of the carbide COD 1538535 (R-3m): 6 pairs on macOS, 7 on Linux (contacts exactly on lattice translations, a tie decided by the last binary digit); that snapshot is excluded, the default-mode snapshot is kept and identical on both platforms; root cause still open | open (worked around) |
+
+## Round 4 of the paper review (10–11 November 2026): items 73–87 (v1.3.0, not yet released)
+
+- **73** Fallback long axis for nearly isotropic fragments (single rings): long axis of the whole molecule projected
+  onto the fragment plane (`axis_fallback = "molecule"`, default), of the fragment with its substituents, or none.
+  The origin of the axis is written with every pair (`long_axis_a`, `long_axis_b`).
+- **74** Slips in the frame of each fragment (`long_slip_a`, `lat_slip_a`, `long_slip_b`, `lat_slip_b`): the pitch
+  and roll distances of Curtis et al. (2004); defined whatever the twist between the two long axes.
+- **75** `max_axis_twist` lowered from 75° to 30°: beyond it the bisector frame describes neither molecule.
+- **76** *Clamped* pairs: two fragments of one molecule closer than `min_interplanar` = 3.2 Å are flagged and are not
+  π-stacked (COD 7239588). Effect on the COD sample: 99 → 98 π-stacked pairs.
+- **77** Complete symmetry classes: a class missed members when symmetry exchanged fragments of equal size, so its
+  multiplicity was too low and its representative changed with `contact_cutoff`. Every class now holds its whole
+  orbit and has a canonical representative. The number of pairs does not change.
+- **78** Contacts per molecule (`per_molecule`), independent of Z.
+- **79** Monte Carlo: optional covariance matrix of the coordinates (`--mc-covariance`); the reported value is the
+  nominal one; results are reproducible from the seed.
+- **80** Dimer export: keywords stated for ORCA 6; warnings for impossible charge/multiplicity, metals and salts.
+  The exported inputs have not been run.
+- **81** Output terms aligned with the paper (π-stacked, angle); no "interplanar distance" printed for pairs without
+  projected overlap; JSON format version 5.
+- **82** Windows and macOS added to continuous integration (to be confirmed after the first push).
+
+- **83** Planar molecules without rings (nitrate, guanidinium) are π fragments only on request
+  (`ringless_fragments = "planar"`; default `"none"`): with 500 structures the rule classed two nitrate–arene
+  contacts (COD 7032025, 7104713) as π-stacked. Author's decision.
+- **84** Two elements on one site (mixed occupancy, COD 2108505): angles and torsions through both atoms of the
+  site are degenerate and no longer listed.
+- **85** COD sample enlarged from 200 to 500 structures (the first 500 of the same seeded draw; the previous 200 are
+  its first 200). The Monte Carlo over the sample runs in blocks of 100 structures.
+- **86** (11 November 2026) Symmetry classes: when no molecule had more than one fragment, an operation mapping a
+  molecule onto a copy of itself was assumed to map its fragment onto the fragment. This fails for a molecule on a
+  symmetry element whose fragment is one of two equivalent rings of which only one is a fragment (COD 7044129), and
+  for disorder removed asymmetrically (COD 4326386): non-equivalent pairs were merged into one class. The fragment
+  maps are now always used. Found by the independent multiplicity check (2 of 364 structures of discrete
+  molecules). COD sample: 10 875 → 10 883 pairs, no π-stacked pair changes.
+- **87** (12 November 2026) The table of the graphical interface prints a dash, like the terminal, in place of the
+  "interplanar distance" of pairs that are not π-stacked and have no projected overlap; one rule for both. The value
+  stays in the scatter plot, CSV and JSON.
+- **88** (12 November 2026, round 5, N1) Extended networks: no result depends any more on how the repeat unit is
+  cut. The *clamped* flag and the pair categories now test membership of the same bonded network (a translation in
+  the lattice of periodicities of the network), not of the same repeat unit; a bridging atom is looked up in the bond
+  graph of the infinite network, not only in the unit; the nodes of the stacking graph are the discrete molecules
+  and the π fragments of networks; and the symmetry images of fragments that share an atom are found whichever
+  fragment the atom is listed in. A random re-cut of the repeat units of the 98 network structures of the sample
+  (three cuts each; `paper/scripts/recut_invariance.py`) changed 22 of them with the previous rules (12 cuts with a
+  different motif rank) and none now. Test: `tests/test_round5.py`.

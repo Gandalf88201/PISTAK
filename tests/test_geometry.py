@@ -161,7 +161,7 @@ def test_complete_json(tmp_path):
 
     a = api.analyse_file(COD / "4500022.cif")
     data = json.loads(export.write_json(a, tmp_path / "a.json").read_text(encoding="utf-8"))
-    assert data["version"] == export.JSON_VERSION == 4
+    assert data["version"] == export.JSON_VERSION == 5
     assert {"symops", "molecule_list", "stacks", "ring_pairs", "geometry"} <= set(data)
     g = data["geometry"]
     items = molecule_geometry(a.structure, a.cif)

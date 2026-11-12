@@ -23,3 +23,7 @@ Rispetto ai file scaricati sono stati tolti solo i campi di testo `_shelx_res_fi
 | 4020270 | corannulene C₂₀H₁₀ | P2₁/c | 90 K | policiclico a scodella: il sistema fuso non è planare e non si spezza nelle sue parti planari, quindi nessun frammento π (revisione 2, E8) |
 | 7206203 | (H₂mela)₂[CuCl₅]Cl (mela = melammina) | P2/c | 293 K | nessun legame C–C o C–H, ma l'anello triazinico è un sistema π: con `pi_scope = "organic"` si cercano i frammenti (revisione 3, N1) |
 | 1538535 | Ta₂VC₂ (carburo) | R3̄m | — | rete inorganica con anelli Ta/V/C: nessun frammento π con `pi_scope = "organic"` (revisione 3, N1) |
+| 7239588 | [Zn₂L₂] dinucleare, chelati affacciati | P1̄ | — | due anelli chelati della stessa molecola a 3,10 Å, tenuti da due ponti carbossilato: coppia «vincolata» (`clamped`), non π-stack (revisione 4, M6.4) |
+| 7123350 | complesso di Cu con leganti aromatici | — | — | frammenti della stessa taglia scambiati dalla simmetria: le classi di coppie devono avere tutta l'orbita, qualunque sia `contact_cutoff` (revisione 4, S5) |
+| 2108505 | HoFe₃(BO₃)₄ con Bi sul sito di Ho | P3₁21 | — | due elementi sullo stesso sito (occupazione mista): angoli e torsioni che li contengono entrambi sono degeneri e non si riportano (revisione 4) |
+| 7044129 | complesso di Fe, C₂₂H₅₂FeN₈ | C2/c | — | molecola su un asse binario con un solo frammento π (uno di due anelli equivalenti di quattro atomi): le operazioni che non portano il frammento in un frammento non si usano per le classi di coppie (revisione 4, voce 86) |

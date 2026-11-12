@@ -51,7 +51,7 @@ def test_without_perturbation_nominal_geometry_returns():
     for p in a.pairs:
         q = remeasure(a2.structure, a2.fragments, p, a2.limits)
         for k in GEOMETRY_KEYS:
-            assert getattr(q, k) == pytest.approx(getattr(p, k), abs=1e-9), k
+            assert getattr(q, k) == pytest.approx(getattr(p, k), abs=1e-9, nan_ok=True), k
 
 
 def test_analytical_case_centroid_distance_of_stack_along_a():

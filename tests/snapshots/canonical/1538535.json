@@ -35,9 +35,9 @@
  "geometry": {
   "contacts": [],
   "counts": {
-   "angle": 58,
+   "angle": 49,
    "bond": 13,
-   "torsion": 186
+   "torsion": 97
   }
  },
  "molecules": [

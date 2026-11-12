@@ -221,7 +221,7 @@ def _trigonal(centre: str, arm: str, d: float, h: bool) -> list[tuple[str, np.nd
 def _fallback_fragments(atoms, **kw):
     text = cifgen.make_cif(atoms, cifgen.Cell(10.0, 10.0, 10.0, 90.0, 90.0, 90.0), ["x, y, z"], "fb", "P 1",
                            origin_frac=(0.4, 0.4, 0.5))
-    a = api.analyse_text(text, "fb", Limits(**kw))
+    a = api.analyse_text(text, "fb", Limits(**{"ringless_fragments": "planar", **kw}))
     return [f for fs in a.fragments for f in fs]
 
 
@@ -231,6 +231,8 @@ def test_fallback_keeps_sp2_skeletons():
     for atoms in (_trigonal("N", "O", 1.25, False), _trigonal("C", "N", 1.33, True)):
         frags = _fallback_fragments(atoms, pi_scope="all")
         assert len(frags) == 1 and frags[0].kind == "molecule" and len(frags[0].atoms) == 4
+        # off by default since round 4: a nitrate over an arene is an anion–π contact, not a π-stack
+        assert _fallback_fragments(atoms, pi_scope="all", ringless_fragments="none") == []
 
 
 def test_fallback_rejects_planar_sp3_chains():

@@ -49,6 +49,16 @@ class Molecule:
     #: Per ogni atomo: indice dell'atomo nella cella (`Structure.cell_el`) e cella di appartenenza.
     cell_index: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=int))
     cell_shift: np.ndarray = field(default_factory=lambda: np.zeros((0, 3), dtype=int))
+    #: Rete estesa: base (righe intere, forma a scala) del reticolo delle sue periodicità, le traslazioni t per cui un
+    #: atomo dell'unità è legato, attraverso la rete, alla sua copia traslata di t. Una catena lungo a ha la sola riga
+    #: (1, 0, 0); una molecola discreta nessuna riga. Due copie dell'unità traslate di t sono la stessa rete se e solo
+    #: se t sta in questo reticolo (`same_network`), qualunque sia il taglio dell'unità ripetuta (revisione 5, N1).
+    periods: np.ndarray = field(default_factory=lambda: np.zeros((0, 3), dtype=int))
+    #: Rete estesa: per ogni atomo dell'unità, i suoi vicini legati nella rete infinita come (atomo dell'unità,
+    #: traslazione in celle della copia dell'unità in cui sta). Serve a riconoscere un atomo che lega due frammenti
+    #: anche quando sta in un'altra copia dell'unità ripetuta (`pairs.fragments_link`, revisione 5, N1). Vuoto per le
+    #: molecole discrete, i cui legami sono tutti in `bonds`.
+    links: list = field(default_factory=list)
 
     def __len__(self) -> int:
         return len(self.el)
@@ -249,6 +259,74 @@ UNIT_RING_SIZE = 10
 Shift = tuple[int, int, int]
 
 
+def lattice_basis(vectors) -> np.ndarray:
+    """Base intera in forma a scala (righe con il primo elemento non nullo positivo e colonne pivot crescenti) del
+    reticolo generato dai vettori interi `vectors`: eliminazione di Gauss sugli interi (algoritmo di Euclide per
+    colonna), quindi il reticolo è esattamente quello generato, non il sottospazio razionale."""
+    rows = [[int(x) for x in t] for t in vectors if any(int(x) for x in t)]
+    basis: list[list[int]] = []
+    for col in range(3):
+        while True:
+            nz = [r for r in rows if r[col] != 0]
+            if len(nz) <= 1:
+                break
+            piv = min(nz, key=lambda r: abs(r[col]))
+            out = [piv]
+            for r in rows:
+                if r is piv:
+                    continue
+                if r[col] != 0:
+                    q = r[col] // piv[col]
+                    r = [r[k] - q * piv[k] for k in range(3)]
+                if any(r):
+                    out.append(r)
+            rows = out
+        nz = [r for r in rows if r[col] != 0]
+        if nz:
+            piv = nz[0]
+            rows = [r for r in rows if r is not piv]
+            basis.append(piv if piv[col] > 0 else [-x for x in piv])
+    return np.array(basis, dtype=int).reshape(-1, 3)
+
+
+def in_lattice(basis: np.ndarray, t) -> bool:
+    """Vero se il vettore intero `t` sta nel reticolo della base a scala `basis` (`lattice_basis`)."""
+    v = [int(x) for x in t]
+    for row in basis:
+        col = next(k for k in range(3) if row[k] != 0)
+        if v[col] % int(row[col]):
+            return False
+        q = v[col] // int(row[col])
+        v = [v[k] - q * int(row[k]) for k in range(3)]
+    return not any(v)
+
+
+def same_network(s: "Structure", a: int, b: int, shift) -> bool:
+    """Vero se la molecola `a` (cella 0) e la molecola `b` traslata di `shift` sono lo stesso insieme di atomi legati:
+    la stessa molecola discreta, o la stessa rete estesa (catena, strato, rete 3D). Non dipende da come è stata
+    tagliata l'unità ripetuta di una rete (revisione 5, N1): due unità traslate di una catena lungo a sono la stessa
+    catena se la traslazione è un multiplo di a, due catene parallele altrimenti."""
+    if a != b:
+        return False
+    if not any(int(x) for x in shift):
+        return True
+    return bool(len(s.molecules[a].periods)) and in_lattice(s.molecules[a].periods, shift)
+
+
+def network_links(cell_index, cell_shift, edges) -> list[list[tuple[int, Shift]]]:
+    """I vicini legati di ogni atomo di un'unità ripetuta nella rete infinita: (posizione nell'unità del vicino,
+    traslazione della copia dell'unità che lo contiene), dai legami della cella `edges` (`cell_bonds`)."""
+    where = {int(c): k for k, c in enumerate(cell_index)}
+    out: list[list[tuple[int, Shift]]] = [[] for _ in range(len(cell_index))]
+    for k, c in enumerate(cell_index):
+        for j, es in edges[int(c)]:
+            kk = where.get(int(j))
+            if kk is None:
+                continue
+            out[k].append((kk, tuple(int(cell_shift[k][d]) + int(es[d]) - int(cell_shift[kk][d]) for d in range(3))))
+    return out
+
+
 def _add(a: Shift, b: Shift) -> Shift:
     return a[0] + b[0], a[1] + b[1], a[2] + b[2]
 
@@ -350,6 +428,7 @@ def build_structure(cif: Cif, limits: Limits | None = None) -> Structure:
         index = {start: 0}
         bonds: list[tuple[int, int]] = []
         extended = False
+        periods: list[tuple[int, int, int]] = []
         seen[start] = (0, 0, 0)
         k = 0
         while k < len(members):
@@ -364,6 +443,9 @@ def build_structure(cif: Cif, limits: Limits | None = None) -> Structure:
                     bonds.append((k, len(members) - 1))
                 elif prev != s:
                     extended = True  # lo stesso atomo raggiunto in due celle diverse: la rete continua all'infinito
+                    # la differenza è una periodicità della rete; quelle dei cicli chiusi dalla visita (gli archi fuori
+                    # dall'albero) generano tutto il reticolo delle periodicità
+                    periods.append((s[0] - prev[0], s[1] - prev[1], s[2] - prev[2]))
                 elif index[j] > k:
                     bonds.append((k, index[j]))
             k += 1
@@ -380,7 +462,8 @@ def build_structure(cif: Cif, limits: Limits | None = None) -> Structure:
         molecules.append(Molecule(
             el=[els[i] for i in ci], labels=[labels[i] for i in ci], pos=pos,
             bonds=_dedupe(bonds), centroid=c + back, extended=extended,
-            cell_index=ci, cell_shift=cs - fc.astype(int),
+            cell_index=ci, cell_shift=cs - fc.astype(int), periods=lattice_basis(periods),
+            links=network_links(ci, cs, edges) if extended else [],
         ))
     return Structure(vectors, els, labels, frac, molecules, list(cif.symops),
                      cell_origin=np.array(origins, dtype=int).reshape(-1, 2))

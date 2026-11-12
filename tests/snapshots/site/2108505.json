@@ -1,0 +1,79 @@
+{
+ "alerts": [
+  [
+   "C",
+   "partialOccupancy",
+   {
+    "atoms": "Bi1, Ho1",
+    "n": 2
+   }
+  ]
+ ],
+ "cell_atoms": 63,
+ "geometry": {
+  "contacts": [],
+  "counts": {
+   "angle": 120,
+   "bond": 26,
+   "torsion": 400
+  }
+ },
+ "molecules": [
+  {
+   "atoms": 63,
+   "bonds": 101,
+   "centroid": [
+    3.025428571,
+    3.930147,
+    1.680333453
+   ],
+   "core": {
+    "atoms": [
+     20,
+     32,
+     49,
+     59
+    ],
+    "centroid": [
+     4.493251548,
+     8.724077429,
+     1.26024937
+    ],
+    "kind": "rings",
+    "long": [
+     -0.5240476353,
+     -0.3025606878,
+     0.7961351055
+    ],
+    "normal": [
+     0.6894729176,
+     0.3980680872,
+     0.6051189089
+    ],
+    "rms": 1.138032692e-06
+   },
+   "extended": true,
+   "formula": "B12Bi3Fe9Ho3O36"
+  }
+ ],
+ "pairs": [],
+ "skipped_disorder": 0,
+ "space_group": "P 31 2 1",
+ "stacks": [],
+ "structure": {
+  "alerts_a": 0.0,
+  "alerts_b": 0.0,
+  "alerts_c": 1.0,
+  "density_calc": 4.768760865,
+  "density_cif": 4.7687,
+  "goof": 1.04,
+  "r1": 0.0138,
+  "rho_max": 1.32,
+  "rho_min": -1.13,
+  "temperature": 360.0,
+  "volume": 594.7487031,
+  "wr2": 0.03,
+  "z": 3.0,
+  "z_prime": 0.5
+ }
+}

@@ -11,7 +11,7 @@ from pistak.gui.session import Session
 from pistak.gui.theme import KIND_COLORS, KIND_LABELS, kind_label, qcolor
 from pistak.gui.views.base import PairView
 from pistak.i18n import tr
-from pistak.labels import relation
+from pistak.labels import is_interplanar, relation
 from pistak.params import get_spec, specs
 
 DEFAULT_COLUMNS = ["interplanar", "long_slip", "lat_slip", "dihedral", "centroid_distance", "contact", "overlap", "count"]
@@ -63,6 +63,8 @@ class PairModel(QAbstractTableModel):
         v = p.get(key)
         if role == Qt.ItemDataRole.DisplayRole:
             spec = get_spec(key)
+            if key == "interplanar" and not is_interplanar(p):
+                return "–"  # come nel terminale: non è una distanza interplanare (il valore resta per ordinare)
             return "–" if not math.isfinite(v) else f"{v:.{spec.digits if spec else 2}f}"
         if role == Qt.ItemDataRole.UserRole:
             return v if math.isfinite(v) else -1e30

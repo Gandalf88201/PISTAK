@@ -627,3 +627,101 @@ anelli (`validation/platon_polimeri/`, con `LEGGIMI.md` e il confronto completo 
   hanno ora coppie π (32 stack in queste strutture); le altre 12 non hanno frammenti π abbastanza vicini.
 - Test sintetici: catena di poli(p-fenilene) con stack noto a 3,6 Å (trovato, segnato polimero, non esportato) e asse
   2₁ lungo la catena (le due coppie equivalenti diventano una ×2 solo con le immagini dei frammenti).
+
+## Revisione del paper, round 4 (10–11 novembre 2026): voci 73–87 (v1.3.0, non ancora rilasciata)
+
+Rapporto: `PISTAK_review_round4.md` (voci G, M, E, T, F, S, L, P). Qui le modifiche al codice; test in
+`tests/test_round4.py` (25 test). Suite completa: 507 superati, 5 saltati; ruff e `i18n_check` puliti.
+
+- **73 (M1.1) Asse lungo di ripiego per i frammenti isotropi.** Un frammento con isotropia sopra `max_axis_isotropy`
+  (un anello benzenico, una piridina) prende l'asse lungo di tutta la molecola proiettato sul suo piano
+  (`axis_fallback = "molecule"`, predefinito), oppure quello del frammento con gli atomi legati ai suoi
+  (`"substituents"`), oppure nessuno (`"none"`, il comportamento di prima). `Core.axis_source` e i nuovi campi
+  `Pair.axis_a`/`axis_b` (JSON: `long_axis_a`/`long_axis_b`) dicono quale asse è stato usato. Niente ripiego nel modo
+  del sito né, nel modo "molecule", per le reti estese. Nel Monte Carlo l'asse di ripiego si ricalcola a ogni campione.
+  `max_axis_isotropy` passa allo stadio `fragments`.
+- **74 (M1.2) Slittamenti nel sistema di ciascun frammento.** `long_slip_a`, `lat_slip_a`, `long_slip_b`,
+  `lat_slip_b`: il centroide dell'altro frammento proiettato sul piano di un frammento e diviso lungo il suo asse
+  lungo e corto (le distanze di pitch e roll di Curtis et al., 2004). Definiti qualunque sia la rotazione tra gli assi.
+  Nel registro dei parametri, negli export e nel Monte Carlo.
+- **75 (M1.3) `max_axis_twist` da 75° a 30°.** La bisettrice L dista metà della rotazione da ciascun asse: oltre 30°
+  (15° da ciascuno) gli slittamenti della coppia non si riportano; restano quelli della voce 74.
+- **76 (M6.4) Coppie «vincolate» (`Pair.clamped`).** Due frammenti della stessa molecola (o della stessa unità
+  ripetuta) più vicini di `min_interplanar` = 3,2 Å che sarebbero uno stack per angolo, distanza e sovrapposizione
+  sono parallele e segnate `clamped`, come `bonded` e `bridged`. COD 7239588 (due chelati a 3,10 Å) ora è così: nel
+  campione COD gli stack passano da 99 a 98. Tra molecole diverse nessun limite inferiore. Soglia dello stadio `pairs`.
+- **77 (S5) Classi di simmetria complete.** La coppia dei frammenti principali (0–0) si misurava sempre, le altre
+  solo se i frammenti erano entro `contact_cutoff` + 1 Å: se la simmetria porta il frammento 0 nel frammento 1
+  dell'immagine, l'immagine di una coppia 0–0 lontana non veniva misurata. La classe aveva meno membri del dovuto
+  (molteplicità sottostimata) e il rappresentante cambiava con `contact_cutoff` (le 4–10 coppie «perse» della
+  tabella S3). Ora `contact_keys` completa l'orbita di ogni classe (`_complete_classes`) e il rappresentante è
+  sempre il membro più piccolo. Il numero di coppie non cambia; cambiano alcune molteplicità e rappresentanti.
+- **78 (T16) Contatti per molecola** (`Pair.per_molecule`, parametro `per_molecule`): non dipende da Z.
+- **79 (M4.5, M4.6) Monte Carlo.** Matrice di covarianza opzionale (`--mc-covariance FILE`, `read_covariance`,
+  `covariance_factor`): 3N×3N sulle coordinate frazionarie, nell'ordine degli atomi del CIF. Documentato che il valore
+  riportato è quello nominale e che il seme rende i risultati riproducibili (JSON: `reported_value`, `covariance`).
+- **80 (M3.1–M3.3) Export dei dimeri.** Parole chiave dichiarate per ORCA 6; avvertenze nell'input quando elettroni e
+  molteplicità sono incompatibili, quando un monomero contiene un metallo e quando la struttura ha più specie
+  chimiche (`charge_warnings`). Gli idrogeni a distanze da neutroni c'erano già (ora con un test sull'input esportato).
+  GLI INPUT NON SONO STATI ESEGUITI: su questa macchina non c'è ORCA né Psi4.
+- **81 (E5, E8, S7) Termini dell'uscita.** In inglese i tipi sono «π-stacked», «parallel», «tilted» (terminale e
+  finestra), la colonna dell'angolo è «angle»; nella tabella del terminale la distanza interplanare delle coppie senza
+  sovrapposizione è un trattino (il valore resta in CSV e JSON); la relazione dice «legati», «a ponte» o «vincolata».
+  Proiezione: l'asse è «bisettrice degli assi lunghi dei due frammenti», la sovrapposizione è il rapporto, non Å².
+  JSON versione 5.
+- **82 (M7.2) Windows e macOS nell'integrazione continua** (`.github/workflows/test.yml`, lavoro `altri-sistemi`).
+  NON ANCORA VERIFICATO: serve un push.
+
+- **83 (T12) Molecole planari senza anelli: frammenti π solo su richiesta** (`ringless_fragments`, predefinito
+  `"none"`; `"planar"` ridà il comportamento di prima; il modo del sito lo tiene acceso). Decisione dell'autore dopo
+  il passaggio del campione COD da 200 a 500 strutture: comparivano due «π-stack» nitrato–arene (COD 7032025 a
+  3,08 Å, 7104713 a 3,16 Å), contatti anione–π. Con 200 strutture la regola non dava nessuno stack.
+- **84 Atomi di due elementi sullo stesso sito** (occupazione mista, COD 2108505: Ho e Bi): angoli e torsioni che
+  contengono entrambi gli atomi dello stesso sito sono degeneri e non si riportano più (`intramolecular.COINCIDENT`).
+  Trovato dal controllo dei codici di simmetria sul campione di 500 (123 misure diverse, tutte in quella struttura).
+- **85 Campione COD di 500 strutture** (`validation/congela_campione.py`): i primi 500 ID dell'estrazione a seme
+  fisso; i 200 precedenti ne sono i primi 200 (`cod_sample_200.*`). Il Monte Carlo sul campione va a blocchi di 100
+  (`paper/scripts/mc_blocks.py`). `cod_cache/` deve contenere solo i CIF del campione: circa venti script lo
+  prendono dall'elenco di quella cartella (lo scaricamento del campione più grande va in `cod_cache_2000/`).
+- **86 Classi di simmetria: solo operazioni che portano il frammento in un frammento** (11 novembre 2026). Quando
+  nessuna molecola aveva più di un frammento, l'orbita di una coppia si costruiva senza le mappe dei frammenti: si
+  dava per scontato che un'operazione che porta la molecola in una sua copia porti anche il frammento 0 nel
+  frammento 0. Non è vero se la molecola sta su un elemento di simmetria e il frammento è uno di due anelli
+  equivalenti di cui l'altro non è un frammento (COD 7044129, C2/c, anelli di quattro atomi: il secondo è sotto
+  `min_fragment_atoms`), o se atomi disordinati sono stati tolti in modo non simmetrico (COD 4326386). Venivano unite
+  in una classe coppie non equivalenti (distanze interatomiche diverse fino a 5,8 Å). Ora `contact_keys` calcola
+  sempre `fragment_maps`. Trovato dal controllo indipendente delle molteplicità (`paper/scripts/geometry_oracle.py`,
+  che ora verifica che i membri di una classe siano congruenti): 2 strutture su 364 di molecole discrete. Sul
+  campione di 500: 10 875 → 10 883 coppie (parallele +5, inclinate +3), nessuna coppia π-stack cambia. Test:
+  `test_class_members_are_congruent_when_an_operation_does_not_map_the_fragment` (CIF di prova 7044129).
+  Resta da decidere: in 7044129 solo uno dei due anelli equivalenti di quattro atomi è un frammento π.
+- **87 (E8) Trattino anche nella tabella della finestra** (12 novembre 2026): la distanza interplanare delle coppie
+  non π-stack e senza sovrapposizione in proiezione è un trattino anche nella tabella della finestra, come nel
+  terminale (voce 81); una sola regola per entrambi (`labels.is_interplanar`). Il valore resta per l'ordinamento, nel
+  grafico di dispersione, in CSV e JSON. Fig. 3 dell'articolo rifatta con il tema chiaro.
+- **88 (revisione 5, N1) Reti estese: nessun risultato dipende dal taglio dell'unità ripetuta** (12 novembre 2026).
+  L'unità ripetuta di un polimero di coordinazione è un taglio arbitrario della rete, ma tre risultati la trattavano
+  come una molecola: (i) la bandiera *clamped* e la categoria «intramolecolare» valevano solo dentro l'unità, non tra
+  due unità della stessa rete; (ii) l'atomo che lega due frammenti (*bridged*) si cercava solo tra gli atomi
+  dell'unità, non nelle sue copie traslate; (iii) i nodi del grafo di stack erano le unità, così spostare un anello
+  nell'unità vicina cambiava le traslazioni dei cicli e il rango. Inoltre (iv) `fragment_images` ricordava un solo
+  frammento per atomo: se un atomo (un metallo) sta in due frammenti, l'immagine di un frammento si cercava a volte
+  in quello sbagliato e l'operazione si scartava, con classi di simmetria spezzate in modo diverso a seconda del
+  taglio. Ora: `Molecule.periods` (reticolo delle periodicità della rete, base di Hermite) e `same_network` (stessa
+  rete se la traslazione sta nel reticolo); `Pair.same_network` decide *clamped* e la categoria; `Molecule.links`
+  (vicini legati di ogni atomo nella rete infinita) per l'atomo a ponte; nodi del grafo di stack = molecole discrete
+  e frammenti π delle reti (`stacks.stack_node`; gli archi portano i frammenti); `fragment_images` prova tutti i
+  frammenti dell'atomo. Controllo: `paper/scripts/recut_invariance.py` ritaglia a caso le unità delle 98 strutture
+  con reti del campione (tre tagli ciascuna, anelli e leganti interi, spostati di periodi della rete): con le regole
+  del round 4 cambiavano 22 strutture su 98 (12 tagli con un rango diverso), ora nessuna. Test: `tests/test_round5.py`
+  (CIF di prova 7024607). Effetto sul campione di 500 (`paper/data/runs/rev5/`): le coppie π-stacked restano 271 (187 tra molecole,
+  50 entro una molecola o rete invece di 41, 34 tra reti diverse invece di 43); le coppie in tutto 10 836 invece di
+  10 883 (la differenza è tutta nelle strutture con reti); motivi 204/103/13/2 (aggregati finiti, colonne,
+  strati, reti 3D) invece di 128/96/23/10; bonded 362, bridged 712, clamped 4. Monte Carlo ripetuto sulle 25
+  strutture con rete e coppia π-stacked: conteggi invariati; 265/271 coppie stabili in tutti i 500 campioni.
+
+Snapshot: quelli del modo del sito differiscono solo per le chiavi nuove (valori identici); quelli predefiniti sono
+stati rigenerati (assi di ripiego, limite di rotazione, classi complete). Nuovi CIF di prova: 7239588, 7123350, 2108505, 7044129.
+`validation/scarica_cod.py`: secondo argomento per l'elenco (campione di 2000 strutture) e nuovi tentativi sugli
+errori di rete.
+

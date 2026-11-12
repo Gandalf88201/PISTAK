@@ -9,8 +9,29 @@ from pistak.core.pairs import Pair
 from pistak.core.stacks import RANK_NAMES
 from pistak.i18n import tr
 
+#: Nomi dei tipi di coppia (testi italiani, da passare a `tr`): gli stessi nel terminale e nella finestra.
+KIND_TEXT = {"stack": "π-stack", "parallel": "parallela", "tilted": "inclinata"}
+#: Perché una coppia parallela e sovrapposta non è un π-stack (`Pair.bonded`, `bridged`, `clamped`).
+FLAG_TEXT = {"bonded": "legati", "bridged": "a ponte", "clamped": "vincolata"}
+
+
+def kind_text(kind: str) -> str:
+    """Nome del tipo di coppia nella lingua corrente (inglese: π-stacked, parallel, tilted, come nel paper)."""
+    return tr(KIND_TEXT.get(kind, kind))
+
+
+def flags_text(pair: Pair) -> str:
+    """«legati», «a ponte» o «vincolata» se la coppia lo è, altrimenti vuoto."""
+    return " · ".join(tr(FLAG_TEXT[k]) for k in FLAG_TEXT if getattr(pair, k, False))
+
 
 def relation(pair: Pair) -> str:
+    """`_relation` più, se c'è, il motivo per cui la coppia non può essere un π-stack («· a ponte», «· vincolata»)."""
+    flags = flags_text(pair)
+    return f"{_relation(pair)} · {flags}" if flags else _relation(pair)
+
+
+def _relation(pair: Pair) -> str:
     """Come la seconda molecola è legata alla prima: «stessa [0 1 0]» o «molecola 2 [1 0 0]»; con più frammenti π
     anche quali («· π1–π2»), e per le coppie nella stessa molecola «intramolecolare · π1–π3». Nei polimeri (reti
     estese) la «molecola» è l'unità ripetuta: «polimero · stessa unità · π1–π5» o «polimero · [0 1 0] · π2–π2»."""
@@ -121,3 +142,11 @@ def alert_text(alert) -> str:
         return tr(template).format(**alert.values)
     except (KeyError, IndexError, ValueError):
         return f"{alert.code}: {alert.values}"
+
+
+def is_interplanar(pair) -> bool:
+    """La distanza tra i piani di questa coppia è una distanza interplanare: coppia π-stack, o contorni che si
+    sovrappongono in proiezione. Per due molecole affiancate senza sovrapposizione è la distanza tra due piani
+    paralleli che non si fronteggiano: nelle tabelle (terminale e finestra) si scrive un trattino; il valore resta in
+    CSV, JSON e nell'ordinamento (revisione 4, E8)."""
+    return pair.kind == "stack" or pair.overlap_area > 0

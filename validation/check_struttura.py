@@ -54,7 +54,7 @@ def check_cell() -> None:
             if abs(r) > 0.005:
                 bad_d.append((f.stem, round(100 * r, 2)))
         z, formula = cif_value(cif, "z"), reported_formula(cif)
-        if math.isfinite(z) and formula:
+        if math.isfinite(z) and z > 0 and formula and all(n > 0 for n in formula.values()):  # Z = 0 nel CIF: non confrontabile
             n_z += 1
             ratios = {e: contents.get(e, 0.0) / (z * n) for e, n in formula.items() if e != "H"}
             if any(abs(x - 1) > 0.01 for x in ratios.values()):

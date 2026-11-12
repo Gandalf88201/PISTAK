@@ -91,9 +91,11 @@ def test_conjugated_merge_coplanar_and_twisted_biaryl():
 def test_linear_molecule_has_no_fallback_plane():
     """A linear heavy-atom skeleton (no rings) has no defined normal: no 'molecule' fragment."""
     m = _flat([("C", 1.2 * k, 0.0, 0.0) for k in range(6)], [(k, k + 1) for k in range(5)])
-    assert pi_fragments(m, Limits()) == []
+    on = Limits(ringless_fragments="planar")
+    assert pi_fragments(m, on) == []
     bent = _flat([("C", 1.2 * k, 0.6 * (k % 2), 0.0) for k in range(6)], [(k, k + 1) for k in range(5)])
-    assert [f.kind for f in pi_fragments(bent, Limits())] == ["molecule"]
+    assert [f.kind for f in pi_fragments(bent, on)] == ["molecule"]
+    assert pi_fragments(bent, Limits()) == []  # off by default since round 4
 
 
 def test_union_of_rings_versus_hull():

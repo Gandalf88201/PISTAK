@@ -35,8 +35,9 @@ def registry_evaluator(keys: Iterable[str] | None = None, registry: Registry = R
 
 def uncertainty(analysis: Analysis, samples: int = 100, seed: int = 0, keys: Iterable[str] | None = None,
                 include_cell: bool = True, progress: Callable[[int, int], None] | None = None,
-                registry: Registry = REGISTRY) -> Uncertainty:
+                registry: Registry = REGISTRY, covariance=None) -> Uncertainty:
     """Calcola le σ di tutti i parametri (o di `keys`) e le salva in `analysis.uncertainty`."""
-    result = monte_carlo(analysis, samples, seed, registry_evaluator(keys, registry), include_cell, progress)
+    result = monte_carlo(analysis, samples, seed, registry_evaluator(keys, registry), include_cell, progress,
+                         covariance=covariance)
     analysis.uncertainty = result
     return result

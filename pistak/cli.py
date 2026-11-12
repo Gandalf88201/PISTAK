@@ -83,10 +83,15 @@ def cmd_analyze(args) -> int:
         if reason is not None:
             print("  " + no_pairs_text(reason))
     else:
-        print(f"{'#':>3} {tr('tipo'):<8} {tr('interpl.'):>8} {'L-slip':>7} {'W-slip':>7} {tr('diedro'):>7} {'Cg-Cg':>7} "
+        from pistak.labels import is_interplanar, kind_text
+
+        print(f"{'#':>3} {tr('tipo'):<10} {tr('interpl.'):>8} {'L-slip':>7} {'W-slip':>7} {tr('angolo'):>7} {'Cg-Cg':>7} "
               f"{tr('contatto'):>8}  {tr('relazione')}")
         for p in a.pairs[: args.rows]:
-            print(f"{p.index + 1:>3} {p.kind:<8} {p.interplanar:8.2f} {p.long_slip:7.2f} {p.lat_slip:7.2f} {p.dihedral:7.1f} "
+            # senza sovrapposizione in proiezione |d·n| è lo scalino tra i piani di due frammenti affiancati, non una
+            # distanza di impilamento: nella tabella un trattino (il valore resta in --csv e --json) (revisione 4, S7)
+            ip = f"{p.interplanar:8.2f}" if is_interplanar(p) else f"{'–':>8}"
+            print(f"{p.index + 1:>3} {kind_text(p.kind):<10} {ip} {_num(p.long_slip, 7)} {_num(p.lat_slip, 7)} {p.dihedral:7.1f} "
                   f"{p.centroid_distance:7.2f} {p.contact:8.2f}  {relation(p)}")
         if len(a.pairs) > args.rows:
             print(tf("… altre {n} coppie (usa --rows o --csv)", n=len(a.pairs) - args.rows))
@@ -206,16 +211,26 @@ def cmd_periodic(args) -> int:
     return 0
 
 
+def _num(v: float, width: int, digits: int = 2) -> str:
+    """Un numero allineato a destra, o un trattino se non è definito (NaN)."""
+    return f"{v:{width}.{digits}f}" if v == v else f"{'–':>{width}}"
+
+
 def _print_uncertainty(a, args) -> None:
     from pistak.api import uncertainty
 
     prog = lambda i, n: print(f"\r[MC {i}/{n}]", end="", flush=True, file=sys.stderr)  # noqa: E731
-    u = uncertainty(a, args.mc, args.mc_seed, include_cell=not args.mc_no_cell, progress=prog)
+    cov = None
+    if getattr(args, "mc_covariance", None):
+        from pistak.core.uncertainty import read_covariance
+
+        cov = read_covariance(args.mc_covariance, a.cif)
+    u = uncertainty(a, args.mc, args.mc_seed, include_cell=not args.mc_no_cell, progress=prog, covariance=cov)
     print(file=sys.stderr)
     if not u.has_su:
         print(tr("attenzione: il CIF non ha incertezze standard (s.u.): tutte le σ sono 0"), file=sys.stderr)
     print("\n" + tf("incertezze (σ, Monte Carlo su {n} campioni dalle s.u. del CIF):", n=u.samples))
-    print(f"{'#':>3} {tr('interpl.'):>15} {'L-slip':>15} {'W-slip':>15} {tr('diedro'):>13} {tr('stabilità del tipo'):>20}")
+    print(f"{'#':>3} {tr('interpl.'):>15} {'L-slip':>15} {'W-slip':>15} {tr('angolo'):>13} {tr('stabilità del tipo'):>20}")
     for p in a.pairs[: args.rows]:
         s = u.sigma[p.index]
         print(f"{p.index + 1:>3} {p.interplanar:7.3f}±{s['interplanar']:<7.3f} {p.long_slip:7.3f}±{s['long_slip']:<7.3f} "
@@ -437,6 +452,8 @@ def main(argv: list[str] | None = None) -> int:
                    help=tr("incertezze dei parametri con un Monte Carlo di N campioni dalle s.u. del CIF (es. 200)"))
     p.add_argument("--mc-seed", type=int, default=0, help=tr("seme del generatore casuale del Monte Carlo"))
     p.add_argument("--mc-no-cell", action="store_true", help=tr("non perturbare i parametri di cella"))
+    p.add_argument("--mc-covariance", metavar="FILE",
+                   help=tr("matrice di covarianza delle coordinate frazionarie (3N×3N, testo o .npy, atomi nell'ordine del CIF): il Monte Carlo ne tiene conto"))
     _add_limit_args(p)
     p.set_defaults(fn=cmd_analyze)
 

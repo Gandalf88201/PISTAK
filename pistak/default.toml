@@ -19,6 +19,7 @@ max_cell_atoms = 6000     # il sito, nel browser, si fermava a 2500
 overlap_measure = "area"   # area: area comune dei poligoni degli anelli / frammento minore | atoms: frazione di atomi dentro il contorno dell'altro (sito)
 min_overlap = 0.10         # il sito: atoms e 0 (basta un atomo dentro il contorno), vedi Limits.site()
 max_slip = 0.0             # Å; 0 = nessun limite allo slittamento
+min_interplanar = 3.2      # Å; sotto, due frammenti della stessa molecola o rete sono «vincolati» (clamped), non un π-stack; 0 = nessun limite
 # convenzioni (quelle del sito: pair_mode = "site", disorder = "first")
 pair_mode = "canonical"    # canonical: una coppia per contatto, equivalenza dalle operazioni del gruppo | site: come il sito
 disorder = "major"         # major: componente con occupanza maggiore | first: gruppo 1 | all: tutto | 2, 3…: quel gruppo
@@ -26,9 +27,11 @@ fragments = "all"          # all: tutti i sistemi di anelli planari di ogni mole
 min_fragment_atoms = 5     # atomi minimi di un frammento π secondario (il principale si tiene sempre)
 pi_scope = "organic"       # organic: frammenti π se c'è un legame C–C o C–H o un anello planare di non metalli con B, C o N | all: in tutte
 fragment_merge = "fused"   # fused: anelli condensati | conjugated: anche sistemi complanari collegati (biarili, porfirine)
+ringless_fragments = "none" # none: solo sistemi di anelli | planar: anche molecole planari sp²/sp senza anelli (nitrato, guanidinio)
 long_axis_atoms = ""       # asse lungo da due atomi, per etichetta ("C1,C9"); vuoto = direzione di massima estensione
 max_axis_isotropy = 0.9    # oltre questa isotropia del nucleo l'asse lungo automatico non è definito: slittamenti L/W = NaN
-max_axis_twist = 75.0      # oltre questo angolo tra gli assi lunghi la bisettrice salta: slittamenti L/W = NaN
+axis_fallback = "molecule" # asse lungo dei frammenti isotropi: molecule (tutta la molecola) | substituents (frammento + atomi legati) | none
+max_axis_twist = 30.0      # oltre questo angolo tra gli assi lunghi L (bisettrice) non descrive nessuna delle due molecole: L/W della coppia = NaN
 # controlli rapidi
 contact_check = "fixed"    # fixed: C···C < 3,0 Å e H···H < 1,8 Å | vdw: somma dei raggi di van der Waals − contact_check_margin
 contact_check_margin = 0.5 # Å sotto la somma dei raggi (solo con contact_check = "vdw"); legami a idrogeno esclusi

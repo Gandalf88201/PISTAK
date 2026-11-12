@@ -170,9 +170,11 @@ class TestBuiltCases:
         assert a.cores == [None] and a.pairs == []
 
     def test_chain_without_rings_uses_the_molecule(self):
-        a = core.analyse_text(cifgen.chain_molecule(), "zigzag", Limits())
+        # ring-free planar skeletons are π fragments only on request since round 4 (`ringless_fragments`)
+        a = core.analyse_text(cifgen.chain_molecule(), "zigzag", Limits(ringless_fragments="planar"))
         assert len(a.structure.molecules) == 2
         assert all(c is not None and c.kind == "molecule" for c in a.cores)
+        assert all(c is None for c in core.analyse_text(cifgen.chain_molecule(), "zigzag", Limits()).cores)
 
     def test_herringbone_has_tilted_pairs(self):
         a = core.analyse_text(cifgen.anthracene_p21a_like(), "herringbone", Limits())

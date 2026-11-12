@@ -34,10 +34,10 @@ import numpy as np
 from scipy.spatial.distance import cdist
 
 from pistak.core.config import Limits
-from pistak.core.cores import Core
+from pistak.core.cores import FALLBACK_SOURCES, Core
 from pistak.core.elements import covalent_radius
 from pistak.core.geometry import clip_convex, convex_hull, points_inside, polygon_area, unit
-from pistak.core.structure import Structure
+from pistak.core.structure import Structure, same_network
 
 KINDS = ("stack", "parallel", "tilted")  # in ordine di interesse
 Shift = tuple[int, int, int]
@@ -135,6 +135,29 @@ class Pair:
     #: Vero se d·n_A e d·n_B hanno segni opposti: la retta d'intersezione dei due piani passa tra i centroidi e la
     #: «distanza interplanare» d⊥ = |h_A + h_B| / (2 cos θ/2) è più piccola di entrambe le distanze perpendicolari.
     planes_cross: bool = False
+    #: Slittamento longitudinale e laterale nel sistema di ciascun frammento (revisione 4, M1.2): la posizione del
+    #: centroide dell'altro frammento proiettata sul piano di A (normale n_A) e divisa lungo l'asse lungo di A e la
+    #: direzione n_A × l_A; lo stesso per B. Sono le distanze di «pitch» e «roll» di Curtis et al. (2004) viste da una
+    #: molecola. Non dipendono dalla rotazione tra i due assi: sono definiti anche quando L, la bisettrice, non lo è
+    #: (`max_axis_twist`). NaN se l'asse lungo di quel frammento non è definito. A rotazione e angolo nulli coincidono
+    #: con `long_slip` e `lat_slip`.
+    long_slip_a: float = math.nan
+    lat_slip_a: float = math.nan
+    long_slip_b: float = math.nan
+    lat_slip_b: float = math.nan
+    #: Da dove viene l'asse lungo di ciascun frammento: "pca" (il frammento stesso), "atoms" (due atomi scelti),
+    #: "molecule" o "substituents" (ripiego per i frammenti isotropi), "" se non è definito.
+    axis_a: str = ""
+    axis_b: str = ""
+    #: Vero se i due frammenti stanno nella stessa molecola o nella stessa rete estesa e la distanza interplanare è
+    #: sotto `min_interplanar`: la separazione è imposta dall'impalcatura che li unisce (revisione 4, M6.4). Come
+    #: `bonded` e `bridged` non è mai un π-stack; a differenza di quelli dipende da una soglia dello stadio `pairs`.
+    clamped: bool = False
+    #: Vero se i due frammenti appartengono allo stesso insieme di atomi legati: la stessa molecola discreta o la
+    #: stessa rete estesa, anche in due unità ripetute diverse (revisione 5, N1). Per una molecola discreta coincide con
+    #: `intramolecular`; per una rete non dipende da come è tagliata l'unità ripetuta, che `intramolecular` invece
+    #: segue. Decide la bandiera `clamped` e la categoria della coppia nelle statistiche.
+    same_network: bool = False
 
     def get(self, key: str, default: float = float("nan")) -> float:
         """Valore di un parametro del registro per questa coppia."""
@@ -143,6 +166,17 @@ class Pair:
     @property
     def intramolecular(self) -> bool:
         return self.a == self.b and self.shift == (0, 0, 0)
+
+    @property
+    def per_molecule(self) -> int:
+        """Quanti contatti di questa classe ha la molecola A (il frammento `fa` della molecola `a`): `count` è per
+        cella e dipende da Z, questo no (revisione 4, T16). Un contatto con una copia traslata della stessa molecola
+        conta due volte, perché la molecola ha quel vicino da tutte e due le parti (una colonna: 2). Intramolecolare: 1.
+        Nel modo del sito (coppie raccolte per valori) è `count`."""
+        if self.intramolecular or not self.members or len(self.members[0]) < 5:
+            return 1 if self.intramolecular else self.count
+        me = (self.a, self.fa)
+        return sum((m[0], m[3]) == me for m in self.members) + sum((m[1], m[4]) == me for m in self.members)
 
     @property
     def key(self) -> Member:
@@ -162,12 +196,14 @@ def area_overlap(hull_a: np.ndarray, hull_b: np.ndarray) -> float:
     return polygon_area(clip_convex(hull_a, hull_b)) / smaller if smaller > 0 else 0.0
 
 
-def classify(dihedral: float, interplanar: float, overlap: float, slip: float, limits: Limits, bonded: bool = False) -> str:
+def classify(dihedral: float, interplanar: float, overlap: float, slip: float, limits: Limits, bonded: bool = False,
+             tethered: bool = False) -> str:
     """stack | parallel | tilted secondo le soglie. `overlap` è già misurata come chiede `limits.overlap_measure`.
-    Due frammenti legati tra loro o a uno stesso atomo (`bonded`: legati o a ponte) non sono mai uno stack."""
+    Due frammenti legati tra loro o a uno stesso atomo (`bonded`: legati o a ponte) non sono mai uno stack; nemmeno due
+    frammenti della stessa molecola o rete (`tethered`) più vicini di `min_interplanar` (`is_clamped`)."""
     if dihedral > limits.max_dihedral:
         return "tilted"
-    if (not bonded and interplanar <= limits.max_interplanar and overlap > limits.min_overlap
+    if (not bonded and not (tethered and interplanar < getattr(limits, "min_interplanar", 0.0)) and interplanar <= limits.max_interplanar and overlap > limits.min_overlap
             and (limits.max_slip <= 0 or slip <= limits.max_slip)):
         return "stack"
     return "parallel"
@@ -178,9 +214,26 @@ def stack_overlap(p: Pair, limits: Limits) -> float:
     return p.overlap_area if limits.overlap_measure == "area" else p.overlap
 
 
+def tethered(p: Pair) -> bool:
+    """Vero se i due frammenti stanno nella stessa molecola o nella stessa rete estesa: un'impalcatura di legami li
+    tiene alla distanza a cui sono. Per una rete conta la rete, non l'unità ripetuta, il cui taglio è arbitrario: due
+    unità traslate della stessa catena sono tenute dalla catena come due anelli della stessa unità; due catene
+    parallele no (revisione 5, N1; prima contava solo l'unità ripetuta)."""
+    return p.same_network or p.intramolecular
+
+
+def is_clamped(p: Pair, limits: Limits) -> bool:
+    """La coppia sarebbe un π-stack per angolo, distanza e sovrapposizione, ma i frammenti sono nella stessa molecola o
+    rete e più vicini di `min_interplanar`: coppia «vincolata» (`Pair.clamped`)."""
+    if p.bonded or p.bridged or not tethered(p) or p.interplanar >= getattr(limits, "min_interplanar", 0.0):
+        return False
+    return classify(p.dihedral, p.interplanar, stack_overlap(p, limits), p.slip, limits) == "stack"
+
+
 def reclassify(p: Pair, limits: Limits) -> str:
     """Il tipo di una coppia già misurata secondo altre soglie (stadio `pairs`: nessuna geometria da rifare)."""
-    return classify(p.dihedral, p.interplanar, stack_overlap(p, limits), p.slip, limits, p.bonded or p.bridged)
+    return classify(p.dihedral, p.interplanar, stack_overlap(p, limits), p.slip, limits, p.bonded or p.bridged,
+                    tethered(p))
 
 
 #: Due posizioni più vicine di così sono lo stesso atomo (frammenti che lo condividono), come `d² ≥ 0,16` di `structure`.
@@ -194,6 +247,23 @@ def fragments_link(s: Structure, ca: Core, cb: Core, a: int, b: int, v: np.ndarr
     if fragments_bonded(s, ca, cb, a, b, v, limits):
         return "bonded"
     ma, mb = s.molecules[a], s.molecules[b]
+    if ma.extended or mb.extended:
+        # rete estesa: l'atomo che lega i due frammenti può stare in un'altra copia dell'unità ripetuta, il cui taglio è
+        # arbitrario; si cerca tra i vicini legati nella rete infinita (`Molecule.links`), e solo se i due frammenti
+        # sono nella stessa rete: tra reti diverse, o tra una rete e una molecola, non c'è nessun legame (revisione 5, N1)
+        shift = tuple(int(x) for x in np.rint(np.linalg.solve(s.vectors.T, v)))
+        if a != b or not same_network(s, a, b, shift) or not ma.links:
+            return ""
+        own_a, own_b = {int(i) for i in ca.atoms}, {int(i) for i in cb.atoms}
+        zero = (0, 0, 0)
+        near_a = {(kk, t) for i in own_a for kk, t in ma.links[i]
+                  if ma.el[kk] != "H" and not (t == zero and kk in own_a) and not (t == shift and kk in own_b)}
+        for j in own_b:
+            for kk, t in ma.links[j]:
+                x = (kk, (t[0] + shift[0], t[1] + shift[1], t[2] + shift[2]))
+                if x in near_a:
+                    return "bridged"
+        return ""
     pa, pb = ma.pos[ca.atoms], mb.pos[cb.atoms] + v
     ra = np.array([covalent_radius(ma.el[i]) for i in ca.atoms])
     rb = np.array([covalent_radius(mb.el[i]) for i in cb.atoms])
@@ -305,7 +375,17 @@ def axis_twist(ca: Core, cb: Core, n: np.ndarray) -> float:
 def axis_defined(core: Core, limits: Limits) -> bool:
     """L'asse lungo è definito se è dato da due atomi o se il frammento non è quasi isotropo nel piano (un asse Cn con
     n ≥ 3 normale al piano rende isotropa la dispersione: benzene, trifenilene, coronene, porfirine)."""
-    return core.axis_source == "atoms" or core.plane.aspect <= limits.max_axis_isotropy
+    return core.axis_source in ("atoms", *FALLBACK_SOURCES) or core.plane.aspect <= limits.max_axis_isotropy
+
+
+def own_slips(ca: Core, cb: Core) -> tuple[float, float]:
+    """Slittamento longitudinale e laterale del centroide di `cb` nel sistema di `ca`: d = c_B − c_A proiettato sul
+    piano di A, poi |s·l_A| e |s·(n_A × l_A)|."""
+    d = cb.centroid - ca.centroid
+    n = ca.normal
+    sv = d - n * float(np.dot(d, n))
+    long = unit(ca.long - n * float(np.dot(ca.long, n)))
+    return abs(float(np.dot(sv, long))), abs(float(np.dot(sv, np.cross(n, long))))
 
 
 def _measure(s: Structure, ca: Core, cb0: Core, a: int, b: int, shift: Shift, limits: Limits, contact: float,
@@ -330,22 +410,29 @@ def _measure(s: Structure, ca: Core, cb0: Core, a: int, b: int, shift: Shift, li
     area = float(polygons_overlap(polys_a, polys_b) / smaller) if smaller > 0 else 0.0
     interplanar = abs(z)
     slip = float(np.linalg.norm(sv))
-    kind = classify(dihedral, interplanar, area if limits.overlap_measure == "area" else overlap, slip, limits, bonded or bridged)
     long_slip, lat_slip = abs(float(np.dot(sv, f.L))), abs(float(np.dot(sv, f.W)))
     twist = axis_twist(ca, cb, f.n)
-    defined = axis_defined(ca, limits) and axis_defined(cb, limits)
+    def_a, def_b = axis_defined(ca, limits), axis_defined(cb, limits)
+    defined = def_a and def_b
     if not site and (not defined or twist > limits.max_axis_twist):
         long_slip = lat_slip = math.nan  # asse lungo non definito o assi incrociati: la divisione di s in L e W è arbitraria
+    own_a = own_slips(ca, cb) if def_a and not site else (math.nan, math.nan)
+    own_b = own_slips(cb, ca) if def_b and not site else (math.nan, math.nan)
     nb = cb.normal if np.dot(ca.normal, cb.normal) >= 0 else -cb.normal
     # la retta d'intersezione passa tra i centroidi; altezze sotto 10⁻³ Å (frammenti complanari) contano come zero
     planes_cross = float(np.dot(d, ca.normal)) * float(np.dot(d, nb)) < -1e-6
-    return Pair(
-        a=a, b=b, shift=shift, kind=kind, interplanar=interplanar,
+    p = Pair(
+        a=a, b=b, shift=shift, kind="", interplanar=interplanar,
         long_slip=long_slip, lat_slip=lat_slip, slip=slip,
         dihedral=dihedral, centroid_distance=float(np.linalg.norm(d)), contact=contact, overlap=overlap,
         fa=fa, fb=fb, fragmented=fragmented, overlap_area=area, bonded=bonded, bridged=bridged,
         twist=twist if defined else math.nan, planes_cross=planes_cross,
+        long_slip_a=own_a[0], lat_slip_a=own_a[1], long_slip_b=own_b[0], lat_slip_b=own_b[1],
+        axis_a=ca.axis_source if def_a else "", axis_b=cb.axis_source if def_b else "",
+        same_network=same_network(s, a, b, shift),
     )
+    p.kind, p.clamped = reclassify(p, limits), is_clamped(p, limits)
+    return p
 
 
 def measure_pair(s: Structure, cores: Sequence, a: int, b: int, shift: Shift, limits: Limits,
@@ -491,7 +578,9 @@ def iter_neighbour_pairs(s: Structure, cores: Sequence, limits: Limits) -> Itera
                 yield p
 
 
-StackEdge = tuple[int, int, Shift, Pair]
+#: Un arco di stack (a, b, shift, coppia, fa, fb): il frammento fb della molecola b, traslata di `shift`, è impilato
+#: sul frammento fa di a. I frammenti servono alle reti estese, dove i nodi del grafo sono i frammenti (`stacks`).
+StackEdge = tuple[int, int, Shift, "Pair", int, int]
 
 
 def collect_pairs(s: Structure, cores: Sequence, limits: Limits) -> tuple[list[Pair], list[StackEdge]]:
@@ -507,16 +596,50 @@ def contact_keys(s: Structure, frags: Fragments, contacts: list[Pair], limits: L
     equivalenti si riconoscono dai valori e quindi dipendono dalla classificazione."""
     if limits.pair_mode == "site":
         return None
-    fmaps = fragment_maps(s, frags) if any(len(f) > 1 for f in frags) else None
+    # sempre, anche con un solo frammento per molecola: un'operazione può portare la molecola in sé stessa o in una sua
+    # copia senza portare il frammento in un frammento (due anelli equivalenti di cui uno solo è un frammento, COD
+    # 7044129; atomi disordinati tolti in modo non simmetrico, COD 4326386), e allora non va usata (voce 86)
+    fmaps = fragment_maps(s, frags)
     fimgs = fragment_images(s, frags) if any(p.polymer for p in contacts) else None
-    return [symmetry_key(s, p.a, p.b, p.shift, p.fa, p.fb, fmaps, fimgs) for p in contacts]
+    orbits = [symmetry_orbit(s, p.a, p.b, p.shift, p.fa, p.fb, fmaps, fimgs) for p in contacts]
+    keys = [min(o) for o in orbits]
+    _complete_classes(s, frags, contacts, keys, orbits, limits)
+    return keys
+
+
+def _complete_classes(s: Structure, frags: Fragments, contacts: list[Pair], keys: list[Member],
+                      orbits: list[set[Member]], limits: Limits) -> None:
+    """Aggiunge a `contacts` (e a `keys`) i membri di ogni classe di simmetria che la ricerca non ha misurato.
+
+    La coppia dei frammenti principali (0–0) di due molecole a contatto si misura sempre; le altre coppie di frammenti
+    solo se i frammenti sono entro `contact_cutoff + FRAGMENT_MARGIN`. Se un'operazione porta il frammento 0 di una
+    molecola nel frammento 1 della sua immagine (frammenti della stessa taglia), l'immagine di una coppia 0–0 lontana è
+    una coppia 1–1 che la ricerca scartava: la classe aveva meno membri del dovuto (molteplicità sottostimata) e il suo
+    rappresentante cambiava con `contact_cutoff` (revisione 4, S5). Ogni classe ha ora tutta la sua orbita e il
+    rappresentante è sempre il membro più piccolo (`symmetry_key`), qualunque siano le soglie."""
+    have = {p.key for p in contacts}
+    by_class: dict[Member, tuple[Pair, set[Member]]] = {}
+    for p, key, orbit in zip(list(contacts), list(keys), orbits):
+        ref, members = by_class.setdefault(key, (p, set()))
+        members |= orbit
+    for key, (ref, members) in by_class.items():
+        for a, b, sh, fa, fb in sorted(members - have):
+            if fa >= len(frags[a]) or fb >= len(frags[b]):
+                continue
+            q = _measure(s, frags[a][fa], frags[b][fb], a, b, sh, limits, ref.contact, fa, fb,
+                         len(frags[a]) > 1 or len(frags[b]) > 1, ref.bonded, ref.bridged)
+            q.polymer = ref.polymer
+            contacts.append(q)
+            keys.append(key)
+            have.add(q.key)
 
 
 def group_pairs(contacts: list[Pair], keys: list[Member] | None, limits: Limits) -> tuple[list[Pair], list[StackEdge]]:
     """Classifica con `limits` copie fresche delle coppie misurate, raccoglie quelle equivalenti (per chiave di
     simmetria, o per valori arrotondati se `keys` è None) e le ordina. Le coppie misurate non vengono toccate: si
     può ripetere con altre soglie dello stadio `pairs`."""
-    fresh = [replace(p, kind=reclassify(p, limits), count=1, members=[], values={}, index=-1) for p in contacts]
+    fresh = [replace(p, kind=reclassify(p, limits), clamped=is_clamped(p, limits), count=1, members=[], values={},
+                     index=-1) for p in contacts]
     pairs, stack_edges = _group_site(fresh) if keys is None else _group_canonical(fresh, keys)
     order = {k: i for i, k in enumerate(KINDS)}
     # distanze arrotondate a 1e-6 Å e spareggio su grandezze e indici: due coppie con la stessa distanza (2.3655 contro
@@ -533,7 +656,7 @@ def _group_site(contacts: list[Pair]) -> tuple[list[Pair], list[StackEdge]]:
     stack_edges: list[StackEdge] = []
     for p in contacts:
         if p.kind == "stack" and not p.intramolecular:
-            stack_edges.append((p.a, p.b, p.shift, p))
+            stack_edges.append((p.a, p.b, p.shift, p, p.fa, p.fb))
         key = "|".join([p.kind, f"{p.interplanar:.2f}", f"{p.long_slip:.2f}", f"{p.lat_slip:.2f}",
                         f"{p.dihedral:.1f}", f"{p.contact:.2f}"])
         prev = found.get(key)
@@ -575,7 +698,16 @@ def fragment_images(s: Structure, frags: Fragments, tol: float = 0.3) -> list[li
     for mi, m in enumerate(s.molecules):
         for p, ci in enumerate(m.cell_index):
             owner[int(ci)] = (mi, p)
-    in_frag: list[dict[int, int]] = [{int(i): f for f, c in enumerate(fs) for i in c.atoms} for fs in frags]
+    # un atomo può stare in più frammenti (un metallo in due anelli chelati): si provano tutti, non solo l'ultimo; con
+    # uno solo l'immagine si cercava a volte nel frammento sbagliato e l'operazione si scartava, secondo il taglio
+    # dell'unità ripetuta (revisione 5, N1)
+    in_frag: list[dict[int, list[int]]] = []
+    for fs in frags:
+        d: dict[int, list[int]] = {}
+        for f, c in enumerate(fs):
+            for i in c.atoms:
+                d.setdefault(int(i), []).append(f)
+        in_frag.append(d)
     by_el = {e: np.array([i for i, x in enumerate(s.cell_el) if x == e]) for e in set(s.cell_el)}
     out = []
     for op in s.symops:
@@ -592,17 +724,20 @@ def fragment_images(s: Structure, frags: Fragments, tol: float = 0.3) -> list[li
                 k = int(np.argmin(np.linalg.norm(d @ s.vectors, axis=1)))
                 j = int(cand[k])
                 hit = owner.get(j)
-                f2 = in_frag[hit[0]].get(hit[1]) if hit else None
-                if hit is None or f2 is None:
-                    imgs.append(None)
-                    continue
-                m2 = s.molecules[hit[0]]
-                t = np.rint(img[0] - s.cell_frac[j] - m2.cell_shift[hit[1]]).astype(int)
-                t2 = np.asarray(frags[hit[0]][f2].atoms)
-                tgt = s.cell_frac[m2.cell_index[t2]] + m2.cell_shift[t2] + t
-                dist = np.linalg.norm((img[:, None, :] - tgt[None, :, :]) @ s.vectors, axis=2)
-                ok = len(t2) == len(idx) and (dist.min(axis=1) < tol).all()
-                imgs.append((hit[0], f2, (int(t[0]), int(t[1]), int(t[2]))) if ok else None)
+                found: FragmentImage | None = None
+                if hit is not None:
+                    m2 = s.molecules[hit[0]]
+                    t = np.rint(img[0] - s.cell_frac[j] - m2.cell_shift[hit[1]]).astype(int)
+                    for f2 in in_frag[hit[0]].get(hit[1], []):
+                        t2 = np.asarray(frags[hit[0]][f2].atoms)
+                        if len(t2) != len(idx):
+                            continue
+                        tgt = s.cell_frac[m2.cell_index[t2]] + m2.cell_shift[t2] + t
+                        dist = np.linalg.norm((img[:, None, :] - tgt[None, :, :]) @ s.vectors, axis=2)
+                        if (dist.min(axis=1) < tol).all():
+                            found = (hit[0], f2, (int(t[0]), int(t[1]), int(t[2])))
+                            break
+                imgs.append(found)
             row.append(imgs)
         out.append(row)
     return out
@@ -615,7 +750,14 @@ def symmetry_key(s: Structure, a: int, b: int, sh: Shift, fa: int = 0, fb: int =
     con `_canon5`). Due contatti sono equivalenti per simmetria se e solo se hanno la stessa chiave; le operazioni che
     non mappano molecole e frammenti non si usano, così non si uniscono mai contatti diversi. Con `fimgs` (reti
     estese) le immagini si prendono frammento per frammento (`fragment_images`)."""
-    best = _canon5(a, b, sh, fa, fb)
+    return min(symmetry_orbit(s, a, b, sh, fa, fb, fmaps, fimgs))
+
+
+def symmetry_orbit(s: Structure, a: int, b: int, sh: Shift, fa: int = 0, fb: int = 0,
+                   fmaps: list[list[list[int | None] | None]] | None = None,
+                   fimgs: list[list[list[FragmentImage | None]]] | None = None) -> set[Member]:
+    """Tutte le immagini del contatto sotto le operazioni del gruppo spaziale (scritte con `_canon5`), lui compreso."""
+    out = {_canon5(a, b, sh, fa, fb)}
     if fimgs is not None and (s.molecules[a].extended or s.molecules[b].extended):
         for k, row in enumerate(fimgs):
             ia, ib = row[a][fa], row[b][fb]
@@ -626,8 +768,8 @@ def symmetry_key(s: Structure, a: int, b: int, sh: Shift, fa: int = 0, fb: int =
             new = (tb[0] + int(rs[0]) - ta[0], tb[1] + int(rs[1]) - ta[1], tb[2] + int(rs[2]) - ta[2])
             if a2 == b2 and new == (0, 0, 0) and fa2 == fb2:
                 continue
-            best = min(best, _canon5(a2, b2, new, fa2, fb2))
-        return best
+            out.add(_canon5(a2, b2, new, fa2, fb2))
+        return out
     for k, row in enumerate(s.molecule_images()):
         ia, ib = row[a], row[b]
         if ia is None or ib is None:
@@ -643,16 +785,18 @@ def symmetry_key(s: Structure, a: int, b: int, sh: Shift, fa: int = 0, fb: int =
         new = (tb[0] + int(rs[0]) - ta[0], tb[1] + int(rs[1]) - ta[1], tb[2] + int(rs[2]) - ta[2])
         if a2 == b2 and new == (0, 0, 0) and fa2 == fb2:
             continue
-        best = min(best, _canon5(a2, b2, new, fa2, fb2))
-    return best
+        out.add(_canon5(a2, b2, new, fa2, fb2))
+    return out
 
 
 def _group_canonical(contacts: list[Pair], keys: list[Member]) -> tuple[list[Pair], list[StackEdge]]:
     classes: dict[tuple, list[Pair]] = {}
     stack_edges: list[StackEdge] = []
     for p, key in zip(contacts, keys, strict=True):
-        if p.kind == "stack" and not p.intramolecular:
-            stack_edges += [(p.a, p.b, p.shift, p), (p.b, p.a, _neg(p.shift), p)]
+        # tra molecole discrete un arco unisce due molecole; in una rete estesa i nodi sono i frammenti, e anche due
+        # frammenti della stessa unità ripetuta impilati tra loro sono un arco (revisione 5, N1)
+        if p.kind == "stack" and (not p.intramolecular or p.polymer):
+            stack_edges += [(p.a, p.b, p.shift, p, p.fa, p.fb), (p.b, p.a, _neg(p.shift), p, p.fb, p.fa)]
         classes.setdefault(key, []).append(p)
     pairs = []
     for key, members in classes.items():

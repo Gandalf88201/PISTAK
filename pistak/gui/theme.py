@@ -12,7 +12,8 @@ from pistak.core.config import load_section, save_user_config
 from pistak.i18n import tr
 
 KIND_COLORS = {"stack": (46, 160, 67), "parallel": (224, 160, 30), "tilted": (170, 100, 210)}
-KIND_LABELS = {"stack": "π-stack", "parallel": "parallela", "tilted": "inclinata"}  # testi italiani, da passare a tr()
+from pistak.labels import KIND_TEXT as KIND_LABELS  # noqa: E402  testi italiani, da passare a tr()
+
 MODES = {"auto": "Automatico (come il sistema)", "light": "Chiaro", "dark": "Scuro"}  # testi italiani, da passare a tr()
 
 _mode: str | None = None  # letto da config alla prima richiesta

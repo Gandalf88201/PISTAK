@@ -12,6 +12,7 @@ Cg(J) sul piano I, come in PISTAK.
 """
 from __future__ import annotations
 
+import os
 import re
 import sys
 from pathlib import Path
@@ -25,7 +26,8 @@ from pistak.api import analyse_file  # noqa: E402
 from pistak.core.config import Limits  # noqa: E402
 from pistak.core.ringpairs import ring_pairs  # noqa: E402
 
-DIR = HERE / "platon"
+# cartella dei riferimenti: validation/platon (predefinita) o un'altra con PISTAK_PLATON_DIR (revisione 5: platon_500)
+DIR = HERE / os.environ.get("PISTAK_PLATON_DIR", "platon")
 NUM = re.compile(r"-?\d+\.\d+(?:\(\d+\))?")
 ROW = re.compile(r"^Cg(\d+)\s+\[\s*\d+\]\s+->\s+Cg(\d+)\s+\[\s*(\d+)\.(\d+)\](.*)$")
 

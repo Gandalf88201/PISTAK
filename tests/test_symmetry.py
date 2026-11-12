@@ -24,7 +24,8 @@ EXAMPLES = sorted(p for p in EX.glob("*.cif") if not p.name.startswith("."))
 @pytest.mark.parametrize("cif", EXAMPLES, ids=[p.stem for p in EXAMPLES])
 def test_each_contact_once(cif):
     # same maximum contact in both modes (the website uses 4.0 Å): the website counts each contact twice (a→b and b→a)
-    site, canon = analyse_file(cif, Limits.site()), analyse_file(cif, Limits(contact_cutoff=Limits.site().contact_cutoff))
+    site = analyse_file(cif, Limits.site())
+    canon = analyse_file(cif, Limits(contact_cutoff=Limits.site().contact_cutoff, ringless_fragments="planar"))
     assert sum(p.count for p in site.pairs) == 2 * sum(p.count for p in canon.pairs)
     seen = set()
     for p in canon.pairs:
@@ -47,7 +48,7 @@ def test_swapping_a_and_b_keeps_values(cif):
     for p in a.pairs:
         q = measure_pair(a.structure, a.cores, p.b, p.a, tuple(-x for x in p.shift), a.limits)
         for attr in ("interplanar", "long_slip", "lat_slip", "slip", "dihedral", "contact", "overlap"):
-            assert getattr(q, attr) == pytest.approx(getattr(p, attr), abs=1e-9), attr
+            assert getattr(q, attr) == pytest.approx(getattr(p, attr), abs=1e-9, nan_ok=True), attr
         assert q.kind == p.kind
 
 
@@ -78,7 +79,8 @@ def test_same_columns_in_both_modes():
     # rings themselves (v1.1, review item 50) it is not a stack in canonical mode, as intended
     for cif in [c for c in EXAMPLES if c.name != "dimers_naphthalene.cif"]:
         # same overlap criterion as the site (any overlap): the default area ≥ 10 % drops the slipped dimers
-        site, canon = analyse_file(cif, Limits.site()), analyse_file(cif, Limits(overlap_measure="atoms", min_overlap=0.0))
+        site, canon = analyse_file(cif, Limits.site()), analyse_file(cif, Limits(overlap_measure="atoms", min_overlap=0.0,
+                                                                                    ringless_fragments="planar"))
         assert [(c.rank, sorted(c.molecules)) for c in site.stacks] == [(c.rank, sorted(c.molecules)) for c in canon.stacks]
 
 
@@ -241,4 +243,5 @@ def test_thresholds_from_dict():
     assert lim.pair_mode == "site" and lim.disorder == "3" and lim.max_dihedral == 15.0
     assert lim.overlap_measure == "area" and lim.max_slip == 0.0  # invalid values ignored (defaults kept)
     assert Limits.site() == Limits(pair_mode="site", disorder="first", fragments="largest", contact_cutoff=4.0,
-                                   overlap_measure="atoms", min_overlap=0.0, pi_scope="all")
+                                   overlap_measure="atoms", min_overlap=0.0, pi_scope="all", axis_fallback="none",
+                                   min_interplanar=0.0, ringless_fragments="planar")

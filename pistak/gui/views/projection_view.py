@@ -43,7 +43,7 @@ class ProjectionView(PairView):
         self.plot = theme.plot_widget()
         self.plot.setAspectLocked(True)
         self.plot.showGrid(x=True, y=True, alpha=0.15)
-        self.plot.setLabel("bottom", tr("L (Å) — asse lungo della prima molecola"))
+        self.plot.setLabel("bottom", tr("L (Å) — bisettrice degli assi lunghi dei due frammenti"))
         self.plot.setLabel("left", "W (Å)")
         self.plot.getPlotItem().getViewBox().invertY(False)
         self.caption = QLabel("")
@@ -103,8 +103,8 @@ class ProjectionView(PairView):
         self.caption.setText(
             f"<span style='color:rgb{COLOR_L}'>■</span> L {pair.long_slip:.2f} Å &nbsp; "
             f"<span style='color:rgb{COLOR_W}'>■</span> W {pair.lat_slip:.2f} Å &nbsp; · "
-            + tf("interplanare {ip:.2f} Å · angolo {ang:.1f}° · sovrapposizione {ov:.1f} Å²", ip=pair.interplanar, ang=pair.dihedral,
-                 ov=pair.get("overlap_area"))
+            + tf("interplanare {ip:.2f} Å · angolo {ang:.1f}° · sovrapposizione {ov:.2f} (area comune / frammento minore)",
+                 ip=pair.interplanar, ang=pair.dihedral, ov=pair.overlap_area)
         )
 
     def _arrow(self, a, b, rgb) -> None:

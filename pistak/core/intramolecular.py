@@ -31,6 +31,8 @@ from pistak.core.elements import vdw_radius
 from pistak.core.structure import Structure
 
 KINDS = ("bond", "angle", "torsion", "contact")
+#: Due posizioni più vicine di così (Å) sono lo stesso sito: come la soglia dei legami di `structure.cell_bonds`.
+COINCIDENT = 0.4
 _STEP = 1e-4  # Å, per le differenze finite
 #: Una torsione i-j-k-l non è definita se i-j-k o j-k-l sono allineati (piano indefinito); vicino all'allineamento la
 #: sua s.u. cresce come 1/sin dell'angolo (×11 a 175°) e il valore dipende dagli arrotondamenti. Oltre questo angolo
@@ -270,6 +272,12 @@ def molecule_geometry(s: Structure, cif: Cif, molecules: list[int] | None = None
         for kind in (k for k in kinds if k in MEASURES):
             for idx in groups[kind]:
                 if not include_h and any(m.el[i] == "H" for i in idx):
+                    continue
+                # due atomi sullo stesso sito (occupazione mista: Ho e Bi nella stessa posizione, entrambi legati agli
+                # stessi vicini) non sono legati tra loro, ma un angolo X–O–X′ o una torsione che li contiene entrambi è
+                # degenere (0°, o un valore arbitrario): non si riporta (revisione 4, COD 2108505)
+                if len(idx) > 2 and any(np.linalg.norm(m.pos[idx[p]] - m.pos[idx[q]]) < COINCIDENT
+                                        for p in range(len(idx)) for q in range(p + 1, len(idx))):
                     continue
                 # verso canonico per il confronto; la torsione si riporta nel verso in cui è stata costruita
                 out_idx = idx

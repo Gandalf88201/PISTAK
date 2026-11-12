@@ -15,7 +15,7 @@ from pistak.core.pairs import Pair
 from pistak.params import get_spec, get_structure_spec
 
 #: Formato del JSON scritto da `write_json`: cambia `JSON_VERSION` se cambia la struttura.
-JSON_FORMAT, JSON_VERSION = "pistak-analysis", 4
+JSON_FORMAT, JSON_VERSION = "pistak-analysis", 5
 
 
 def table(analysis: Analysis, keys: list[str] | None = None) -> tuple[list[str], list[list]]:
@@ -68,7 +68,8 @@ def summary_dict(analysis: Analysis) -> dict:
         "limits": analysis.limits.to_dict(),
         "uncertainty": None if analysis.uncertainty is None else {
             "method": "monte_carlo", "samples": analysis.uncertainty.samples, "seed": analysis.uncertainty.seed,
-            "include_cell": analysis.uncertainty.include_cell, "has_su": analysis.uncertainty.has_su},
+            "include_cell": analysis.uncertainty.include_cell, "has_su": analysis.uncertainty.has_su,
+            "covariance": analysis.uncertainty.covariance, "reported_value": "nominal"},
         "structure": {k: _clean(v) for k, v in analysis.structure_values.items()},
         "alerts": alerts_list(analysis),
     }
@@ -114,7 +115,8 @@ def pair_dict(p: Pair, keys: list[str], uncertainty=None) -> dict:
     d = {
         "n": p.index + 1, "kind": p.kind, "molecule_a": p.a + 1, "molecule_b": p.b + 1, "shift": list(p.shift),
         "fragment_a": p.fa + 1, "fragment_b": p.fb + 1,
-        "equivalent_pairs": p.count, "polymer": p.polymer, "bonded": p.bonded, "bridged": p.bridged, "parameters": {k: _clean(p.get(k)) for k in keys},
+        "equivalent_pairs": p.count, "polymer": p.polymer, "bonded": p.bonded, "bridged": p.bridged, "clamped": p.clamped,
+        "long_axis_a": p.axis_a, "long_axis_b": p.axis_b, "parameters": {k: _clean(p.get(k)) for k in keys},
     }
     if uncertainty is not None:
         d["su"] = {k: _clean(uncertainty.get(p, k)) for k in keys if k in uncertainty.keys}
