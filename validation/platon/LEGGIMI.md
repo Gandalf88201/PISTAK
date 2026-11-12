@@ -2,7 +2,8 @@
 
 I 20 CIF di `elenco.txt` vengono dal campione COD (`../cod_sample.txt`). Sono strutture organiche senza metalli,
 senza avvisi A, con coppie di anelli entro 6 Å e almeno uno stack. Le copie dei CIF si rigenerano da `../cod_cache/`;
-gli output di PLATON (`*.lis`) invece si tengono nel repository, perché sono il riferimento esterno.
+gli output di PLATON (`*.lis`) sono il riferimento esterno. Per ora non sono nel repository, in attesa del permesso
+di ridistribuirli: si ottengono come descritto sotto.
 
 ## Cosa serve
 

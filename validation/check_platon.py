@@ -136,6 +136,8 @@ def compare(stem: str) -> dict:
 
 def main() -> None:
     stems = [s for s in (DIR / "elenco.txt").read_text().split() if (DIR / f"{s}.lis").exists()]
+    if not stems:
+        sys.exit(f"nessun file .lis in {DIR}: si ottengono con PLATON, vedi LEGGIMI.md nella cartella")
     total: dict[str, list[float]] = {}
     print("== coppie di anelli: PISTAK contro PLATON CALC ALL ==")
     for stem in stems:

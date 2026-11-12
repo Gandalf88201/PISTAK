@@ -2,9 +2,9 @@
 
 I 26 CIF di `elenco.txt` sono le strutture del campione COD (`../cod_sample.txt`) in cui la rete di legami non si
 chiude e che hanno anelli: polimeri di coordinazione e MOF. Servono a verificare le coppie π tra frammenti dell'unità
-ripetuta (registro, voce 47). Come per `../platon/`, gli output di PLATON (`*.lis`) sono il riferimento esterno e
-restano nel repository. Le copie dei CIF e i file `.spf` e `.ckf` che PLATON scrive accanto non sono nel
-repository: si rigenerano.
+ripetuta (registro, voce 47). Come per `../platon/`, gli output di PLATON (`*.lis`) sono il riferimento esterno.
+Per ora non sono nel repository, in attesa del permesso di ridistribuirli. Nemmeno le copie dei CIF e i file `.spf` e
+`.ckf` che PLATON scrive accanto sono nel repository: tutto si rigenera come descritto sotto.
 
 ## Come si rifà
 

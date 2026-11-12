@@ -26,7 +26,7 @@ unchanged), *deferred* (left to the author), *open*.
 | `rapporto_platon.py` | report of the PLATON comparison |
 | `scarica_cod.py` | downloads the 200 COD CIFs of `cod_sample.txt` |
 | `cod_cache/`, `benchmark_cache/` | downloaded CIFs |
-| `platon/`, `platon_polimeri/` | PLATON listings for molecular crystals and for coordination polymers |
+| `platon/`, `platon_polimeri/` | PLATON comparison for molecular crystals and for coordination polymers (the `.lis` listings are not in the repository, pending permission to redistribute them; `LEGGIMI.md` in each folder says how to produce them) |
 | `ambiente.txt` | exact package versions used for the paper |
 | `dichiarazione_ia.md` | draft statement on the use of AI |
 | `LEGGIMI.md` | read-me |
