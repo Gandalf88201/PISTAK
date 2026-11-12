@@ -8,11 +8,12 @@ chiedono alla finestra principale di aprire quel file e quella coppia.
 from __future__ import annotations
 
 import math
+import threading
 from pathlib import Path
 
 import numpy as np
 import pyqtgraph as pg
-from PySide6.QtCore import QObject, QRunnable, Qt, QThreadPool, Signal
+from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -58,11 +59,18 @@ class _Signals(QObject):
     done = Signal(object)
 
 
-class _Job(QRunnable):
+class _Job:
+    """L'analisi dei file in un thread di Python (non di QThreadPool: un QRunnable creato in Python viene distrutto
+    da Qt alla fine di run() mentre Python lo tiene ancora, e la CI su Linux chiudeva il programma con un
+    segmentation fault). I risultati arrivano alla finestra con segnali in coda, nel thread dell'interfaccia."""
+
     def __init__(self, files: list[Path], limits: Limits):
-        super().__init__()
         self.files, self.limits = files, limits
         self.signals = _Signals()
+        self.thread = threading.Thread(target=self.run, name="pistak-collection", daemon=True)
+
+    def start(self) -> None:
+        self.thread.start()
 
     def run(self) -> None:
         try:
@@ -171,9 +179,14 @@ class CollectionWindow(QMainWindow):
         self.bar.setValue(0)
         self.bar.show()
         self._job = _Job(files, self.limits)
-        self._job.signals.progress.connect(lambda i, n, name: (self.bar.setValue(i), self.bar.setFormat(f"{i}/{n}  {name}")))
-        self._job.signals.done.connect(self._finished)
-        QThreadPool.globalInstance().start(self._job)
+        queued = Qt.ConnectionType.QueuedConnection
+        self._job.signals.progress.connect(self._progress, queued)
+        self._job.signals.done.connect(self._finished, queued)
+        self._job.start()
+
+    def _progress(self, i: int, n: int, name: str) -> None:
+        self.bar.setValue(i)
+        self.bar.setFormat(f"{i}/{n}  {name}")
 
     def _finished(self, results: list[StructureEntry]) -> None:
         self._job = None
