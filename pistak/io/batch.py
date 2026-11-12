@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import csv
 import math
+import multiprocessing
 import os
 from collections.abc import Callable
 from concurrent.futures import BrokenExecutor, ProcessPoolExecutor, as_completed
@@ -117,7 +118,9 @@ def run_batch(files: list[Path], limits: Limits, workers: int = 0,
                 progress(i, len(paths), Path(p).name)
     else:
         try:
-            with ProcessPoolExecutor(max_workers=workers) as ex:
+            # «spawn» su ogni sistema: su Linux il «fork» predefinito di Python ≤ 3.13, chiamato da un thread della
+            # finestra di confronto mentre Qt ha altri thread attivi, può chiudere il programma (segmentation fault)
+            with ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("spawn")) as ex:
                 futures = {ex.submit(analyse_path, p, limits): p for p in paths}
                 for i, fut in enumerate(as_completed(futures), 1):
                     p = futures[fut]
