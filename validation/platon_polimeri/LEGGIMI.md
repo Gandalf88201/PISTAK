@@ -3,13 +3,15 @@
 I 26 CIF di `elenco.txt` sono le strutture del campione COD (`../cod_sample.txt`) in cui la rete di legami non si
 chiude e che hanno anelli: polimeri di coordinazione e MOF. Servono a verificare le coppie π tra frammenti dell'unità
 ripetuta (registro, voce 47). Come per `../platon/`, gli output di PLATON (`*.lis`) sono il riferimento esterno e
-restano nel repository.
+restano nel repository. Le copie dei CIF e i file `.spf` e `.ckf` che PLATON scrive accanto non sono nel
+repository: si rigenerano.
 
 ## Come si rifà
 
-Con PLATON nel PATH, da questa cartella:
+Con i CIF del campione in `../cod_cache/` (`validation/scarica_cod.py`) e PLATON nel PATH, da questa cartella:
 
 ```bash
+while read -r id; do cp "../cod_cache/$id.cif" .; done < elenco.txt
 for f in *.cif; do printf 'CALC ALL\nEXIT\n' | platon -o "$f"; done
 ```
 

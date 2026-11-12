@@ -22,3 +22,6 @@ validation/cod_cache_2000/
 validation/platon/*.cif
 validation/platon/*.spf
 validation/platon/*.ckf
+validation/platon_polimeri/*.cif
+validation/platon_polimeri/*.spf
+validation/platon_polimeri/*.ckf
