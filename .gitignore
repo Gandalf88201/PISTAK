@@ -18,10 +18,9 @@ build/
 # campione COD scaricato da validation/scarica_cod.py (si rigenera)
 validation/cod_cache/
 validation/cod_cache_2000/
-# output di PLATON (.lis): fuori dal repository finché non c'è il permesso di ridistribuirli.
-# Avuto il permesso: togliere queste due righe e aggiungere i .lis (anche validation/platon_500/).
-validation/platon*/*.lis
+# I listati di PLATON (.lis) sono nel repository con il permesso di A. L. Spek (13 novembre 2026).
 # copie dei CIF COD per PLATON e file di servizio di PLATON (si rigenerano)
+validation/platon_500/*.cif
 validation/platon/*.cif
 validation/platon/*.spf
 validation/platon/*.ckf
