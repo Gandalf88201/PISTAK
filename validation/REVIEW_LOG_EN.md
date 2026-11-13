@@ -171,3 +171,12 @@ unchanged), *deferred* (left to the author), *open*.
   deferred its destruction to the main thread, where the program crashed. The main thread now runs `gc.collect()`
   before starting the comparison window's thread and the session's jobs, and the tests do so after every GUI test.
   With the fix, 30 runs of 30 under gdb pass.
+
+- **92** (13 November 2026, v1.4.0) π fragments were defined by planarity alone, so a planar saturated ring
+  (cyclobutane on an inversion centre, an sp³ chelate ring), a cage triangle or a cyclopropane became a fragment, and an
+  aromatic ring fused to a saturated ring (indane, fluorene) formed one fragment with it. Now (`ring_atoms = "sp2"`,
+  default) a ring enters a fragment only if it has at least four atoms and every non-metal atom in it has at most three
+  non-metal neighbours (H included, bonds to metals not counted) and, with three, lies in their plane (angle sum
+  ≥ 345°). `ring_atoms = "any"` restores the old rule (site mode keeps it); the PLATON-style ring list still uses every
+  planar ring. Found by the pre-submission referee (issue 1). On the 500-CIF sample: symmetry-distinct fragments
+  1606 → 1512, π-stacked pairs 271 → 263; with the old rule 21 of the 271 involved an sp³ atom or a triangle.

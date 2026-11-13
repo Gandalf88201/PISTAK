@@ -36,7 +36,14 @@ folder, which are not experimental measurements.
 ## 1. Basic concepts
 
 **π core and fragments.** In every molecule PISTAK looks for planar rings (root-mean-square deviation from the mean
-plane below `ring_rms`) and joins them into fused systems. Each planar system is a *π fragment*: π1 is the largest
+plane below `ring_rms`) and joins them into fused systems. A ring counts only if it has at least four atoms and every non-metal atom in it can be
+sp² or sp (`ring_atoms = "sp2"`, since v1.4.0): at most three non-metal neighbours, hydrogens included (bonds to
+metals do not count, as in a coordinated Cp or pyridine), and, with three neighbours, lying in their plane (the three
+angles add up to at least 345°). A planar saturated ring (cyclobutane on an inversion centre, an sp³ chelate ring), a
+three-membered ring (cage triangles, η²-bound M–C–C, cyclopropanes; the rare aromatic cyclopropenium is
+the one π system left out) is not part of any fragment, and an aromatic ring fused to a saturated ring is a
+fragment on its own; an sp³ atom with two neighbours in a CIF without hydrogens cannot be recognized.
+`ring_atoms = "any"` restores the planarity-only rule of earlier versions. Each planar system is a *π fragment*: π1 is the largest
 (the "classic" π core), π2, π3… the others, if they have at least `min_fragment_atoms` atoms. For every fragment
 PISTAK computes the centroid (Cg), the mean plane with its normal **n** and the *long axis* **L**, the direction of
 largest extent (or the one defined by two atoms, see [Long axis](#9-analysis-conventions)). A molecule without planar
@@ -397,11 +404,12 @@ criterion), from `user.toml` or on the command line.
 | `fragment_merge` | fused | π fragments: fused ring systems, or also conjugated coplanar systems |
 | `pi_scope` | organic | where π fragments are sought: structures with a C–C or C–H bond or a planar non-metal ring with B, C or N (organic), or all |
 | `max_axis_isotropy` | 0.9 | above it the automatic long axis is undefined |
-| `max_axis_twist` | 75° | above it L and W of the pair are undefined |
+| `max_axis_twist` | 30° | above it L and W of the pair are undefined |
 | `max_slip` | 0 Å | maximum slip for a π-stack (0 = no limit) |
 | `ring_rms` | 0.10 Å | maximum non-planarity of a ring |
 | `molecule_rms` | 0.15 Å | maximum non-planarity of the whole core |
 | `max_ring_size` | 8 | maximum atoms in a ring |
+| `ring_atoms` | sp2 | rings of π fragments: `sp2` (at least four atoms; non-metal atoms with at most three non-metal neighbours, planar with them) or `any` (planarity only, up to v1.3.1) |
 | `bond_tolerance` | 0.4 Å | bond if the distance is below the sum of covalent radii plus this |
 | `same_site` | 0.3 Å | images of one site, or ordered atoms written twice, closer than this are merged; alternative positions of a split atom are kept (positions within 0.05 Å are always one atom) |
 | `neighbour_shells` | 2 | neighbouring cells explored (a minimum: in canonical mode it grows by itself) |
@@ -433,7 +441,7 @@ Why it is fast: the analysis is split into **stages**, and every threshold belon
 |---|---|---|
 | cif | `disorder` | reading the file |
 | structure | `bond_tolerance`, `same_site`, `max_cell_atoms` | cell, bonds, molecules |
-| fragments | `ring_rms`, `molecule_rms`, `max_ring_size`, `fragments`, `min_fragment_atoms`, `long_axis_atoms` | rings, fragments, axes |
+| fragments | `ring_rms`, `molecule_rms`, `max_ring_size`, `ring_atoms`, `fragments`, `min_fragment_atoms`, `long_axis_atoms` | rings, fragments, axes |
 | contacts | `contact_cutoff`, `neighbour_shells`, `pair_mode` | measuring all pairs (the expensive part) |
 | pairs | `max_dihedral`, `max_interplanar`, `min_overlap`, `max_slip`, `overlap_measure`, `ring_pair_max_distance`, `contact_check`, `contact_check_margin` | classification, grouping, columns (the last two only redo the quick checks) |
 

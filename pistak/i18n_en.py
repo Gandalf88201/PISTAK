@@ -523,6 +523,9 @@ TEXT: dict[str, str] = {
     "Molecole planari senza anelli come frammenti π": "Planar molecules without rings as π fragments",
     "no: solo sistemi di anelli": "no: ring systems only",
     "sì: scheletri planari sp²/sp (nitrato, guanidinio)": "yes: planar sp²/sp skeletons (nitrate, guanidinium)",
+    "Atomi degli anelli dei frammenti π": "Ring atoms of π fragments",
+    "sp²/sp: anelli di almeno 4 atomi, al più tre vicini non metallici, nel piano dei vicini": "sp²/sp: rings of at least 4 atoms, at most three non-metal neighbours, in the plane of the neighbours",
+    "qualsiasi (solo planarità, come fino alla v1.3.1)": "any (planarity only, as up to v1.3.1)",
     "Contatti per molecola": "Contacts per molecule",
     "Quanti contatti di questa classe ha una molecola (il frammento A): a differenza delle coppie equivalenti per cella non dipende da Z. Una colonna di molecole traslate: 2.":
         "How many contacts of this class one molecule (fragment A) has: unlike the equivalent pairs per cell it does not depend on Z. A column of translated molecules: 2.",

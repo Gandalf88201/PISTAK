@@ -182,14 +182,58 @@ def _fuse(rings: list[list[int]]) -> list[tuple[set[int], list[list[int]]]]:
     return groups
 
 
+#: Somma minima (°) dei tre angoli attorno a un atomo dell'anello con tre vicini non metallici perché sia sp² (360° se
+#: planare; ~328° per un sp³ con un idrogeno mancante o un'ammina piramidale). Con `ring_atoms = "sp2"`.
+MIN_SP2_ANGLE_SUM = 345.0
+
+
+def _neighbours(m: Molecule) -> list[list[int]]:
+    nbr: list[list[int]] = [[] for _ in range(len(m))]
+    for p, q in m.bonds:
+        nbr[int(p)].append(int(q))
+        nbr[int(q)].append(int(p))
+    return nbr
+
+
+def sp2_ring(m: Molecule, ring: list[int], nbr: list[list[int]] | None = None) -> bool:
+    """Vero se ogni atomo non metallico dell'anello può essere sp² o sp: al più tre vicini non metallici (idrogeni
+    compresi; i legami ai metalli non contano, come in un Cp o in una piridina coordinati) e, con tre vicini, nel loro
+    piano (somma degli angoli ≥ `MIN_SP2_ANGLE_SUM`). Esclude dai frammenti π gli anelli saturi che sono planari per
+    simmetria o per caso (ciclobutano su un centro d'inversione, anelli di chelati sp³), i triangoli delle gabbie
+    (carborani: boro con cinque o sei vicini) e i ciclopropani. Un atomo sp³ senza idrogeni nel CIF e con due soli vicini
+    non si riconosce (revisione del paper, 13 novembre 2026, punto 1)."""
+    if nbr is None:
+        nbr = _neighbours(m)
+    for i in ring:
+        if _is_metal(m.el[i]):
+            continue
+        nm = [j for j in nbr[i] if not _is_metal(m.el[j])]
+        if len(nm) >= 4:
+            return False
+        if len(nm) == 3:
+            v = [m.pos[j] - m.pos[i] for j in nm]
+            v = [x / np.linalg.norm(x) for x in v]
+            total = sum(np.degrees(np.arccos(np.clip(np.dot(v[a], v[b]), -1.0, 1.0)))
+                        for a, b in ((0, 1), (0, 2), (1, 2)))
+            if total < MIN_SP2_ANGLE_SUM:
+                return False
+    return True
+
+
 def _planar_systems(m: Molecule, limits: Limits) -> list[tuple[list[int], list[list[int]]]]:
     """I sistemi di anelli planari condensati che passano la soglia di planarità `molecule_rms`.
 
-    Un sistema che non la passa e contiene anelli con un metallo si riprova senza quegli anelli: in un metallocene o in
-    un complesso η⁶-arene i triangoli M–C–C (legami M–C entro la tolleranza) sono «anelli» planari condensati con il Cp
-    o l'arene, e il sistema intero, con il metallo a ~1,6 Å dal piano, non è planare; senza di loro resta l'anello
-    aromatico. Un chelato planare con il metallo (metallo-porfirina) passa la soglia così com'è e resta intero."""
+    Con `ring_atoms = "sp2"` (predefinito dalla v1.4.0) contano solo gli anelli di almeno quattro atomi i cui atomi non
+    metallici sono sp² o sp (`sp2_ring`): i triangoli (M–C–C di un η²-legante, cluster, X₃) non sono sistemi π; resta
+    fuori anche il catione ciclopropenio, l'unico triangolo aromatico. Un sistema che non passa `molecule_rms` e contiene anelli con un metallo si riprova senza quegli
+    anelli: in un metallocene o in un complesso η⁶-arene i triangoli M–C–C (legami M–C entro la tolleranza) sono
+    «anelli» planari condensati con il Cp o l'arene, e il sistema intero, con il metallo a ~1,6 Å dal piano, non è
+    planare; senza di loro resta l'anello aromatico. Un chelato planare con il metallo (metallo-porfirina) passa la
+    soglia così com'è e resta intero."""
     rings = [r for r, _ in planar_rings(m, limits)]
+    if getattr(limits, "ring_atoms", "sp2") == "sp2":
+        nbr = _neighbours(m)
+        rings = [r for r in rings if len(r) >= 4 and sp2_ring(m, r, nbr)]
     out = []
     for atoms, members in _fuse(rings):
         g = sorted(atoms)

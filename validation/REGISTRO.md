@@ -746,3 +746,20 @@ stati rigenerati (assi di ripiego, limite di rotazione, classi complete). Nuovi 
 `validation/scarica_cod.py`: secondo argomento per l'elenco (campione di 2000 strutture) e nuovi tentativi sugli
 errori di rete.
 
+## Revisione del paper, revisore del 13 novembre 2026: voce 92 (v1.4.0)
+
+- **92 Frammenti π solo da anelli sp²/sp** (13 novembre 2026, v1.4.0). Un frammento π era definito dalla sola
+  planarità: un anello saturo planare (ciclobutano su un centro d'inversione, chelato sp³), un triangolo di una gabbia
+  (carborano) o un ciclopropano diventava un frammento, e un anello aromatico condensato con uno saturo (indano,
+  fluorene) formava un frammento solo con l'anello saturo. Ora (`Limits.ring_atoms = "sp2"`, predefinito) un anello
+  entra in un frammento solo se ha almeno quattro atomi e ogni suo atomo non metallico ha al più tre vicini non
+  metallici (idrogeni compresi; i legami ai metalli non contano) e, con tre vicini, sta nel loro piano (somma degli
+  angoli ≥ 345°, `cores.MIN_SP2_ANGLE_SUM`; `cores.sp2_ring`). `ring_atoms = "any"` ridà la regola di prima; il modo
+  del sito la tiene. Gli anelli della tabella di tipo PLATON (`ringpairs`) restano tutti gli anelli planari. Un atomo
+  sp³ con due vicini in un CIF senza idrogeni non si riconosce. Trovato dal revisore pre-sottomissione (punto 1);
+  conteggio con `paper/scripts/pi_fragment_check.py`: con la regola di prima 122 dei 1606 frammenti simmetricamente
+  distinti del campione di 500 e 21 delle 271 coppie π-stack avevano un atomo con quattro vicini non metallici o un
+  triangolo. Effetto sul campione: frammenti distinti 1606 → 1512, coppie π-stack 271 → 263 (nessuna con un atomo sp³
+  o un triangolo). Test: `tests/test_round6.py`; aggiornati i test del ciclofano sintetico (atomi di testa di ponte
+  piramidali a 40°: `ring_atoms = "any"`), del carburo 1538535 e del modo del sito. Manuale: sezione 1 e tabella delle
+  soglie (corretto anche il valore di `max_axis_twist`, 30° e non 75°).

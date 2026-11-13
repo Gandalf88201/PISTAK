@@ -166,7 +166,8 @@ def test_clamped_depends_on_min_interplanar_only():
     free = api.reanalyse(api.finish(a), Limits(min_interplanar=0.0))  # stage `pairs`: nothing is remeasured
     (p,) = [q for q in free.pairs if q.intramolecular]
     assert p.kind == "stack" and not p.clamped
-    (q,) = [q for q in analyse_text(cyclophane(3.40), "cp", Limits()).pairs if q.intramolecular]
+    # the synthetic bridgeheads are pyramidal (bridge 40° out of the ring plane at this gap): planarity-only rings
+    (q,) = [q for q in analyse_text(cyclophane(3.40), "cp", Limits(ring_atoms="any")).pairs if q.intramolecular]
     assert q.kind == "stack" and not q.clamped  # above the limit a folded molecule can stack on itself
 
 
@@ -354,7 +355,7 @@ def test_contacts_per_molecule_do_not_depend_on_z():
     h = api.analyse_file(EX / "herringbone_anthracene.cif", Limits())
     q = stack_pair(h)
     assert q.count == 2 and q.per_molecule == 2  # Z = 2: two contacts per cell, still two per molecule
-    (c,) = [x for x in analyse_text(cyclophane(3.4), "cp", Limits()).pairs if x.intramolecular]
+    (c,) = [x for x in analyse_text(cyclophane(3.4), "cp", Limits(ring_atoms="any")).pairs if x.intramolecular]
     assert c.per_molecule == 1
 
 

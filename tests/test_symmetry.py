@@ -244,4 +244,4 @@ def test_thresholds_from_dict():
     assert lim.overlap_measure == "area" and lim.max_slip == 0.0  # invalid values ignored (defaults kept)
     assert Limits.site() == Limits(pair_mode="site", disorder="first", fragments="largest", contact_cutoff=4.0,
                                    overlap_measure="atoms", min_overlap=0.0, pi_scope="all", axis_fallback="none",
-                                   min_interplanar=0.0, ringless_fragments="planar")
+                                   min_interplanar=0.0, ringless_fragments="planar", ring_atoms="any")

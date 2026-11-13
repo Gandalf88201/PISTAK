@@ -75,8 +75,10 @@ def test_carbide_is_still_skipped():
     a = api.analyse_file(COD / "1538535.cif", Limits())
     assert not in_pi_scope(a.structure, a.limits)
     assert all(not f for f in a.fragments) and not a.pairs
-    b = api.analyse_file(COD / "1538535.cif", Limits(pi_scope="all"))
+    # the network's rings are Ta/V/C triangles: since v1.4.0 they need also the planarity-only rule (`ring_atoms`)
+    b = api.analyse_file(COD / "1538535.cif", Limits(pi_scope="all", ring_atoms="any"))
     assert any(f for f in b.fragments)
+    assert all(not f for f in api.analyse_file(COD / "1538535.cif", Limits(pi_scope="all")).fragments)
 
 
 def test_carbonate_and_cyanide_are_still_skipped():

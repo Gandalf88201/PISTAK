@@ -111,6 +111,13 @@ class Limits:
         "all": "tutti i sistemi di anelli planari",
         "largest": "solo il più grande (come il sito)"}})
     min_fragment_atoms: int = field(default=5, metadata={"label": "Atomi minimi in un frammento π secondario", "min": 3, "max": 60, "step": 1})
+    #: Quali anelli planari possono far parte di un frammento π (v1.4.0, revisore del 13 novembre 2026, punto 1).
+    #: «sp2»: anelli di almeno quattro atomi in cui ogni atomo non metallico ha al più tre vicini non metallici
+    #: (idrogeni compresi, metalli no) e, con tre vicini, sta nel loro piano (somma degli angoli ≥
+    #: `cores.MIN_SP2_ANGLE_SUM`): niente anelli saturi planari, triangoli, anelli di chelati sp³. «any»: solo la planarità, come fino alla v1.3.1.
+    ring_atoms: str = field(default="sp2", metadata={"label": "Atomi degli anelli dei frammenti π", "choices": {
+        "sp2": "sp²/sp: anelli di almeno 4 atomi, al più tre vicini non metallici, nel piano dei vicini",
+        "any": "qualsiasi (solo planarità, come fino alla v1.3.1)"}})
     fragment_merge: str = field(default="fused", metadata={"label": "Frammenti π", "choices": {
         "fused": "sistemi di anelli condensati (che condividono un legame)",
         "conjugated": "anche sistemi complanari collegati da legami o atomi sp/sp² (biarili, porfirine)"}})
@@ -159,7 +166,7 @@ class Limits:
         """Le soglie e le convenzioni dell'analizzatore del sito (per i confronti di parità)."""
         return cls(**{"pair_mode": "site", "disorder": "first", "fragments": "largest", "contact_cutoff": 4.0,
                       "overlap_measure": "atoms", "min_overlap": 0.0, "pi_scope": "all", "axis_fallback": "none",
-                      "ringless_fragments": "planar",
+                      "ringless_fragments": "planar", "ring_atoms": "any",
                       "min_interplanar": 0.0, **kw})
 
     @classmethod

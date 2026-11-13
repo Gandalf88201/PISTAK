@@ -28,6 +28,7 @@ min_fragment_atoms = 5     # atomi minimi di un frammento π secondario (il prin
 pi_scope = "organic"       # organic: frammenti π se c'è un legame C–C o C–H o un anello planare di non metalli con B, C o N | all: in tutte
 fragment_merge = "fused"   # fused: anelli condensati | conjugated: anche sistemi complanari collegati (biarili, porfirine)
 ringless_fragments = "none" # none: solo sistemi di anelli | planar: anche molecole planari sp²/sp senza anelli (nitrato, guanidinio)
+ring_atoms = "sp2"          # sp2: anelli di ≥ 4 atomi con atomi non metallici sp²/sp (≤ 3 vicini, planari) | any: solo planarità (fino alla v1.3.1)
 long_axis_atoms = ""       # asse lungo da due atomi, per etichetta ("C1,C9"); vuoto = direzione di massima estensione
 max_axis_isotropy = 0.9    # oltre questa isotropia del nucleo l'asse lungo automatico non è definito: slittamenti L/W = NaN
 axis_fallback = "molecule" # asse lungo dei frammenti isotropi: molecule (tutta la molecola) | substituents (frammento + atomi legati) | none

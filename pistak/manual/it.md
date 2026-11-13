@@ -36,7 +36,14 @@ Il manuale è anche nella finestra: **Aiuto ▸ Manuale** (F1). Le figure usano 
 ## 1. Concetti di base
 
 **Nucleo π e frammenti.** In ogni molecola PISTAK cerca gli anelli planari (scarto quadratico dal piano medio sotto
-`ring_rms`) e li unisce in sistemi condensati. Ogni sistema planare è un *frammento π*: π1 è il più grande (il nucleo
+`ring_rms`) e li unisce in sistemi condensati. Un anello conta solo se ha almeno quattro atomi e ogni suo atomo non metallico può essere sp² o
+sp (`ring_atoms = "sp2"`, dalla v1.4.0): al più tre vicini non metallici, idrogeni compresi (i legami ai metalli non
+contano, come in un Cp o in una piridina coordinati), e, con tre vicini, nel loro piano (i tre angoli sommano almeno
+345°). Un anello saturo planare (ciclobutano su un centro d'inversione, un chelato sp³), un anello di tre atomi
+(triangoli di gabbie, M–C–C di un legante η², ciclopropani; il raro catione ciclopropenio, aromatico, è l'unico
+sistema π escluso) non fa parte di nessun frammento, e un anello aromatico condensato con uno saturo è un frammento da solo;
+un atomo sp³ con due vicini in un CIF senza idrogeni non si riconosce. `ring_atoms = "any"` ridà la regola della sola
+planarità delle versioni precedenti. Ogni sistema planare è un *frammento π*: π1 è il più grande (il nucleo
 π «classico»), π2, π3… gli altri, se hanno almeno `min_fragment_atoms` atomi. Di ogni frammento si calcolano il
 baricentro (Cg), il piano medio con la sua normale **n** e l'*asse lungo* **L**, la direzione in cui il frammento è
 più esteso (oppure quella definita da due atomi, vedi [Asse lungo](#9-convenzioni-dellanalisi)). Una molecola senza
@@ -398,11 +405,12 @@ criterio), da `user.toml` o dal terminale.
 | `fragment_merge` | fused | frammenti π: sistemi di anelli condensati, o anche sistemi coniugati complanari |
 | `max_axis_isotropy` | 0,9 | sopra, l'asse lungo automatico non è definito |
 | `pi_scope` | organic | dove si cercano i frammenti π: strutture con un legame C–C o C–H o un anello planare di non metalli con B, C o N (organic) o tutte (all) |
-| `max_axis_twist` | 75° | sopra, L e W della coppia non sono definiti |
+| `max_axis_twist` | 30° | sopra, L e W della coppia non sono definiti |
 | `max_slip` | 0 Å | slittamento massimo per una π-stack (0 = nessun limite) |
 | `ring_rms` | 0,10 Å | planarità massima di un anello |
 | `molecule_rms` | 0,15 Å | planarità massima del nucleo intero |
 | `max_ring_size` | 8 | atomi massimi in un anello |
+| `ring_atoms` | sp2 | anelli dei frammenti π: `sp2` (almeno quattro atomi; atomi non metallici con al più tre vicini non metallici, nel loro piano) o `any` (solo planarità, fino alla v1.3.1) |
 | `bond_tolerance` | 0,4 Å | legame se la distanza è sotto la somma dei raggi covalenti più questo |
 | `same_site` | 0,3 Å | si fondono le immagini dello stesso sito, o atomi ordinati scritti due volte, più vicini di così; restano distinte le posizioni alternative di un atomo sdoppiato (entro 0,05 Å è sempre lo stesso atomo) |
 | `neighbour_shells` | 2 | celle vicine esplorate (minimo: in modalità canonical si allarga da sola) |
@@ -434,7 +442,7 @@ Perché è veloce: l'analisi è divisa in **stadi** e ogni soglia appartiene a u
 |---|---|---|
 | cif | `disorder` | lettura del file |
 | struttura | `bond_tolerance`, `same_site`, `max_cell_atoms` | cella, legami, molecole |
-| frammenti | `ring_rms`, `molecule_rms`, `max_ring_size`, `fragments`, `min_fragment_atoms`, `long_axis_atoms` | anelli, frammenti, assi |
+| frammenti | `ring_rms`, `molecule_rms`, `max_ring_size`, `ring_atoms`, `fragments`, `min_fragment_atoms`, `long_axis_atoms` | anelli, frammenti, assi |
 | contatti | `contact_cutoff`, `neighbour_shells`, `pair_mode` | misura di tutte le coppie (la parte costosa) |
 | coppie | `max_dihedral`, `max_interplanar`, `min_overlap`, `max_slip`, `overlap_measure`, `ring_pair_max_distance`, `contact_check`, `contact_check_margin` | classificazione, raccolta, colonne (le ultime due rifanno solo i controlli rapidi) |
 
