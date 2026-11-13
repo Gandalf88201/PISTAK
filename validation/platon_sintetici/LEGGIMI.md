@@ -15,8 +15,7 @@ Per ognuno ci sono:
 - `<nome>_H.cif`: lo stesso CIF con gli H in posizione calcolata, senza s.u. Senza idrogeni PLATON non riconosce un
   anello di C con due soli legami: lo elenca come piano («Plan») e salta la tabella Cg–Cg. Gli H non entrano nei piani
   né nei centroidi degli anelli, quindi nessuna grandezza degli anelli cambia;
-- `<nome>_H.lis`: il listato di PLATON (per ora non nel repository, in attesa del permesso di ridistribuirlo: si rifà
-  come descritto sotto);
+- `<nome>_H.lis`: il listato di PLATON (nel repository con il permesso di A. L. Spek; si rifà come descritto sotto);
 - `<nome>_su<k>.cif`, `<nome>_su<k>_H.cif`, `<nome>_su<k>_H.lis`: lo stesso cristallo con tutte le s.u. delle coordinate
   moltiplicate per *k*. PLATON stampa una s.u. con una sola cifra significativa, salvo quando la cifra è 1: 0,3° può
   valere da 0,25° a 0,35°. Con *k* scelto in modo che la s.u. di α (o di Cg···Cg) cada fra 10 e 19 unità dell'ultima
