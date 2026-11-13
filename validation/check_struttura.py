@@ -390,5 +390,7 @@ CHECKS = {"cell": check_cell, "moiety": check_moiety, "oblique": check_oblique,
           "hthresh": check_hthresh}
 
 if __name__ == "__main__":
-    for name in sys.argv[1:] or CHECKS:
-        CHECKS[name]()
+    # "rdkit=500", "rings=500": the check on the first N structures of the sample (default 200, as in the first rounds)
+    for arg in sys.argv[1:] or CHECKS:
+        name, _, n = arg.partition("=")
+        CHECKS[name](int(n)) if n else CHECKS[name]()
