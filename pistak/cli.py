@@ -2,7 +2,7 @@
 
     python -m pistak                       finestra grafica
     python -m pistak struttura.cif         finestra grafica con quel file
-    python -m pistak analyze a.cif [--block NOME] [--csv out.csv] [--json out.json] [--xyz 1 out.xyz]
+    python -m pistak analyze a.cif [--block NOME] [--csv out.csv] [--json out.json] [--xyz 1 out.xyz] [--xyz-all cartella/]
     python -m pistak batch cartella/ --csv riepilogo.csv
     python -m pistak compare a.cif b.cif c.cif [--ref 1] [--csv confronto.csv]
     python -m pistak stats cartella/ [--kind stack] [--csv coppie.csv] [--summary descrizione.csv] [--corr]
@@ -107,6 +107,11 @@ def cmd_analyze(args) -> int:
             print(tf("errore: la coppia {n} non esiste", n=n), file=sys.stderr)
             return 1
         print(tr("scritto"), export.write_pair_xyz(a, a.pairs[n - 1], out))
+    if args.xyz_all:
+        if not a.pairs:
+            print(tr("nessuna coppia da scrivere in XYZ"), file=sys.stderr)
+        for path in export.write_all_pairs_xyz(a, args.xyz_all):
+            print(tr("scritto"), path)
     return 0
 
 
@@ -447,6 +452,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--csv")
     p.add_argument("--json")
     p.add_argument("--xyz", nargs=2, metavar=("N", "FILE"), help=tr("scrive la coppia N in formato XYZ"))
+    p.add_argument("--xyz-all", metavar="FOLDER",
+                   help=tr("scrive tutte le coppie in formato XYZ nella cartella, una per file (nome-tipo-n.xyz)"))
     p.add_argument("--block", help=tr("blocco data_ da analizzare (predefinito: il primo con atomi)"))
     p.add_argument("--mc", type=int, default=0, metavar="N",
                    help=tr("incertezze dei parametri con un Monte Carlo di N campioni dalle s.u. del CIF (es. 200)"))

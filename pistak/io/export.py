@@ -8,6 +8,7 @@ from __future__ import annotations
 import csv
 import json
 import math
+import re
 from pathlib import Path
 
 from pistak.core.analysis import Analysis
@@ -228,3 +229,32 @@ def write_pair_xyz(analysis: Analysis, pair: Pair, path: str | Path) -> Path:
     path = Path(path)
     path.write_text(pair_xyz(analysis, pair), encoding="utf-8")
     return path
+
+
+#: Il tipo di coppia nei nomi dei file XYZ: fisso e in inglese, come le chiavi degli altri file esportati.
+XYZ_KIND_NAMES = {"stack": "pistaked", "parallel": "parallel", "tilted": "tilted"}
+
+
+def xyz_stem(analysis: Analysis) -> str:
+    """Il nome della struttura nei nomi dei file: quello del CIF senza estensione, con soli caratteri sicuri."""
+    return re.sub(r"[^\w.-]+", "_", Path(analysis.name).stem) or "pistak"
+
+
+def all_pairs_xyz_names(analysis: Analysis) -> list[tuple[Pair, str]]:
+    """Ogni coppia con il nome del suo file XYZ, «<struttura>-<tipo>-<n>.xyz»: n conta le coppie di quel tipo
+    nell'ordine della tabella (prima i π-stack, poi le parallele, poi le inclinate). Il numero della coppia nella
+    tabella resta nella riga di commento del file (`pair=`)."""
+    stem, seen = xyz_stem(analysis), dict.fromkeys(XYZ_KIND_NAMES, 0)
+    out = []
+    for p in analysis.pairs:
+        seen[p.kind] = seen.get(p.kind, 0) + 1
+        out.append((p, f"{stem}-{XYZ_KIND_NAMES.get(p.kind, p.kind)}-{seen[p.kind]}.xyz"))
+    return out
+
+
+def write_all_pairs_xyz(analysis: Analysis, folder: str | Path) -> list[Path]:
+    """Un file XYZ per ogni coppia trovata, nella cartella `folder` (creata se manca), con i nomi di
+    `all_pairs_xyz_names`. Restituisce i file scritti, nell'ordine delle coppie."""
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    return [write_pair_xyz(analysis, p, folder / name) for p, name in all_pairs_xyz_names(analysis)]

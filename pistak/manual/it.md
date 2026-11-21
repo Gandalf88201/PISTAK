@@ -576,6 +576,10 @@ Tutto si esporta in CSV dal menu *Esporta ▾*. Da terminale: `compare` e `stats
   `geometry` (`bonds`, `angles`, `torsions`, `contacts` delle molecole indipendenti: atomi, `symops`, valore, s.u.; per i
   contatti `molecule_b`, `vdw_sum` e `delta`).
 * **Coppia selezionata (XYZ)**: le due molecole, B già nella cella giusta, da aprire in qualunque visualizzatore.
+* **Tutte le coppie (XYZ, un file per coppia)**: ogni coppia della tabella in un suo file XYZ, nella sottocartella
+  `<struttura>_xyz` della cartella scelta. I file si chiamano `<struttura>-pistaked-1.xyz`, `-pistaked-2.xyz`, …,
+  poi `<struttura>-parallel-1.xyz`, … e `<struttura>-tilted-1.xyz`, …: il numero conta le coppie di quel tipo
+  nell'ordine della tabella; il numero della coppia nella tabella è nella riga di commento (`pair=`).
 * **Coppia selezionata per calcoli quantistici**: vedi la sezione seguente.
 * **Cella per calcoli periodici**: vedi [Cella intera per calcoli periodici](#cella-intera-per-calcoli-periodici).
 * **Geometria delle molecole (CSV)**: `kind` (bond, angle, torsion, contact), `molecule`, `atom_1`…`atom_4`, `symop_1`…`symop_4` (l'operazione che genera ogni atomo; vuota per l'atomo del CIF), `value`, `su`, e per i contatti `vdw_sum` e `delta`.
@@ -676,7 +680,7 @@ Tutto ciò che fa la finestra si fa anche da terminale (`./start.py COMANDO …`
 
 | comando | a che cosa serve |
 |---|---|
-| `analyze file.cif` | analizza un file e stampa le coppie; `--csv`, `--json`, `--xyz N FILE`, `--block`, `--mc N` |
+| `analyze file.cif` | analizza un file e stampa le coppie; `--csv`, `--json`, `--xyz N FILE`, `--xyz-all CARTELLA`, `--block`, `--mc N` |
 | `batch cartella/` | tutti i CIF di una cartella, in parallelo; `--csv riepilogo.csv` |
 | `compare a.cif b.cif …` | confronto del motivo di stack; `--ref N` sceglie il riferimento |
 | `stats cartella/` | statistiche sulle coppie; `--kind stack`, `--keys`, `--corr`, `--csv`, `--summary` |

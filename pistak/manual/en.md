@@ -576,6 +576,10 @@ Everything can be exported to CSV from the *Export ▾* menu. On the command lin
   `geometry` (`bonds`, `angles`, `torsions`, `contacts` of the independent molecules: atoms, `symops`, value, s.u.;
   for contacts also `molecule_b`, `vdw_sum` and `delta`).
 * **Selected pair (XYZ)**: the two molecules, B already in the right cell, for any molecular viewer.
+* **All pairs (XYZ, one file per pair)**: every pair of the table in its own XYZ file, in the subfolder
+  `<structure>_xyz` of the chosen folder. The files are named `<structure>-pistaked-1.xyz`, `-pistaked-2.xyz`, …,
+  then `<structure>-parallel-1.xyz`, … and `<structure>-tilted-1.xyz`, …: the number counts the pairs of that kind
+  in table order; the pair's number in the table is in the comment line (`pair=`).
 * **Selected pair for quantum chemistry**: see the next section.
 * **Cell for periodic calculations**: see [Whole cell for periodic calculations](#whole-cell-for-periodic-calculations).
 * **Molecular geometry (CSV)**: `kind` (bond, angle, torsion, contact), `molecule`, `atom_1`…`atom_4`, `symop_1`…`symop_4` (the operation generating each atom; empty for the CIF atom), `value`, `su`, and for contacts `vdw_sum` and `delta`.
@@ -676,7 +680,7 @@ Everything the window does can also be done on the command line (`./start.py COM
 
 | command | purpose |
 |---|---|
-| `analyze file.cif` | analyse a file and print the pairs; `--csv`, `--json`, `--xyz N FILE`, `--block`, `--mc N` |
+| `analyze file.cif` | analyse a file and print the pairs; `--csv`, `--json`, `--xyz N FILE`, `--xyz-all FOLDER`, `--block`, `--mc N` |
 | `batch folder/` | all CIFs of a folder, in parallel; `--csv summary.csv` |
 | `compare a.cif b.cif …` | compare the stacking motif; `--ref N` chooses the reference |
 | `stats folder/` | statistics on the pairs; `--kind stack`, `--keys`, `--corr`, `--csv`, `--summary` |

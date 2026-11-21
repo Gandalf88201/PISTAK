@@ -240,6 +240,7 @@ class MainWindow(QMainWindow):
         self._act(ex, tr("Tabella delle coppie (CSV)…"), lambda: self._export("csv"))
         self._act(ex, tr("Risultati completi (JSON)…"), lambda: self._export("json"))
         self._act(ex, tr("Coppia selezionata (XYZ)…"), lambda: self._export("xyz"))
+        self._act(ex, tr("Tutte le coppie (XYZ, un file per coppia)…"), self._export_all_xyz)
         self._act(ex, tr("Coppia selezionata per calcoli quantistici (ORCA, Psi4, Gaussian)…"), self._export_qc)
         self._act(ex, tr("Cella per calcoli periodici (VASP, Quantum ESPRESSO, CP2K, CRYSTAL)…"), self._export_periodic)
         self._act(ex, tr("Geometria delle molecole (CSV)…"), lambda: self._export("geom"))
@@ -370,6 +371,22 @@ class MainWindow(QMainWindow):
                 return
             export.write_pair_xyz(a, a.pairs[idx], path)
         self.status_label.setText(tf("Scritto {path}", path=path))
+
+    def _export_all_xyz(self) -> None:
+        """Ogni coppia in un suo file XYZ, nella sottocartella «<struttura>_xyz» della cartella scelta."""
+        a = self.session.analysis
+        if not a:
+            return
+        if not a.pairs:
+            QMessageBox.information(self, APP_NAME, tr("Nessuna coppia da esportare."))
+            return
+        start = str(self.settings.value("last_dir", str(ROOT)))
+        folder = QFileDialog.getExistingDirectory(self, tr("Cartella in cui scrivere i file"), start)
+        if not folder:
+            return
+        target = Path(folder) / f"{export.xyz_stem(a)}_xyz"
+        files = export.write_all_pairs_xyz(a, target)
+        self.status_label.setText(tf("Scritti {n} file in {path}", n=len(files), path=target))
 
     def _export_qc(self) -> None:
         from pistak.errors import describe_error
