@@ -263,6 +263,8 @@ class Dimer:
     dimero. La prima (il tipo più interessante, poi la distanza più corta) dà nome e coordinate."""
 
     pairs: list[Pair]
+    #: «<tipo>-<n>», come nel nome del file (pistaked-1, parallel-3, …): la colonna «Dimero» della tabella.
+    label: str = ""
     name: str = ""
 
     @property
@@ -306,8 +308,15 @@ def dimers(analysis: Analysis) -> list[Dimer]:
     stem, seen = xyz_stem(analysis), dict.fromkeys(XYZ_KIND_NAMES, 0)
     for d in out:
         seen[d.kind] = seen.get(d.kind, 0) + 1
-        d.name = f"{stem}-{XYZ_KIND_NAMES.get(d.kind, d.kind)}-{seen[d.kind]}.xyz"
+        d.label = f"{XYZ_KIND_NAMES.get(d.kind, d.kind)}-{seen[d.kind]}"
+        d.name = f"{stem}-{d.label}.xyz"
     return out
+
+
+def dimer_of_pairs(analysis: Analysis) -> dict[int, tuple[int, Dimer]]:
+    """Per ogni coppia (indice nella tabella) il suo dimero e la posizione del dimero in `dimers`; le coppie tra
+    frammenti della stessa molecola non ci sono. Serve alla tabella e allo scatter per legare righe e punti ai file."""
+    return {p.index: (k, d) for k, d in enumerate(dimers(analysis)) for p in d.pairs}
 
 
 def dimer_xyz(analysis: Analysis, dimer: Dimer) -> str:
@@ -333,3 +342,52 @@ def write_dimers_xyz(analysis: Analysis, folder: str | Path) -> list[Path]:
         path.write_text(dimer_xyz(analysis, d), encoding="utf-8")
         out.append(path)
     return out
+
+
+def pair_files(analysis: Analysis) -> list[tuple[Pair, str]]:
+    """Ogni coppia della tabella con il nome del suo file XYZ, «<struttura>-<tipo>-<n>.xyz», n che conta le coppie di
+    quel tipo nell'ordine della tabella. Gli stessi nomi dei dimeri ma un'altra numerazione: vanno in un'altra
+    cartella."""
+    stem, seen = xyz_stem(analysis), dict.fromkeys(XYZ_KIND_NAMES, 0)
+    out = []
+    for p in analysis.pairs:
+        seen[p.kind] = seen.get(p.kind, 0) + 1
+        out.append((p, f"{stem}-{XYZ_KIND_NAMES.get(p.kind, p.kind)}-{seen[p.kind]}.xyz"))
+    return out
+
+
+def write_pairs_xyz(analysis: Analysis, folder: str | Path) -> list[Path]:
+    """Un file XYZ per ogni coppia della tabella (`pair_files`), nella cartella `folder` (creata se manca). Le coppie
+    dello stesso dimero danno file con le stesse due molecole: la riga di commento dice il dimero (`dimer=`); due
+    frammenti della stessa molecola danno la molecola da sola (`same_molecule`)."""
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    dimer_of = dimer_of_pairs(analysis)
+    out = []
+    for p, name in pair_files(analysis):
+        n, head, body = pair_xyz(analysis, p).split("\n", 2)
+        if p.index in dimer_of:
+            head += f" dimer={dimer_of[p.index][1].label}"
+        path = folder / name
+        path.write_text(f"{n}\n{head}\n{body}", encoding="utf-8")
+        out.append(path)
+    return out
+
+
+@dataclass
+class XyzCounts:
+    """Quanti file dà ciascuna esportazione XYZ e perché differiscono: il testo dell'avviso lo fa l'interfaccia."""
+
+    pairs: int  # coppie della tabella: un file ciascuna
+    dimers: int  # dimeri distinti: un file ciascuno
+    repeated: int  # file per coppia che ripetono un dimero già scritto da un'altra coppia
+    same_molecule: int  # coppie tra due frammenti della stessa molecola
+    example: Dimer | None  # il dimero con più coppie, per l'esempio dell'avviso (None se nessun dimero ne ha due)
+
+
+def xyz_counts(analysis: Analysis) -> XyzCounts:
+    ds = dimers(analysis)
+    same = sum(1 for p in analysis.pairs if same_molecule(p))
+    big = max(ds, key=lambda d: len(d.pairs), default=None)
+    return XyzCounts(len(analysis.pairs), len(ds), sum(len(d.pairs) - 1 for d in ds), same,
+                     big if big is not None and len(big.pairs) > 1 else None)

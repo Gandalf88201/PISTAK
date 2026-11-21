@@ -10,12 +10,13 @@ from PySide6.QtWidgets import QCheckBox, QHeaderView, QMenu, QTableView, QToolBu
 from pistak.gui.session import Session
 from pistak.gui.theme import KIND_COLORS, KIND_LABELS, kind_label, qcolor
 from pistak.gui.views.base import PairView
-from pistak.i18n import tr
+from pistak.i18n import tf, tr
+from pistak.io.export import dimer_of_pairs
 from pistak.labels import is_interplanar, relation
 from pistak.params import get_spec, specs
 
 DEFAULT_COLUMNS = ["interplanar", "long_slip", "lat_slip", "dihedral", "centroid_distance", "contact", "overlap", "count"]
-FIXED = ["#", "Tipo", "Relazione"]
+FIXED = ["#", "Tipo", "Dimero", "Relazione"]
 
 
 class PairModel(QAbstractTableModel):
@@ -23,6 +24,8 @@ class PairModel(QAbstractTableModel):
         super().__init__()
         self.pairs: list = []
         self.keys: list[str] = list(DEFAULT_COLUMNS)
+        #: Coppia → (posizione, dimero) di `dimer_of_pairs`: la colonna «Dimero», come i file di «Tutti i dimeri (XYZ)».
+        self.dimer_of: dict = {}
 
     def set_data(self, pairs: list, keys: list[str]) -> None:
         self.beginResetModel()
@@ -43,6 +46,8 @@ class PairModel(QAbstractTableModel):
                 return tr(FIXED[section])
             spec = get_spec(self.keys[section - len(FIXED)])
             return spec.title if spec else self.keys[section - len(FIXED)]
+        if role == Qt.ItemDataRole.ToolTipRole and section == FIXED.index("Dimero"):
+            return tr("Le coppie di frammenti π tra le stesse due molecole: un file in Esporta ▸ Tutti i dimeri (XYZ)")
         if role == Qt.ItemDataRole.ToolTipRole and section >= len(FIXED):
             spec = get_spec(self.keys[section - len(FIXED)])
             return spec.info or None
@@ -52,10 +57,17 @@ class PairModel(QAbstractTableModel):
         p = self.pairs[index.row()]
         c = index.column()
         if c < len(FIXED):
+            dimer = self.dimer_of.get(p.index)
             if role == Qt.ItemDataRole.DisplayRole:
-                return (p.index + 1, kind_label(p.kind), relation(p))[c]
-            if role == Qt.ItemDataRole.UserRole:
-                return (p.index, ["stack", "parallel", "tilted"].index(p.kind), relation(p))[c]
+                return (p.index + 1, kind_label(p.kind), dimer[1].label if dimer else "–", relation(p))[c]
+            if role == Qt.ItemDataRole.UserRole:  # per dimero: le sue coppie una dopo l'altra, quelle senza in fondo
+                rank = dimer[0] if dimer else len(self.pairs)  # un intero: il proxy di Qt non confronta tuple Python
+                return (p.index, ["stack", "parallel", "tilted"].index(p.kind), rank * (len(self.pairs) + 1) + p.index,
+                        relation(p))[c]
+            if role == Qt.ItemDataRole.ToolTipRole and c == FIXED.index("Dimero"):
+                if dimer is None:
+                    return tr("Due frammenti della stessa molecola: non è un dimero")
+                return tf("{file}: coppie {pairs}", file=dimer[1].name, pairs=", ".join(str(q.index + 1) for q in dimer[1].pairs))
             if role == Qt.ItemDataRole.ForegroundRole and c == 1:
                 return QBrush(qcolor(KIND_COLORS[p.kind]))
             return None
@@ -175,6 +187,7 @@ class TableView(PairView):
     def on_analysis(self) -> None:
         a = self.analysis
         keys = [k for k in self.model.keys if get_spec(k)]
+        self.model.dimer_of = dimer_of_pairs(a) if a else {}
         self.model.set_data(a.pairs if a else [], keys)
         self.proxy.subset = None
         self.proxy.refresh()

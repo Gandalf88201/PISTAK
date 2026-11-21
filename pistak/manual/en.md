@@ -161,7 +161,10 @@ removes it).
 One row per pair, in this order: π-stacks first, then parallel, then tilted pairs, each group by increasing
 interplanar distance. **Relation** says which molecules form the pair: `same [0 -1 0]` (the molecule and its
 translated copy), `molecule 2 [1 0 0]` and, when molecules have several fragments, which ones (`· π2–π1`,
-`intramolecular · π1–π3`). The *π-stack / parallel / tilted* boxes hide a type; **Columns ▾** chooses the parameters
+`intramolecular · π1–π3`). **Dimer** says which file of *Export ▸ All dimers (XYZ)* the pair goes into
+(`pistaked-1`, `tilted-3`, …): fragment pairs between the same two molecules share a dimer and sit together when the
+table is sorted by this column; a dash marks two fragments of the same molecule, which are not a dimer. The tooltip on
+the cell gives the file name and its pairs. The *π-stack / parallel / tilted* boxes hide a type; **Columns ▾** chooses the parameters
 to show (all those of the registry, plugins included). Click a header to sort; widths can be adjusted by hand.
 
 ### Parameter scatter
@@ -171,7 +174,9 @@ to show (all those of the registry, plugins included). Click a header to sort; w
 Each pair is a point; X and Y are any two parameters, the colour is the pair type or a third parameter (viridis
 scale). The point grows with the number of symmetry-equivalent pairs. When an axis shows a parameter of the stack
 criterion, the threshold is a dashed line (here the maximum interplanar distance, 4.2 Å) that follows the live
-threshold panel. *Box selection* filters pairs, *Clear filter* removes the filter.
+threshold panel. *Box selection* filters pairs, *Clear filter* removes the filter. When a pair is chosen, dashed
+rings mark the other pairs of the same dimer (same two molecules, same XYZ file); the tooltip on a point names its
+dimer.
 
 ### Histogram
 
@@ -577,14 +582,20 @@ Everything can be exported to CSV from the *Export ▾* menu. On the command lin
   for contacts also `molecule_b`, `vdw_sum` and `delta`).
 * **Selected pair (XYZ)**: the two molecules, B already in the right cell, for any molecular viewer. If the two
   fragments belong to the same molecule, the molecule appears once (`same_molecule` in the comment line).
-* **All dimers (XYZ, one file per dimer)**: each distinct dimer in its own XYZ file, in the subfolder
-  `<structure>_xyz` of the chosen folder. A molecule with several π fragments gives one pair for every pair of nearby
+* **All dimers or all pairs (XYZ)**: a window asks whether to write one file per dimer or one file per pair of the
+  table, with the number of files of each choice and warnings about what the second one contains; then the folder.
+  *One file per dimer*: each distinct dimer in its own XYZ file, in the subfolder `<structure>_xyz` of the chosen
+  folder. A molecule with several π fragments gives one pair for every pair of nearby
   fragments, possibly of different kinds: all those between the same two molecules (or two symmetry-equivalent
   molecules) go into a single file. The file takes its kind and coordinates from the first of these pairs in the table
   and is named `<structure>-pistaked-1.xyz`, `-pistaked-2.xyz`, …, then `<structure>-parallel-1.xyz`, … and
   `<structure>-tilted-1.xyz`, …: the number counts the dimers of that kind. The comment line has the values of the
   first pair (`pair=`, `kind=`, …) and every pair of the dimer: `pairs=` (numbers in the table), `kinds=` and
   `fragments=` (fragments from 1). Pairs between two fragments of the same molecule are not dimers and are left out.
+  *One file per pair of the table*: one table row, one file, in the subfolder `<structure>_pairs_xyz` (same names, but
+  n counts the pairs of that kind). Beware: pairs of the same dimer give files with the same two molecules (the comment
+  line names the dimer, `dimer=`), and two fragments of the same molecule give that molecule alone (`same_molecule`).
+  The window says how many files repeat and how many molecules stand alone.
 * **Selected pair for quantum chemistry**: see the next section.
 * **Cell for periodic calculations**: see [Whole cell for periodic calculations](#whole-cell-for-periodic-calculations).
 * **Molecular geometry (CSV)**: `kind` (bond, angle, torsion, contact), `molecule`, `atom_1`…`atom_4`, `symop_1`…`symop_4` (the operation generating each atom; empty for the CIF atom), `value`, `su`, and for contacts `vdw_sum` and `delta`.
@@ -685,7 +696,7 @@ Everything the window does can also be done on the command line (`./start.py COM
 
 | command | purpose |
 |---|---|
-| `analyze file.cif` | analyse a file and print the pairs; `--csv`, `--json`, `--xyz N FILE`, `--xyz-all FOLDER`, `--block`, `--mc N` |
+| `analyze file.cif` | analyse a file and print the pairs; `--csv`, `--json`, `--xyz N FILE`, `--xyz-all FOLDER`, `--xyz-pairs FOLDER`, `--block`, `--mc N` |
 | `batch folder/` | all CIFs of a folder, in parallel; `--csv summary.csv` |
 | `compare a.cif b.cif …` | compare the stacking motif; `--ref N` chooses the reference |
 | `stats folder/` | statistics on the pairs; `--kind stack`, `--keys`, `--corr`, `--csv`, `--summary` |

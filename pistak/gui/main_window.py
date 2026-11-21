@@ -240,7 +240,7 @@ class MainWindow(QMainWindow):
         self._act(ex, tr("Tabella delle coppie (CSV)…"), lambda: self._export("csv"))
         self._act(ex, tr("Risultati completi (JSON)…"), lambda: self._export("json"))
         self._act(ex, tr("Coppia selezionata (XYZ)…"), lambda: self._export("xyz"))
-        self._act(ex, tr("Tutti i dimeri (XYZ, un file per dimero)…"), self._export_all_xyz)
+        self._act(ex, tr("Tutti i dimeri o tutte le coppie (XYZ)…"), self._export_all_xyz)
         self._act(ex, tr("Coppia selezionata per calcoli quantistici (ORCA, Psi4, Gaussian)…"), self._export_qc)
         self._act(ex, tr("Cella per calcoli periodici (VASP, Quantum ESPRESSO, CP2K, CRYSTAL)…"), self._export_periodic)
         self._act(ex, tr("Geometria delle molecole (CSV)…"), lambda: self._export("geom"))
@@ -373,19 +373,32 @@ class MainWindow(QMainWindow):
         self.status_label.setText(tf("Scritto {path}", path=path))
 
     def _export_all_xyz(self) -> None:
-        """Ogni dimero distinto in un suo file XYZ, nella sottocartella «<struttura>_xyz» della cartella scelta."""
+        """Tutta la struttura in XYZ: prima la scelta tra un file per dimero e uno per coppia della tabella, con gli
+        avvisi (`XyzExportDialog`), poi la cartella; i file vanno in «<struttura>_xyz» o «<struttura>_pairs_xyz»."""
+        from pistak.gui.xyz_dialog import PAIRS, XyzExportDialog
+
         a = self.session.analysis
         if not a:
             return
-        if not export.dimers(a):
-            QMessageBox.information(self, APP_NAME, tr("Nessun dimero da esportare."))
+        if not a.pairs:
+            QMessageBox.information(self, APP_NAME, tr("Nessuna coppia da esportare."))
             return
+        dlg = XyzExportDialog(Path(a.name).name or APP_NAME, export.xyz_counts(a), getattr(self, "_xyz_choice", "dimers"),
+                              self, stem=export.xyz_stem(a))
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return
+        choice = self._xyz_choice = dlg.choice()
         start = str(self.settings.value("last_dir", str(ROOT)))
         folder = QFileDialog.getExistingDirectory(self, tr("Cartella in cui scrivere i file"), start)
         if not folder:
             return
-        target = Path(folder) / f"{export.xyz_stem(a)}_xyz"
-        files = export.write_dimers_xyz(a, target)
+        stem = export.xyz_stem(a)
+        if choice == PAIRS:
+            target = Path(folder) / f"{stem}_pairs_xyz"
+            files = export.write_pairs_xyz(a, target)
+        else:
+            target = Path(folder) / f"{stem}_xyz"
+            files = export.write_dimers_xyz(a, target)
         self.status_label.setText(tf("Scritti {n} file in {path}", n=len(files), path=target))
 
     def _export_qc(self) -> None:

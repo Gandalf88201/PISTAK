@@ -223,3 +223,100 @@ def test_dimers_xyz_collect_the_fragment_pairs_of_a_dimer(crystal, tmp_path):
     assert int(lines[0]) == len(a.structure.molecules[intra.a].el) and "same_molecule" in lines[1]
     paths = export.write_dimers_xyz(a, tmp_path)
     assert len(paths) == len(ds) and all(p.name.startswith("fn-") for p in paths)
+
+
+def test_dimer_column_and_scatter_rings(crystal):
+    """La colonna «Dimero» della tabella e gli anelli dello scatter vengono da `export.dimers`, come i file XYZ:
+    stessa etichetta per le coppie dello stesso dimero, trattino per due frammenti della stessa molecola; ordinando
+    per la colonna, le coppie di un dimero stanno una dopo l'altra."""
+    pytest.importorskip("PySide6")
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import QApplication
+
+    from pistak.gui.session import Session
+    from pistak.gui.views.scatter_view import ScatterView
+    from pistak.gui.views.table_view import FIXED, TableView
+    from pistak.io import export
+
+    _app = QApplication.instance() or QApplication([])
+    s = Session()
+    table, scatter = TableView(s, "A"), ScatterView(s, "A")
+    a = compute_all(analyse_text(crystal, "fn", Limits()))  # come nella finestra: i parametri, per gli assi dello scatter
+    s._apply(a)
+    col = FIXED.index("Dimero")
+    m = table.model
+    labels = {m.pairs[r].index: m.data(m.index(r, col)) for r in range(m.rowCount())}
+    ds = export.dimers(a)
+    for d in ds:
+        assert {labels[p.index] for p in d.pairs} == {d.label}
+    assert all(labels[p.index] == "–" for p in a.pairs if export.same_molecule(p))
+    assert m.headerData(col, Qt.Orientation.Horizontal) in ("Dimero", "Dimer")
+
+    table.table.sortByColumn(col, Qt.SortOrder.AscendingOrder)
+    shown = [table.proxy.mapToSource(table.proxy.index(r, 0)).row() for r in range(table.proxy.rowCount())]
+    shown_labels = [labels[m.pairs[r].index] for r in shown]
+    assert shown_labels == [d.label for d in ds for _p in d.pairs] + ["–"] * shown_labels.count("–")
+
+    big = max(ds, key=lambda d: len(d.pairs))
+    assert len(big.pairs) > 1
+    scatter.choose(big.pairs[0].index)
+    assert len(scatter.siblings.data) == len(big.pairs) - 1
+    assert big.label in scatter._tip(0.0, 0.0, big.pairs[1].index)
+
+
+def test_xyz_export_choice_warns_about_the_per_pair_files(crystal, tmp_path):
+    """Un file per coppia della tabella: tanti file quante coppie, `dimer=` nella riga di commento, la molecola da sola
+    per due frammenti della stessa molecola; i conteggi dell'avviso tornano con i file, e la finestra di scelta li
+    mostra (avvisi solo dove servono)."""
+    from pistak.io import export
+    from pistak.labels import xyz_pairs_warnings
+
+    a = analyse_text(crystal, "fn", Limits())
+    c = export.xyz_counts(a)
+    ds = export.dimers(a)
+    assert (c.pairs, c.dimers) == (len(a.pairs), len(ds))
+    assert c.same_molecule == sum(export.same_molecule(p) for p in a.pairs) > 0
+    assert c.pairs == c.dimers + c.repeated + c.same_molecule and c.repeated > 0
+    assert c.example is not None and len(c.example.pairs) == max(len(d.pairs) for d in ds)
+    assert len(xyz_pairs_warnings(c)) == 2
+
+    paths = export.write_pairs_xyz(a, tmp_path / "pairs")
+    assert len(paths) == len(a.pairs) == len({p.name for p in paths})
+    dimer_of = export.dimer_of_pairs(a)
+    for p, path in zip(a.pairs, paths):
+        head = path.read_text(encoding="utf-8").splitlines()[1]
+        assert f"pair={p.index + 1} " in head
+        if export.same_molecule(p):
+            assert "same_molecule" in head and "dimer=" not in head
+        else:
+            assert head.endswith(f" dimer={dimer_of[p.index][1].label}")
+
+    # una struttura senza frammenti multipli: nessun avviso, i due insiemi coincidono
+    simple = analyse_file(EX / "herringbone_anthracene.cif")
+    assert xyz_pairs_warnings(export.xyz_counts(simple)) == []
+
+    pytest.importorskip("PySide6")
+    from PySide6.QtWidgets import QApplication, QLabel
+
+    from pistak.gui.xyz_dialog import DIMERS, PAIRS, XyzExportDialog
+
+    _app = QApplication.instance() or QApplication([])
+    dlg = XyzExportDialog("fn.cif", c)
+    assert dlg.choice() == DIMERS
+    texts = [w.text() for w in dlg.findChildren(QLabel)]
+    assert sum(t.startswith("⚠") for t in texts) == 2
+    dlg.pairs.setChecked(True)
+    assert dlg.choice() == PAIRS
+    assert XyzExportDialog("fn.cif", c, PAIRS).choice() == PAIRS
+
+
+def test_xyz_pairs_cli_writes_one_file_per_pair_and_warns(crystal, tmp_path, capsys):
+    from pistak.cli import main
+
+    cif = tmp_path / "fn.cif"
+    cif.write_text(crystal, encoding="utf-8")
+    assert main(["analyze", str(cif), "--xyz-pairs", str(tmp_path / "out")]) == 0
+    a = analyse_file(cif)
+    assert len(list((tmp_path / "out").glob("*.xyz"))) == len(a.pairs)
+    err = capsys.readouterr().err
+    assert err.count("\n") == 2  # i due avvisi, sullo standard error

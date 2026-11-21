@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from pistak.core.pairs import Pair
 from pistak.core.stacks import RANK_NAMES
-from pistak.i18n import tr
+from pistak.i18n import tf, tr
 
 #: Nomi dei tipi di coppia (testi italiani, da passare a `tr`): gli stessi nel terminale e nella finestra.
 KIND_TEXT = {"stack": "π-stack", "parallel": "parallela", "tilted": "inclinata"}
@@ -150,3 +150,28 @@ def is_interplanar(pair) -> bool:
     paralleli che non si fronteggiano: nelle tabelle (terminale e finestra) si scrive un trattino; il valore resta in
     CSV, JSON e nell'ordinamento (revisione 4, E8)."""
     return pair.kind == "stack" or pair.overlap_area > 0
+
+
+def xyz_dimers_text(c) -> str:
+    """Cosa contiene l'esportazione per dimero (`pistak.io.export.XyzCounts`)."""
+    text = tf("Le {pairs} coppie della tabella sono coppie di frammenti π: quelle tra le stesse due molecole vanno in un "
+              "solo file.", pairs=c.pairs)
+    if c.same_molecule:
+        text += " " + tf("{n} coppie dentro una molecola restano fuori.", n=c.same_molecule)
+    return text
+
+
+def xyz_pairs_warnings(c) -> list[str]:
+    """Gli avvisi per l'esportazione di un file per coppia: file con le stesse due molecole, molecole da sole."""
+    out = []
+    if c.repeated:
+        ex = c.example
+        text = tf("{n} file ripetono un dimero già scritto da un'altra coppia.", n=c.repeated)
+        if ex is not None:
+            text += " " + tf("Per esempio le coppie {pairs} sono le stesse due molecole ({file}).",
+                             pairs=", ".join(str(p.index + 1) for p in ex.pairs), file=ex.name)
+        out.append(text)
+    if c.same_molecule:
+        out.append(tf("{n} coppie sono due frammenti della stessa molecola: il file contiene quella molecola da sola.",
+                      n=c.same_molecule))
+    return out

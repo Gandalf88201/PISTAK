@@ -17,6 +17,7 @@ from pistak.gui import theme
 from pistak.gui.session import Session
 from pistak.gui.views.base import PairView
 from pistak.i18n import tf, tr
+from pistak.io.export import dimer_of_pairs
 from pistak.params import get_spec, specs
 
 KIND_COLOR = "kind"  # valore interno per «colora per tipo di coppia» (non tradotto)
@@ -59,7 +60,12 @@ class ScatterView(PairView):
         self.cloud = pg.ScatterPlotItem(size=10, pxMode=True, hoverable=True, hoverSize=14, tip=self._tip)
         self.cloud.sigClicked.connect(self._clicked)
         self.marker = pg.ScatterPlotItem(size=20, pxMode=True, brush=QBrush(Qt.BrushStyle.NoBrush), pen=pg.mkPen(theme.foreground(), width=2.5))
+        #: Anelli tratteggiati sulle altre coppie del dimero della coppia scelta (stesse due molecole, stesso file XYZ).
+        self.siblings = pg.ScatterPlotItem(size=16, pxMode=True, brush=QBrush(Qt.BrushStyle.NoBrush),
+                                           pen=pg.mkPen(theme.foreground(), width=1.5, style=Qt.PenStyle.DashLine))
+        self.dimer_of: dict = {}
         self.plot.addItem(self.cloud)
+        self.plot.addItem(self.siblings)
         self.plot.addItem(self.marker)
         self.roi: pg.RectROI | None = None
         self.lines: list[pg.InfiniteLine] = []
@@ -113,9 +119,11 @@ class ScatterView(PairView):
         self.plot.setLabel("bottom", sx.title if sx else "")
         self.plot.setLabel("left", sy.title if sy else "")
         self.plot.setBackground(theme.background())
+        self.dimer_of = dimer_of_pairs(a) if a else {}
         if not a or not a.pairs or not sx or not sy:
             self.cloud.setData([], [])
             self.marker.setData([], [])
+            self.siblings.setData([], [])
             self.info.setText("")
             return
         x, y = self._values(kx), self._values(ky)
@@ -143,7 +151,8 @@ class ScatterView(PairView):
         self._threshold_lines(kx, ky)
         self.plot.autoRange()
         n_sub = len(sub) if sub is not None else len(a.pairs)
-        self.info.setText(tf("{n} / {tot} coppie in evidenza · dimensione del punto ∝ coppie equivalenti", n=n_sub, tot=len(a.pairs)))
+        self.info.setText(tf("{n} / {tot} coppie in evidenza · dimensione del punto ∝ coppie equivalenti", n=n_sub, tot=len(a.pairs))
+                          + " · " + tr("anelli tratteggiati: altre coppie dello stesso dimero"))
 
     def _threshold_lines(self, kx: str, ky: str) -> None:
         for line in self.lines:
@@ -168,11 +177,19 @@ class ScatterView(PairView):
             self.marker.setData([pair.get(kx)], [pair.get(ky)])
         else:
             self.marker.setData([], [])
+        dimer = self.dimer_of.get(pair.index) if pair else None
+        others = [q for q in dimer[1].pairs if q is not pair and q.index != pair.index] if dimer and kx and ky else []
+        others = [q for q in others if math.isfinite(q.get(kx)) and math.isfinite(q.get(ky))]
+        self.siblings.setData([q.get(kx) for q in others], [q.get(ky) for q in others])
 
     def _tip(self, x, y, data) -> str:
         a = self.analysis
         p = a.pairs[data] if a and data is not None and data < len(a.pairs) else None
-        return f"#{p.index + 1} {theme.kind_label(p.kind)}  ×{p.count}\nX = {x:.3g}   Y = {y:.3g}" if p else ""
+        if p is None:
+            return ""
+        dimer = self.dimer_of.get(p.index)
+        where = tf("dimero {label}", label=dimer[1].label) if dimer else tr("stessa molecola")
+        return f"#{p.index + 1} {theme.kind_label(p.kind)}  ×{p.count} · {where}\nX = {x:.3g}   Y = {y:.3g}"
 
     # ---- interazione ---------------------------------------------------------------
     def _clicked(self, _item, points, *_) -> None:

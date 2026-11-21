@@ -160,7 +160,11 @@ coppie* lo toglie).
 
 Una riga per coppia, nell'ordine: prima le π-stack, poi le parallele, poi le inclinate, ciascun gruppo per distanza
 interplanare crescente. **Relazione** dice tra chi è la coppia: `stessa [0 -1 0]` (la molecola e la sua traslata),
-`molecola 2 [1 0 0]`, e, se le molecole hanno più frammenti, quali (`· π2–π1`, `intramolecolare · π1–π3`). Le caselle
+`molecola 2 [1 0 0]`, e, se le molecole hanno più frammenti, quali (`· π2–π1`, `intramolecolare · π1–π3`).
+**Dimero** dice in quale file di *Esporta ▸ Tutti i dimeri (XYZ)* finisce la coppia (`pistaked-1`, `tilted-3`, …): le
+coppie di frammenti tra le stesse due molecole hanno lo stesso dimero, e ordinando per questa colonna stanno vicine; un
+trattino per due frammenti della stessa molecola, che non sono un dimero. Il suggerimento sulla casella dà il nome del
+file e le sue coppie. Le caselle
 *π-stack / parallela / inclinata* nascondono un tipo; **Colonne ▾** sceglie i parametri da mostrare (tutti quelli
 del registro, plugin compresi). Clic su un'intestazione per ordinare; le larghezze si regolano a mano.
 
@@ -171,7 +175,9 @@ del registro, plugin compresi). Clic su un'intestazione per ordinare; le larghez
 Ogni coppia è un punto; X e Y sono due parametri qualunque, il colore il tipo di coppia o un terzo parametro (scala
 viridis). La dimensione del punto cresce con le coppie equivalenti per simmetria. Quando un asse mostra un parametro
 del criterio di stack, la soglia è una linea tratteggiata (qui la distanza interplanare massima, 4,2 Å) che segue il
-pannello delle soglie in tempo reale. *Selezione a riquadro* filtra le coppie, *Azzera filtro* lo toglie.
+pannello delle soglie in tempo reale. *Selezione a riquadro* filtra le coppie, *Azzera filtro* lo toglie. Scelta una
+coppia, anelli tratteggiati segnano le altre coppie dello stesso dimero (stesse due molecole, stesso file XYZ); il
+suggerimento su un punto dice il suo dimero.
 
 ### Istogramma
 
@@ -577,14 +583,20 @@ Tutto si esporta in CSV dal menu *Esporta ▾*. Da terminale: `compare` e `stats
   contatti `molecule_b`, `vdw_sum` e `delta`).
 * **Coppia selezionata (XYZ)**: le due molecole, B già nella cella giusta, da aprire in qualunque visualizzatore. Se i
   due frammenti sono della stessa molecola, la molecola c'è una volta sola (`same_molecule` nella riga di commento).
-* **Tutti i dimeri (XYZ, un file per dimero)**: ogni dimero distinto in un suo file XYZ, nella sottocartella
-  `<struttura>_xyz` della cartella scelta. Una molecola con più frammenti π dà una coppia per ogni coppia di frammenti
+* **Tutti i dimeri o tutte le coppie (XYZ)**: una finestra chiede se scrivere un file per dimero o un file per coppia
+  della tabella, con il numero di file di ciascuna scelta e gli avvisi su che cosa contiene la seconda; poi la cartella.
+  *Un file per dimero*: ogni dimero distinto in un suo file XYZ, nella sottocartella `<struttura>_xyz` della cartella
+  scelta. Una molecola con più frammenti π dà una coppia per ogni coppia di frammenti
   vicini, anche di tipo diverso: tutte quelle tra le stesse due molecole (o tra due molecole equivalenti per simmetria)
   vanno in un solo file. Il file prende tipo e coordinate dalla prima di queste coppie nella tabella e si chiama
   `<struttura>-pistaked-1.xyz`, `-pistaked-2.xyz`, …, poi `<struttura>-parallel-1.xyz`, … e
   `<struttura>-tilted-1.xyz`, …: il numero conta i dimeri di quel tipo. La riga di commento ha i valori della prima
   coppia (`pair=`, `kind=`, …) e tutte le coppie del dimero: `pairs=` (numeri nella tabella), `kinds=` e `fragments=`
   (frammenti da 1). Le coppie tra due frammenti della stessa molecola non sono dimeri e restano fuori.
+  *Un file per coppia della tabella*: una riga della tabella, un file, nella sottocartella `<struttura>_pairs_xyz`
+  (stessi nomi, ma n conta le coppie di quel tipo). Attenzione: le coppie dello stesso dimero danno file con le stesse
+  due molecole (la riga di commento dice il dimero, `dimer=`), e due frammenti della stessa molecola danno la molecola
+  da sola (`same_molecule`). La finestra dice quanti file si ripetono e quante molecole sono da sole.
 * **Coppia selezionata per calcoli quantistici**: vedi la sezione seguente.
 * **Cella per calcoli periodici**: vedi [Cella intera per calcoli periodici](#cella-intera-per-calcoli-periodici).
 * **Geometria delle molecole (CSV)**: `kind` (bond, angle, torsion, contact), `molecule`, `atom_1`…`atom_4`, `symop_1`…`symop_4` (l'operazione che genera ogni atomo; vuota per l'atomo del CIF), `value`, `su`, e per i contatti `vdw_sum` e `delta`.
@@ -685,7 +697,7 @@ Tutto ciò che fa la finestra si fa anche da terminale (`./start.py COMANDO …`
 
 | comando | a che cosa serve |
 |---|---|
-| `analyze file.cif` | analizza un file e stampa le coppie; `--csv`, `--json`, `--xyz N FILE`, `--xyz-all CARTELLA`, `--block`, `--mc N` |
+| `analyze file.cif` | analizza un file e stampa le coppie; `--csv`, `--json`, `--xyz N FILE`, `--xyz-all CARTELLA`, `--xyz-pairs CARTELLA`, `--block`, `--mc N` |
 | `batch cartella/` | tutti i CIF di una cartella, in parallelo; `--csv riepilogo.csv` |
 | `compare a.cif b.cif …` | confronto del motivo di stack; `--ref N` sceglie il riferimento |
 | `stats cartella/` | statistiche sulle coppie; `--kind stack`, `--keys`, `--corr`, `--csv`, `--summary` |
