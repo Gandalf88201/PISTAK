@@ -575,11 +575,16 @@ Tutto si esporta in CSV dal menu *Esporta ▾*. Da terminale: `compare` e `stats
   molecole, traslazioni, passo, coppie), `ring_pairs` (coppie di anelli di ogni coppia, con il numero `pair`) e
   `geometry` (`bonds`, `angles`, `torsions`, `contacts` delle molecole indipendenti: atomi, `symops`, valore, s.u.; per i
   contatti `molecule_b`, `vdw_sum` e `delta`).
-* **Coppia selezionata (XYZ)**: le due molecole, B già nella cella giusta, da aprire in qualunque visualizzatore.
-* **Tutte le coppie (XYZ, un file per coppia)**: ogni coppia della tabella in un suo file XYZ, nella sottocartella
-  `<struttura>_xyz` della cartella scelta. I file si chiamano `<struttura>-pistaked-1.xyz`, `-pistaked-2.xyz`, …,
-  poi `<struttura>-parallel-1.xyz`, … e `<struttura>-tilted-1.xyz`, …: il numero conta le coppie di quel tipo
-  nell'ordine della tabella; il numero della coppia nella tabella è nella riga di commento (`pair=`).
+* **Coppia selezionata (XYZ)**: le due molecole, B già nella cella giusta, da aprire in qualunque visualizzatore. Se i
+  due frammenti sono della stessa molecola, la molecola c'è una volta sola (`same_molecule` nella riga di commento).
+* **Tutti i dimeri (XYZ, un file per dimero)**: ogni dimero distinto in un suo file XYZ, nella sottocartella
+  `<struttura>_xyz` della cartella scelta. Una molecola con più frammenti π dà una coppia per ogni coppia di frammenti
+  vicini, anche di tipo diverso: tutte quelle tra le stesse due molecole (o tra due molecole equivalenti per simmetria)
+  vanno in un solo file. Il file prende tipo e coordinate dalla prima di queste coppie nella tabella e si chiama
+  `<struttura>-pistaked-1.xyz`, `-pistaked-2.xyz`, …, poi `<struttura>-parallel-1.xyz`, … e
+  `<struttura>-tilted-1.xyz`, …: il numero conta i dimeri di quel tipo. La riga di commento ha i valori della prima
+  coppia (`pair=`, `kind=`, …) e tutte le coppie del dimero: `pairs=` (numeri nella tabella), `kinds=` e `fragments=`
+  (frammenti da 1). Le coppie tra due frammenti della stessa molecola non sono dimeri e restano fuori.
 * **Coppia selezionata per calcoli quantistici**: vedi la sezione seguente.
 * **Cella per calcoli periodici**: vedi [Cella intera per calcoli periodici](#cella-intera-per-calcoli-periodici).
 * **Geometria delle molecole (CSV)**: `kind` (bond, angle, torsion, contact), `molecule`, `atom_1`…`atom_4`, `symop_1`…`symop_4` (l'operazione che genera ogni atomo; vuota per l'atomo del CIF), `value`, `su`, e per i contatti `vdw_sum` e `delta`.

@@ -575,11 +575,16 @@ Everything can be exported to CSV from the *Export ▾* menu. On the command lin
   molecules, translations, repeat, pairs), `ring_pairs` (ring pairs of every pair, with the `pair` number) and
   `geometry` (`bonds`, `angles`, `torsions`, `contacts` of the independent molecules: atoms, `symops`, value, s.u.;
   for contacts also `molecule_b`, `vdw_sum` and `delta`).
-* **Selected pair (XYZ)**: the two molecules, B already in the right cell, for any molecular viewer.
-* **All pairs (XYZ, one file per pair)**: every pair of the table in its own XYZ file, in the subfolder
-  `<structure>_xyz` of the chosen folder. The files are named `<structure>-pistaked-1.xyz`, `-pistaked-2.xyz`, …,
-  then `<structure>-parallel-1.xyz`, … and `<structure>-tilted-1.xyz`, …: the number counts the pairs of that kind
-  in table order; the pair's number in the table is in the comment line (`pair=`).
+* **Selected pair (XYZ)**: the two molecules, B already in the right cell, for any molecular viewer. If the two
+  fragments belong to the same molecule, the molecule appears once (`same_molecule` in the comment line).
+* **All dimers (XYZ, one file per dimer)**: each distinct dimer in its own XYZ file, in the subfolder
+  `<structure>_xyz` of the chosen folder. A molecule with several π fragments gives one pair for every pair of nearby
+  fragments, possibly of different kinds: all those between the same two molecules (or two symmetry-equivalent
+  molecules) go into a single file. The file takes its kind and coordinates from the first of these pairs in the table
+  and is named `<structure>-pistaked-1.xyz`, `-pistaked-2.xyz`, …, then `<structure>-parallel-1.xyz`, … and
+  `<structure>-tilted-1.xyz`, …: the number counts the dimers of that kind. The comment line has the values of the
+  first pair (`pair=`, `kind=`, …) and every pair of the dimer: `pairs=` (numbers in the table), `kinds=` and
+  `fragments=` (fragments from 1). Pairs between two fragments of the same molecule are not dimers and are left out.
 * **Selected pair for quantum chemistry**: see the next section.
 * **Cell for periodic calculations**: see [Whole cell for periodic calculations](#whole-cell-for-periodic-calculations).
 * **Molecular geometry (CSV)**: `kind` (bond, angle, torsion, contact), `molecule`, `atom_1`…`atom_4`, `symop_1`…`symop_4` (the operation generating each atom; empty for the CIF atom), `value`, `su`, and for contacts `vdw_sum` and `delta`.

@@ -188,3 +188,38 @@ def test_core_isotropy():
 def test_axis_from_thresholds():
     assert Limits.from_dict({"long_axis_atoms": " C1,C9 "}).long_axis_atoms == "C1,C9"
     assert Limits.from_dict({"long_axis_atoms": ["C1"]}).long_axis_atoms == ""
+
+
+def test_dimers_xyz_collect_the_fragment_pairs_of_a_dimer(crystal, tmp_path):
+    """Con due frammenti per molecola, le coppie π1–π1, π2–π2, π1–π2 tra le stesse due molecole sono un dimero solo:
+    un file XYZ per dimero, non uno per coppia di frammenti. La coppia intramolecolare π1–π2 non è un dimero: resta
+    fuori dall'esportazione dei dimeri e nell'XYZ della singola coppia la molecola c'è una volta sola."""
+    from pistak.io import export
+
+    a = analyse_text(crystal, "fn", Limits())
+    inter = [p for p in a.pairs if not export.same_molecule(p)]
+    ds = export.dimers(a)
+    assert len(ds) < len(inter)  # più coppie di frammenti per lo stesso dimero
+    assert any(len({(p.fa, p.fb) for p in d.pairs}) > 1 for d in ds)
+    assert sorted(p.index for d in ds for p in d.pairs) == sorted(p.index for p in inter)
+    # tutte le distanze tra gli atomi del dimero, ordinate: uguali a meno di traslazioni, rotazioni, scambio A/B
+    def shape(x):
+        return np.sort(np.linalg.norm(x[:, None] - x[None], axis=2).ravel())
+
+    def same(u, v):
+        return len(u) == len(v) and np.abs(u - v).max() < 1e-4
+
+    def from_xyz(text):
+        return shape(np.array([[float(v) for v in line.split()[1:4]] for line in text.splitlines()[2:]]))
+
+    shapes = [from_xyz(export.dimer_xyz(a, d)) for d in ds]
+    assert all(not same(shapes[i], shapes[j]) for i in range(len(ds)) for j in range(i))  # dimeri distinti
+    for d, s in zip(ds, shapes):  # ogni coppia del dimero dà le stesse due molecole
+        for p in d.pairs:
+            ctx = a.pair_context(p)
+            assert same(shape(np.vstack([ctx.pos_a, ctx.pos_b])), s)
+    intra = next(p for p in a.pairs if export.same_molecule(p))
+    lines = export.pair_xyz(a, intra).splitlines()
+    assert int(lines[0]) == len(a.structure.molecules[intra.a].el) and "same_molecule" in lines[1]
+    paths = export.write_dimers_xyz(a, tmp_path)
+    assert len(paths) == len(ds) and all(p.name.startswith("fn-") for p in paths)

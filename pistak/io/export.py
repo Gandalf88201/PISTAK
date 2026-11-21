@@ -9,6 +9,7 @@ import csv
 import json
 import math
 import re
+from dataclasses import dataclass
 from pathlib import Path
 
 from pistak.core.analysis import Analysis
@@ -215,14 +216,29 @@ def write_json(analysis: Analysis, path: str | Path, keys: list[str] | None = No
     return path
 
 
-def pair_xyz(analysis: Analysis, pair: Pair) -> str:
-    """Le due molecole della coppia, in coordinate cartesiane (Å), nel formato XYZ."""
-    ctx = analysis.pair_context(pair)
-    atoms = [(e, p) for e, p in zip(ctx.A.el, ctx.pos_a)] + [(e, p) for e, p in zip(ctx.B.el, ctx.pos_b)]
-    head = (f"{analysis.name} pair={pair.index + 1} kind={pair.kind} interplanar={pair.interplanar:.3f} "
-            f"long_slip={pair.long_slip:.3f} lat_slip={pair.lat_slip:.3f}")
+def _xyz_text(atoms: list, head: str) -> str:
     body = "\n".join(f"{e:<2} {p[0]:12.6f} {p[1]:12.6f} {p[2]:12.6f}" for e, p in atoms)
     return f"{len(atoms)}\n{head}\n{body}\n"
+
+
+def same_molecule(pair: Pair) -> bool:
+    """Vero se la coppia è tra due frammenti π della stessa molecola, nella stessa cella: le «due molecole» sono la
+    stessa, una sopra l'altra (con una traslazione, come nelle catene di un polimero, sono due copie distinte)."""
+    return pair.a == pair.b and not any(pair.shift)
+
+
+def pair_xyz(analysis: Analysis, pair: Pair) -> str:
+    """Le due molecole della coppia, in coordinate cartesiane (Å), nel formato XYZ. Se i due frammenti sono della
+    stessa molecola (`same_molecule`), la molecola compare una volta sola, non due volte sovrapposta."""
+    ctx = analysis.pair_context(pair)
+    atoms = [(e, p) for e, p in zip(ctx.A.el, ctx.pos_a)]
+    if not same_molecule(pair):
+        atoms += [(e, p) for e, p in zip(ctx.B.el, ctx.pos_b)]
+    head = (f"{analysis.name} pair={pair.index + 1} kind={pair.kind} interplanar={pair.interplanar:.3f} "
+            f"long_slip={pair.long_slip:.3f} lat_slip={pair.lat_slip:.3f}")
+    if same_molecule(pair):
+        head += " same_molecule"
+    return _xyz_text(atoms, head)
 
 
 def write_pair_xyz(analysis: Analysis, pair: Pair, path: str | Path) -> Path:
@@ -240,21 +256,80 @@ def xyz_stem(analysis: Analysis) -> str:
     return re.sub(r"[^\w.-]+", "_", Path(analysis.name).stem) or "pistak"
 
 
-def all_pairs_xyz_names(analysis: Analysis) -> list[tuple[Pair, str]]:
-    """Ogni coppia con il nome del suo file XYZ, «<struttura>-<tipo>-<n>.xyz»: n conta le coppie di quel tipo
-    nell'ordine della tabella (prima i π-stack, poi le parallele, poi le inclinate). Il numero della coppia nella
-    tabella resta nella riga di commento del file (`pair=`)."""
+@dataclass
+class Dimer:
+    """Due molecole vicine e tutte le coppie di frammenti π che le legano, nell'ordine della tabella. Una molecola con
+    più frammenti dà una coppia per ogni coppia di frammenti vicini, di tipo anche diverso: tutte descrivono lo stesso
+    dimero. La prima (il tipo più interessante, poi la distanza più corta) dà nome e coordinate."""
+
+    pairs: list[Pair]
+    name: str = ""
+
+    @property
+    def kind(self) -> str:
+        return self.pairs[0].kind
+
+
+def _dimer_image(a: int, b: int, shift) -> tuple:
+    """Lo stesso dimero visto da A o da B: (a, b, t) e (b, a, −t) sono le stesse due molecole."""
+    t = tuple(int(v) for v in shift)
+    return min((a, b, t), (b, a, tuple(-v for v in t)))
+
+
+def dimers(analysis: Analysis) -> list[Dimer]:
+    """Le coppie raccolte per dimero di molecole. Due coppie sono dello stesso dimero se una delle loro copie
+    equivalenti per simmetria (`Pair.members`) unisce le stesse due molecole con la stessa traslazione. Le coppie tra
+    frammenti della stessa molecola (`same_molecule`) non sono dimeri e restano fuori. Ordine: quello della prima
+    coppia di ogni dimero nella tabella; il nome è «<struttura>-<tipo>-<n>.xyz» con n che conta i dimeri di quel tipo."""
+    pairs = [p for p in analysis.pairs if not same_molecule(p)]
+    parent = list(range(len(pairs)))
+
+    def root(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    owner: dict[tuple, int] = {}
+    for i, p in enumerate(pairs):
+        for m in p.members or [p.key]:
+            img = _dimer_image(m[0], m[1], m[2])
+            if img in owner:
+                ra, rb = root(i), root(owner[img])
+                parent[max(ra, rb)] = min(ra, rb)  # la radice resta la coppia che viene prima nella tabella
+            else:
+                owner[img] = i
+    groups: dict[int, list[Pair]] = {}
+    for i, p in enumerate(pairs):
+        groups.setdefault(root(i), []).append(p)
+    out = [Dimer(g) for _r, g in sorted(groups.items(), key=lambda kv: kv[1][0].index)]
     stem, seen = xyz_stem(analysis), dict.fromkeys(XYZ_KIND_NAMES, 0)
-    out = []
-    for p in analysis.pairs:
-        seen[p.kind] = seen.get(p.kind, 0) + 1
-        out.append((p, f"{stem}-{XYZ_KIND_NAMES.get(p.kind, p.kind)}-{seen[p.kind]}.xyz"))
+    for d in out:
+        seen[d.kind] = seen.get(d.kind, 0) + 1
+        d.name = f"{stem}-{XYZ_KIND_NAMES.get(d.kind, d.kind)}-{seen[d.kind]}.xyz"
     return out
 
 
-def write_all_pairs_xyz(analysis: Analysis, folder: str | Path) -> list[Path]:
-    """Un file XYZ per ogni coppia trovata, nella cartella `folder` (creata se manca), con i nomi di
-    `all_pairs_xyz_names`. Restituisce i file scritti, nell'ordine delle coppie."""
+def dimer_xyz(analysis: Analysis, dimer: Dimer) -> str:
+    """Il dimero in formato XYZ, con le coordinate della sua prima coppia. La riga di commento ha i valori della prima
+    coppia (`pair=`, come l'XYZ di una coppia) e l'elenco di tutte le sue coppie: numeri nella tabella (`pairs=`), tipi
+    (`kinds=`) e frammenti, numerati da 1 come nel JSON (`fragments=`)."""
+    text = pair_xyz(analysis, dimer.pairs[0])
+    n, head, body = text.split("\n", 2)
+    head += (f" pairs={','.join(str(p.index + 1) for p in dimer.pairs)}"
+             f" kinds={','.join(p.kind for p in dimer.pairs)}"
+             f" fragments={','.join(f'{p.fa + 1}-{p.fb + 1}' for p in dimer.pairs)}")
+    return f"{n}\n{head}\n{body}"
+
+
+def write_dimers_xyz(analysis: Analysis, folder: str | Path) -> list[Path]:
+    """Un file XYZ per ogni dimero distinto (`dimers`), nella cartella `folder` (creata se manca). Restituisce i file
+    scritti, nell'ordine dei dimeri."""
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
-    return [write_pair_xyz(analysis, p, folder / name) for p, name in all_pairs_xyz_names(analysis)]
+    out = []
+    for d in dimers(analysis):
+        path = folder / d.name
+        path.write_text(dimer_xyz(analysis, d), encoding="utf-8")
+        out.append(path)
+    return out

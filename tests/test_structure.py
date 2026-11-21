@@ -180,27 +180,31 @@ def test_config_command(capsys):
     assert "user.toml" in out and "default.toml" in out and "plugins" in out
 
 
-def test_all_pairs_xyz_one_file_per_pair_named_by_kind(tmp_path):
-    """`write_all_pairs_xyz`: un file per coppia, «<struttura>-<tipo>-<n>.xyz» con n per tipo nell'ordine della
-    tabella, contenuto uguale all'XYZ della singola coppia; anche da terminale con --xyz-all."""
+def test_dimers_xyz_one_file_per_dimer_named_by_kind(tmp_path):
+    """`write_dimers_xyz` sugli esempi: un file per dimero, «<struttura>-<tipo>-<n>.xyz» con n per tipo nell'ordine
+    della tabella, ogni coppia in un solo dimero, la riga di commento con tutte le coppie; anche con --xyz-all."""
     from pistak import analyse_file
     from pistak.cli import main
     from pistak.io import export
 
     for cif in sorted(p for p in EX.glob("*.cif") if not p.name.startswith("._")):  # non i file AppleDouble di macOS
-        a = analyse_file(cif)
-        paths = export.write_all_pairs_xyz(a, tmp_path / cif.stem)
-        assert len(paths) == len(a.pairs) and len({p.name for p in paths}) == len(paths)
-        counter: dict[str, int] = {}
-        for pair, path in zip(a.pairs, paths):
-            counter[pair.kind] = counter.get(pair.kind, 0) + 1
-            label = export.XYZ_KIND_NAMES[pair.kind]
-            assert path.name == f"{cif.stem}-{label}-{counter[pair.kind]}.xyz"
-            text = path.read_text(encoding="utf-8")
-            assert text == export.pair_xyz(a, pair)
-            lines = text.splitlines()
-            assert int(lines[0]) == len(lines) - 2 and f"pair={pair.index + 1} " in lines[1]
+        for k, limits in enumerate((Limits(), Limits.site())):
+            a = analyse_file(cif, limits)
+            ds = export.dimers(a)
+            paths = export.write_dimers_xyz(a, tmp_path / f"{cif.stem}-{k}")
+            assert [p.name for p in paths] == [d.name for d in ds] and len(set(d.name for d in ds)) == len(ds)
+            covered = sorted(p.index for d in ds for p in d.pairs)
+            assert covered == sorted(p.index for p in a.pairs if not export.same_molecule(p))
+            counter: dict[str, int] = {}
+            for d, path in zip(ds, paths):
+                assert [p.index for p in d.pairs] == sorted(p.index for p in d.pairs)
+                counter[d.kind] = counter.get(d.kind, 0) + 1
+                assert d.name == f"{cif.stem}-{export.XYZ_KIND_NAMES[d.kind]}-{counter[d.kind]}.xyz"
+                lines = path.read_text(encoding="utf-8").splitlines()
+                assert int(lines[0]) == len(lines) - 2
+                assert f"pair={d.pairs[0].index + 1} " in lines[1]
+                assert f"pairs={','.join(str(p.index + 1) for p in d.pairs)} " in lines[1]
 
     a = analyse_file(EX / "herringbone_anthracene.cif")
     assert main(["analyze", str(EX / "herringbone_anthracene.cif"), "--xyz-all", str(tmp_path / "cli")]) == 0
-    assert sorted(p.name for p in (tmp_path / "cli").iterdir()) == sorted(n for _p, n in export.all_pairs_xyz_names(a))
+    assert sorted(p.name for p in (tmp_path / "cli").iterdir()) == sorted(d.name for d in export.dimers(a))
